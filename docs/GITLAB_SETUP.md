@@ -6,44 +6,53 @@
 - Commit inicial realizado
 - 82 arquivos adicionados
 - Estrutura organizada e pronta
+- ✅ Remote configurado: `https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts.git`
+- ⚠️ **Aguardando autenticação** para fazer push
 
 ## Próximos Passos para Conectar ao GitLab
 
-### 1. Criar o Repositório no GitLab
+### 1. Repositório no GitLab
 
-1. Acesse o GitLab do iFood
-2. Crie um novo projeto/repositório
-3. **NÃO** inicialize com README, .gitignore ou licença (já temos)
-4. Copie a URL do repositório (ex: `https://gitlab.ifood.com/...`)
+✅ **Repositório já existe**: `https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts`
 
 ### 2. Adicionar Remote do GitLab
 
-```bash
-# Adicionar o remote (substitua pela URL do seu repositório)
-git remote add origin <URL_DO_REPOSITORIO_GITLAB>
+**URL do Repositório:** `https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts.git`
 
-# Verificar se foi adicionado corretamente
+```bash
+# Remote já configurado:
 git remote -v
+
+# Se precisar reconfigurar:
+git remote set-url origin https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts.git
 ```
 
 ### 3. Autenticação
 
 ⚠️ **Importante**: O acesso ao GitLab do iFood requer **SSO authentication** em vez de senha via HTTPS.
 
-#### Opção A: Usar SSH (Recomendado)
+#### Opção A: Usar SSH (Recomendado) ⭐
 
-1. **Gerar chave SSH** (se ainda não tiver):
-   ```bash
-   ssh-keygen -t ed25519 -C "seu-email@ifood.com"
-   ```
+1. ✅ **Chave SSH já existe**: `~/.ssh/id_ed25519.pub`
 
 2. **Adicionar chave SSH ao GitLab**:
-   - Copie a chave pública: `cat ~/.ssh/id_ed25519.pub`
-   - No GitLab: Settings → SSH Keys → Adicionar chave
+   - Acesse: https://code.ifoodcorp.com.br/-/profile/keys
+   - Ou: Settings → SSH Keys
+   - Cole sua chave pública (veja abaixo como obter)
 
-3. **Usar URL SSH** ao adicionar o remote:
+3. **Converter remote para SSH**:
    ```bash
-   git remote add origin git@gitlab.ifood.com:grupo/projeto.git
+   git remote set-url origin git@code.ifoodcorp.com.br:ifood/data/viz/custom-charts.git
+   ```
+
+4. **Testar conexão SSH**:
+   ```bash
+   ssh -T git@code.ifoodcorp.com.br
+   ```
+
+5. **Fazer push**:
+   ```bash
+   git push -u origin main
    ```
 
 #### Opção B: Usar HTTPS com Personal Access Token
