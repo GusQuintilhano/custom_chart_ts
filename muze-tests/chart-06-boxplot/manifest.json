@@ -1,0 +1,26 @@
+{
+  "name": "ifood-muze-boxplot",
+  "version": "1.0.0",
+  "description": "Boxplot com cálculo de quartis, mediana e identificação de outliers",
+  "author": "iFood Data Team",
+  "type": "custom-chart",
+  "requiresData": true,
+  "inputColumns": [
+    {
+      "id": "dimension",
+      "name": "Categoria",
+      "type": "string"
+    },
+    {
+      "id": "measure",
+      "name": "Valor",
+      "type": "number"
+    }
+  ]
+}
+
+
+
+
+
+

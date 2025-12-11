@@ -1,0 +1,112 @@
+/* Custom Styles para ifood-muze-branded-chart */
+/* Tema customizado seguindo design system do iFood */
+
+#chart {
+  width: 100%;
+  height: 500px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+}
+
+/* Título customizado - tema iFood */
+#chart .muze-title-cell {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  fill: #1f2937 !important;
+}
+
+/* Subtítulo customizado */
+#chart .muze-subtitle-cell {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  color: #6b7280 !important;
+  fill: #6b7280 !important;
+}
+
+/* Labels dos eixos */
+#chart .muze-ticks {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.75rem !important;
+  color: #6b7280 !important;
+  fill: #6b7280 !important;
+}
+
+/* Nome dos eixos */
+#chart .muze-axis-name {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  fill: #1f2937 !important;
+}
+
+/* Tooltip customizado - tema iFood */
+#chart .muze-tooltip-box {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  padding: 12px !important;
+}
+
+/* Barras - transições suaves */
+#chart .muze-bar {
+  transition: opacity 0.2s ease, fill-opacity 0.2s ease;
+}
+
+#chart .muze-bar:hover {
+  opacity: 0.8;
+}
+
+/* Headers customizados */
+#chart .muze-header-cell {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.75rem !important;
+  color: #1f2937 !important;
+  fill: #1f2937 !important;
+  font-weight: 600 !important;
+}
+
+/* Grid lines - mais sutis */
+#chart .muze-grid-line {
+  stroke: #f3f4f6 !important;
+  stroke-width: 1px !important;
+}
+
+/* Eixos - estilo iFood */
+#chart .muze-axis-line {
+  stroke: #e5e7eb !important;
+  stroke-width: 1px !important;
+}
+
+/* Legenda customizada */
+#chart .muze-legend {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+#chart .muze-legend-item {
+  font-size: 0.75rem !important;
+  color: #6b7280 !important;
+  fill: #6b7280 !important;
+}
+
+/* Melhorias de acessibilidade */
+#chart:focus {
+  outline: 2px solid #EA1D2C;
+  outline-offset: 2px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  #chart .muze-title-cell {
+    font-size: 1.25rem !important;
+  }
+  
+  #chart .muze-ticks {
+    font-size: 0.7rem !important;
+  }
+}
