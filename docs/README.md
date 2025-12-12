@@ -32,7 +32,11 @@ Documentação sobre os Custom Charts desenvolvidos:
   - Chart 06 - Multi-Measures: Análise de problemas
 
 - **trellis-chart/**: Documentação do Trellis Chart SDK
-  - Aprendizados e achados
+  - **APRENDIZADOS_COMPLETOS.md** ⭐ - **Documento principal consolidado**
+    - Todas as lições fundamentais sobre Chart SDK
+    - Como inicializar o Chart Context
+    - Como processar dados do ThoughtSpot
+    - Template completo de código
   - Guia completo da aba Configure
   - Guia completo sobre columnsVizPropDefinition
   - Soluções para forçar atualização
@@ -62,9 +66,14 @@ Documentação sobre organização e histórico do projeto:
    - Exemplos práticos e código completo
 
 ### Para Criar Custom Charts
-1. **Comece por**: `custom-charts/GUIA_COMPLETO.md`
+1. **Para charts tradicionais**: `custom-charts/GUIA_COMPLETO.md`
    - Guia passo a passo completo
    - Duas formas de usar (Muze Studio e Upload)
+
+2. **Para Chart SDK (Trellis Chart)**: `custom-charts/trellis-chart/APRENDIZADOS_COMPLETOS.md`
+   - Todas as lições sobre ThoughtSpot Chart SDK
+   - Template completo de código
+   - Guia de implementação
 
 ### Para Processos de Integração
 1. **Consulte**: `integration-tests/`
@@ -83,6 +92,13 @@ Documentação sobre organização e histórico do projeto:
    - Guia completo de uso e implantação
    - Muze Studio + Upload tradicional
    - Empacotamento e troubleshooting
+
+3. **`custom-charts/trellis-chart/APRENDIZADOS_COMPLETOS.md`**
+   - Todas as lições sobre ThoughtSpot Chart SDK
+   - Como inicializar Chart Context
+   - Como processar dados do ThoughtSpot
+   - Template completo de código
+   - Deploy e configuração
 
 ## 📊 Estatísticas
 
