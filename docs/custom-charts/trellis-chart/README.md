@@ -33,21 +33,44 @@ O chart está hospedado no Railway. Para fazer deploy:
 
 ## Documentação
 
-Toda a documentação técnica está disponível nesta pasta (`docs/custom-charts/trellis-chart/`):
+### ⭐ Documento Principal (Consolidado)
 
-- **APRENDIZADOS_COMPLETOS.md** ⭐ - **Documento principal consolidado**
+- **APRENDIZADOS_COMPLETOS.md** - **Documento principal consolidado** (1.159 linhas)
   - Todas as lições fundamentais sobre Chart SDK
   - Como inicializar o Chart Context
   - Como processar dados do ThoughtSpot
   - Como renderizar gráficos
+  - 9 problemas encontrados e soluções
+  - Visual Properties (elements vs columnsVizPropDefinition)
   - Template completo de código
+  - Deploy e configuração
   - Checklist para novos charts
+  - Evolução do código
 
-- **APRENDIZADOS_E_ACHADOS.md**: Aprendizados e achados durante o desenvolvimento
-- **ABA_CONFIGURE.md**: Guia completo sobre como acessar e usar a aba Configure
-- **COLUMNS_VIZ_PROP_DEFINITION.md**: Guia completo sobre columnsVizPropDefinition (impacto, migração e hipóteses)
-- **SOLUCAO_FORCAR_ATUALIZACAO.md**: Soluções para forçar atualização quando nova medida é adicionada
-- Documentação técnica do SDK (arquivos numerados 01-04)
+### 📚 Documentos Complementares (Detalhes Específicos)
+
+- **COLUMNS_VIZ_PROP_DEFINITION.md**: Guia detalhado sobre configurações por coluna
+  - Impacto prático
+  - Migração de `elements` para `columnsVizPropDefinition`
+  - Hipóteses testadas e refutadas
+  
+- **SOLUCAO_FORCAR_ATUALIZACAO.md**: Workaround detalhado para nova medida não aparecer
+  - Tentativas de solução automática
+  - Análise de charts profissionais
+
+- **APRENDIZADOS_E_ACHADOS.md**: Histórico detalhado de desenvolvimento
+  - Evolução completa do código
+  - Comandos úteis
+  - Limitações conhecidas
+
+### 📖 Documentação Técnica Oficial (Referência)
+
+- **01-ts-chart-sdk-readme-initialize-chart-context.md**: Documentação oficial do Chart SDK
+- **02-chart-custom-thoughtspot.md**: Documentação ThoughtSpot sobre Custom Charts
+- **03-creating-custom-charts-tse-d3.md**: Tutorial oficial com D3.js
+- **04-how-sdk-works.md**: Arquitetura e fluxo do SDK
+
+**Nota:** Para começar, leia primeiro o **APRENDIZADOS_COMPLETOS.md**. Os outros documentos são para referência detalhada de tópicos específicos.
 
 ## Status
 
