@@ -524,7 +524,49 @@ Framing 'https://...' violates CSP directive: "frame-src ..."
 
 ---
 
-### 6. Nova Medida Não Aparece Imediatamente
+### 6. Eixos Y Não Individualizados
+
+**Problema:** Todas as medidas compartilhavam o mesmo eixo Y, dificultando comparação.
+
+**Solução:**
+- Calcular min/max individual para cada medida
+- Criar eixo Y separado para cada linha de medida
+- Usar escala específica ao renderizar barras de cada medida
+
+**Status:** ✅ Resolvido
+
+---
+
+### 7. Múltiplas Dimensões Não Dividiam o Eixo X
+
+**Problema:** Ao adicionar segunda dimensão, as barras ficavam sobrepostas.
+
+**Solução:**
+- Combinar labels de todas as dimensões em uma única string
+- Usar formato: "Dimensão 1 - Dimensão 2"
+- Tratar cada combinação única como um ponto separado no eixo X
+
+**Status:** ✅ Resolvido
+
+---
+
+### 8. Opções de Configuração Não Apareciam
+
+**Problema:** Configurações de cor e formato por medida não apareciam no painel.
+
+**Causa Inicial:** Tentativa de usar apenas `columnsVizPropDefinition` (configurações por coluna só aparecem ao clicar na coluna).
+
+**Solução:**
+- Usar `elements` diretamente com seções por medida
+- Cada seção contém colorpicker e dropdown
+- Valores acessados via `visualProps[`measure_${measure.id}`]`
+- Alternativamente, usar `columnsVizPropDefinition` + clicar na coluna
+
+**Status:** ✅ Resolvido
+
+---
+
+### 9. Nova Medida Não Aparece Imediatamente
 
 **Problema:** Quando uma nova medida é adicionada, ela pode não aparecer imediatamente.
 
@@ -554,6 +596,12 @@ await ctx.emitEvent(ChartToTSEvent.UpdateVisualProps, {
     } as any,
 });
 ```
+
+**Análise:**
+- Testamos hipótese de que `elements` causava o problema
+- Implementamos dependência explícita das colunas
+- Mesmo assim, `getDefaultChartConfig` não é chamado
+- Conclusão: Limitação fundamental do ThoughtSpot
 
 **Status:** ⚠️ Limitação do ThoughtSpot - Não há solução automática viável
 
@@ -749,43 +797,167 @@ init();
 - Configurações globais do gráfico
 - Acessíveis a qualquer momento
 
+**Estrutura:**
+```typescript
+{
+  elements: [
+    {
+      type: 'section',
+      key: 'chart_options',
+      label: 'Opções do Gráfico',
+      children: [
+        {
+          type: 'section',
+          key: `measure_${measure.id}`,
+          label: measure.name,
+          children: [
+            {
+              type: 'colorpicker',
+              key: 'color',
+              label: 'Cor',
+              defaultValue: '#3b82f6',
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Acesso aos valores:**
+```typescript
+const visualProps = chartModel.visualProps || {};
+const measureConfig = visualProps[`measure_${measure.id}`] || {};
+const color = measureConfig.color || defaultValue;
+```
+
 **Vantagens:**
 - ✅ Simples de implementar
 - ✅ Todas as opções sempre visíveis
 - ✅ Não depende de seleção de coluna
+- ✅ Funciona bem para configurações globais
 
 **Desvantagens:**
 - ❌ Aba "Configure" fica vazia
 - ❌ Não há contexto de qual coluna está sendo configurada
+- ❌ Pode ser confuso quando há muitas medidas
 
 ---
 
 ### 🎯 Usando `columnsVizPropDefinition` + `elements` (Solução Avançada)
 
 **Localização:**
-- **`elements`**: Aba **"Settings"** (sempre visível)
-- **`columnsVizPropDefinition`**: Aba **"Configure"** (somente ao clicar em uma coluna)
+- **`elements`**: Aba **"Settings"** (sempre visível) - Configurações globais
+- **`columnsVizPropDefinition`**: Aba **"Configure"** (somente ao clicar em uma coluna) - Configurações por coluna
 
-**Comportamento:**
-- Configurações globais sempre visíveis em "Settings"
-- Configurações por coluna aparecem dinamicamente em "Configure" quando o usuário clica em uma coluna
-- O ThoughtSpot passa `activeColumnId` para identificar qual coluna está sendo configurada
+**⚠️ IMPORTANTE:** A aba **"Configure"** só aparece quando você **clica em uma coluna específica** (medida) no painel lateral do ThoughtSpot. Ela **não aparece automaticamente** quando você abre as configurações do gráfico.
+
+**Como acessar:**
+1. Abra o painel de propriedades do gráfico
+2. Clique diretamente no nome de uma medida na lista de colunas do painel lateral
+3. A aba "Configure" aparecerá com as configurações específicas dessa medida
+
+**Estrutura:**
+```typescript
+{
+  // Configurações globais (aba Settings)
+  elements: [
+    {
+      type: 'section',
+      key: 'chart_options',
+      label: 'Opções do Gráfico',
+      children: [
+        // Configurações globais (layout, tamanhos, etc.)
+      ]
+    }
+  ],
+  
+  // Configurações por coluna (aba Configure)
+  columnsVizPropDefinition: [
+    {
+      type: ColumnType.MEASURE,
+      columnSettingsDefinition: Object.fromEntries(
+        measureColumns.map(measure => [
+          measure.id,
+          {
+            elements: [
+              {
+                type: 'colorpicker',
+                key: 'color',
+                label: 'Cor',
+                defaultValue: '#3b82f6',
+              },
+              {
+                type: 'dropdown',
+                key: 'format',
+                label: 'Formato',
+                defaultValue: 'decimal',
+                values: ['decimal', 'percentage', 'currency'],
+              }
+            ]
+          }
+        ])
+      )
+    }
+  ]
+}
+```
+
+**Acesso aos valores:**
+```typescript
+const visualProps = chartModel.visualProps || {};
+
+// Formato novo (columnsVizPropDefinition)
+const measureConfigNew = visualProps[measure.id] || {};
+
+// Formato antigo (elements) - compatibilidade
+const measureConfigOld = visualProps[`measure_${measure.id}`] || {};
+
+// Novo sobrescreve antigo
+const measureConfig = { ...measureConfigOld, ...measureConfigNew };
+const color = measureConfig.color || defaultValue;
+```
 
 **Vantagens:**
 - ✅ Aba "Configure" funciona corretamente
 - ✅ Contexto claro de qual coluna está sendo configurada
-- ✅ Interface mais organizada
-- ✅ Segue padrão do ThoughtSpot
+- ✅ Interface mais organizada (separação entre global e por coluna)
+- ✅ Segue padrão do ThoughtSpot (como gráficos nativos)
+- ✅ Melhor UX para gráficos com muitas medidas
 
 **Desvantagens:**
 - ⚠️ Implementação mais complexa
+- ⚠️ Requer gerenciar múltiplas configurações por coluna
 - ⚠️ Configurações por coluna só aparecem ao clicar na coluna
+
+**Quando usar:**
+- 📊 Você tem **muitas medidas** (5+) e a aba Settings fica muito cheia
+- 🎯 Quer seguir o **padrão nativo** do ThoughtSpot
+- 🔧 Precisa de **configurações muito específicas** por coluna
+- 👥 Os usuários estão **familiarizados** com o padrão do ThoughtSpot
 
 ---
 
-## 🚀 Deploy
+## 🚀 Deploy e Configuração
 
-### Railway
+### Desenvolvimento Local
+
+```bash
+# Instalar dependências
+npm install
+
+# Servidor de desenvolvimento
+npm run dev
+
+# Build para produção
+npm run build
+
+# Preview do build
+npm run preview
+```
+
+### Deploy no Railway
 
 ```bash
 # Instalar Railway CLI
@@ -794,11 +966,37 @@ npm i -g @railway/cli
 # Login
 railway login
 
-# Deploy
+# Ver status
+railway status
+
+# Ver logs
+railway logs
+
+# Fazer deploy
 railway up
+
+# Abrir dashboard
+railway open
 ```
 
-### Vercel
+**Configuração Vite para Railway:**
+```typescript
+// vite.config.ts
+preview: {
+  allowedHosts: [
+    'ts-custom-charts-production.up.railway.app',
+    '.railway.app',
+    'localhost'
+  ]
+}
+```
+
+```json
+// package.json
+"start": "vite preview --host 0.0.0.0"
+```
+
+### Deploy no Vercel
 
 ```bash
 # Instalar Vercel CLI
@@ -810,10 +1008,32 @@ vercel
 
 ### Configuração CSP no ThoughtSpot
 
+**Via Admin UI:**
 1. Admin > Security > Content Security Policy
 2. Adicionar domínio ao `frame-src`:
    - `*.railway.app` (para Railway)
    - `*.vercel.app` (para Vercel)
+
+**Via TS CLI:**
+```bash
+# Whitelist chart URL
+tscli --adv csp add-override --source 'frame-src' --url <your-chart-url>
+
+# Whitelist chart image URL
+tscli csp add-override --source img-src --url <your-chart-image-url>
+```
+
+### Debug no ThoughtSpot
+
+1. Abrir DevTools (F12)
+2. Filtrar console por `[DEBUG]`
+3. Verificar sequência de logs:
+   - `getDefaultChartConfig` sendo chamado
+   - `getQueriesFromChartConfig` recebendo ChartConfig correto
+   - `renderChart` sendo executado
+   - `RenderComplete` sendo emitido
+4. Verificar estrutura de dados recebidos
+5. Verificar erros de CSP ou comunicação
 
 ---
 
@@ -856,9 +1076,63 @@ vercel
 - [Bar Chart Example](https://github.com/thoughtspot/ts-chart-sdk/tree/main/example/custom-bar-chart)
 
 ### Documentação Relacionada
-- [Aba Configure](./ABA_CONFIGURE.md) - Como acessar e usar a aba Configure
-- [columnsVizPropDefinition](./COLUMNS_VIZ_PROP_DEFINITION.md) - Guia completo sobre configurações por coluna
-- [Solução Forçar Atualização](./SOLUCAO_FORCAR_ATUALIZACAO.md) - Workaround para nova medida
+- [columnsVizPropDefinition](./COLUMNS_VIZ_PROP_DEFINITION.md) - Guia detalhado sobre configurações por coluna (migração, impacto, hipóteses)
+- [Solução Forçar Atualização](./SOLUCAO_FORCAR_ATUALIZACAO.md) - Workaround detalhado para nova medida não aparecer
+
+---
+
+## 🔄 Evolução do Código
+
+### Versão Inicial (Simplificada)
+- 1 dimensão + 1 medida
+- Renderização básica com Muze
+
+### Versão Intermediária
+- Múltiplas medidas
+- Remoção do Muze (conforme solicitado)
+- Renderização SVG nativa
+
+### Versão Atual (Completa)
+- ✅ Múltiplas dimensões e medidas
+- ✅ Eixos Y individualizados
+- ✅ Configurações visuais por medida
+- ✅ Formatação de números customizável
+- ✅ Cores customizáveis por medida
+- ✅ Layout "crosschart" (medidas uma abaixo da outra)
+
+### Principais Mudanças
+
+**1. Remoção do Muze:**
+```typescript
+// ANTES: Usava Muze via CDN
+loadMuze().then(() => { /* render com Muze */ });
+
+// DEPOIS: SVG nativo
+chartElement.innerHTML = `<svg>...</svg>`;
+```
+
+**2. Suporte a Múltiplas Dimensões:**
+```typescript
+// Combinar labels:
+const combinedLabel = dimensions.map(d => label).join(' - ');
+```
+
+**3. Eixos Y Individualizados:**
+```typescript
+const measureRanges = measures.map(measure => ({
+  min: Math.min(...values),
+  max: Math.max(...values)
+}));
+```
+
+**4. Visual Properties:**
+```typescript
+// Configurações por medida:
+visualProps[`measure_${measure.id}`] = {
+  color: '#3b82f6',
+  format: 'decimal'
+};
+```
 
 ---
 
@@ -872,6 +1146,7 @@ vercel
 - ✅ Suporte a múltiplas dimensões e medidas
 - ✅ Eixos Y individualizados
 - ✅ Configurações visuais por medida
+- ✅ Implementação de columnsVizPropDefinition
 - ⚠️ Limitação conhecida: nova medida não aparece imediatamente
 
 ---
