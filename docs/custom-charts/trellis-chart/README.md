@@ -65,10 +65,12 @@ O chart está hospedado no Railway. Para fazer deploy:
 
 ### 📖 Documentação Técnica Oficial (Referência)
 
-- **01-ts-chart-sdk-readme-initialize-chart-context.md**: Documentação oficial do Chart SDK
-- **02-chart-custom-thoughtspot.md**: Documentação ThoughtSpot sobre Custom Charts
-- **03-creating-custom-charts-tse-d3.md**: Tutorial oficial com D3.js
-- **04-how-sdk-works.md**: Arquitetura e fluxo do SDK
+- **DOCUMENTACAO_TECNICA_OFICIAL.md**: Documentação técnica consolidada
+  - Consolida 4 documentos oficiais em um único arquivo
+  - ThoughtSpot Charts SDK (GitHub README)
+  - Custom Charts (ThoughtSpot Documentation)
+  - Creating Custom Charts with TSE and D3
+  - How SDK Works (Arquitetura)
 
 **Nota:** Para começar, leia primeiro o **APRENDIZADOS_COMPLETOS.md**. Os outros documentos são para referência detalhada de tópicos específicos.
 

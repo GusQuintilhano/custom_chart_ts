@@ -610,10 +610,72 @@ O problema **NÃO está relacionado ao uso de `elements`**. É uma limitação f
 
 **Tentativa de Solução Automática:**
 Implementamos uma tentativa de forçar atualização usando o evento `UpdateVisualProps`:
-- Quando detectamos medidas faltando, emitimos `UpdateVisualProps` com um contador incrementado
-- Isso pode fazer o ThoughtSpot detectar uma mudança e re-executar `getDefaultChartConfig`
-- Tentamos novamente a cada 5 tentativas durante o retry (por até 30 segundos)
-- Ver `SOLUCAO_FORCAR_ATUALIZACAO.md` para detalhes
+
+**Estratégia:**
+Usamos o evento `UpdateVisualProps` do ThoughtSpot Chart SDK para tentar **forçar o ThoughtSpot a re-executar `getDefaultChartConfig`** quando detectamos que há medidas faltando.
+
+**Como Funciona:**
+1. **Detecção de Medidas Faltando**: No `renderChart`, verificamos se todas as medidas do `chartModel` estão presentes nos dados.
+
+2. **Tentativa Imediata de Forçar Atualização**:
+   - Quando detectamos medidas faltando, emitimos imediatamente `UpdateVisualProps`
+   - Incrementamos um contador `_refresh_trigger` em `_column_dependency`
+   - Isso pode fazer o ThoughtSpot detectar uma mudança e re-executar o fluxo completo
+
+3. **Retries com Tentativas Periódicas**:
+   - Se as medidas ainda não aparecerem, tentamos novamente a cada 5 tentativas
+   - Continuamos tentando por até 30 segundos (30 tentativas a cada 1 segundo)
+   - Cada tentativa verifica se os dados foram atualizados
+
+4. **Logs Detalhados**: Registramos todas as tentativas para diagnóstico
+
+**Código Implementado:**
+```typescript
+// Quando detectamos medidas faltando:
+const tryForceRefresh = async () => {
+    try {
+        // Sempre obter o chartModel mais recente
+        const currentChartModel = ctx.getChartModel();
+        const currentVisualProps = currentChartModel.visualProps || {};
+        const columnDependency = (currentVisualProps as any)?._column_dependency || {};
+        
+        // Incrementar contador para forçar detecção de mudança
+        const newRefreshTrigger = ((columnDependency as any)?._refresh_trigger || 0) + 1;
+        
+        await ctx.emitEvent(ChartToTSEvent.UpdateVisualProps, {
+            visualProps: {
+                ...currentVisualProps,
+                _column_dependency: {
+                    ...columnDependency,
+                    _refresh_trigger: newRefreshTrigger,
+                    _missing_measures_count: missingMeasures.length,
+                },
+            } as any,
+        });
+    } catch (error) {
+        console.warn('Erro ao tentar forçar atualização:', error);
+    }
+};
+
+// Tentar imediatamente
+await tryForceRefresh();
+
+// E durante os retries, a cada 5 tentativas:
+if (retryCount % 5 === 0) {
+    await tryForceRefresh();
+}
+```
+
+**Limitações:**
+Esta solução **pode não funcionar** se:
+- O ThoughtSpot não reagir ao evento `UpdateVisualProps` para re-executar `getDefaultChartConfig`
+- O cache do `ChartConfig` for muito agressivo e não for invalidado pelo evento
+
+**Resultado Esperado:**
+- **Cenário Ideal:** Nova medida é adicionada → `renderChart` detecta → Emite `UpdateVisualProps` → ThoughtSpot re-executa `getDefaultChartConfig` → Nova medida aparece
+- **Cenário Alternativo:** Se não funcionar, usuário precisa mudar uma configuração manualmente (workaround)
+
+**Status:** ⏳ Implementação completa, mas pode não funcionar devido à limitação do ThoughtSpot
 
 **Análise de Chart Existente (VitaraHCFunnelChart):**
 Analisamos um chart profissional pronto (VitaraHCFunnelChart) para verificar se há alguma técnica especial:
