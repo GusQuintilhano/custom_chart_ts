@@ -33,13 +33,20 @@ O chart está hospedado no Railway. Para fazer deploy:
 
 ## Documentação
 
-Toda a documentação técnica está disponível nesta pasta (`docs/trellis-chart/`):
+Toda a documentação técnica está disponível nesta pasta (`docs/custom-charts/trellis-chart/`):
+
+- **APRENDIZADOS_COMPLETOS.md** ⭐ - **Documento principal consolidado**
+  - Todas as lições fundamentais sobre Chart SDK
+  - Como inicializar o Chart Context
+  - Como processar dados do ThoughtSpot
+  - Como renderizar gráficos
+  - Template completo de código
+  - Checklist para novos charts
 
 - **APRENDIZADOS_E_ACHADOS.md**: Aprendizados e achados durante o desenvolvimento
 - **ABA_CONFIGURE.md**: Guia completo sobre como acessar e usar a aba Configure
 - **COLUMNS_VIZ_PROP_DEFINITION.md**: Guia completo sobre columnsVizPropDefinition (impacto, migração e hipóteses)
 - **SOLUCAO_FORCAR_ATUALIZACAO.md**: Soluções para forçar atualização quando nova medida é adicionada
-- **.railway-deploy-summary.md**: Guia de deploy no Railway
 - Documentação técnica do SDK (arquivos numerados 01-04)
 
 ## Status
