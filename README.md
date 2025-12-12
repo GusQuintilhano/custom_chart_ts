@@ -8,20 +8,26 @@ Este projeto visa testar e documentar todas as capacidades do Muze para visualiz
 
 ## 📚 Documentação Importante
 
-### Aprendizados Gerais
-- **[APRENDIZADOS_GERAIS.md](./docs/APRENDIZADOS_GERAIS.md)** - Lições fundamentais aplicáveis a todos os charts ⭐
+### 📚 Muze Studio
+- **[Aprendizados Completos](./docs/muze/APRENDIZADOS_COMPLETOS.md)** ⭐ - **Documento principal consolidado**
+  - Todas as lições fundamentais sobre Muze
   - Como usar o DataModel do ThoughtSpot corretamente
   - Como acessar dados do DataModel
   - Como criar campos calculados
   - Como aplicar color encoding
+  - Template completo de código
   - Padrões e anti-padrões
-- **[Documentação Completa do Muze](./docs/muze_documentation_complete.md)** - Documentação completa do Muze Studio
 
-### Documentação por Chart
-- **[Chart 01 - Achados](./docs/charts/ACHADOS_E_APRENDIZADOS.md)** - Problemas encontrados e soluções detalhadas
-- **[Chart 01 - Como Usar](./docs/charts/COMO_USAR.md)** - Guia de uso do Chart 01
-- **[Chart 01 - Guia Muze Studio](./docs/charts/GUIA_MUZE_STUDIO.md)** - Guia do Muze Studio
-- **[Chart 06 - Análise de Problemas](./docs/charts/ANALISE_PROBLEMAS.md)** - Análise de problemas do Chart 06
+### 🎨 Custom Charts
+- **[Guia Completo](./docs/custom-charts/GUIA_COMPLETO.md)** ⭐ - **Guia principal consolidado**
+  - Como usar no Muze Studio (editor interativo)
+  - Como fazer upload como Custom Chart tradicional
+  - Processo de empacotamento completo
+  - Troubleshooting
+
+### 📋 Documentação por Chart
+- **[Chart 01 - Achados](./docs/custom-charts/charts/ACHADOS_E_APRENDIZADOS.md)** - Problemas encontrados e soluções detalhadas
+- **[Chart 06 - Análise de Problemas](./docs/custom-charts/charts/ANALISE_PROBLEMAS.md)** - Análise de problemas do Chart 06
 
 ## Índice de Custom Charts
 
@@ -116,11 +122,14 @@ MUZE/
 ├── .gitignore                  # Arquivos ignorados pelo Git
 │
 ├── docs/                       # Documentação do projeto
-│   ├── APRENDIZADOS_GERAIS.md # Aprendizados gerais
-│   ├── muze_documentation_complete.md
-│   ├── charts/                # Documentação dos Custom Charts
-│   ├── trellis-chart/         # Documentação do Trellis Chart
-│   ├── integration-tests/     # Documentação dos testes de integração
+│   ├── muze/                   # 📚 Documentação Muze Studio
+│   │   ├── APRENDIZADOS_COMPLETOS.md ⭐
+│   │   └── muze_documentation_complete.md
+│   ├── custom-charts/          # 🎨 Documentação Custom Charts
+│   │   ├── GUIA_COMPLETO.md ⭐
+│   │   ├── charts/            # Charts tradicionais
+│   │   └── trellis-chart/     # Trellis Chart SDK
+│   ├── integration-tests/     # 🧪 Testes de integração
 │   └── README.md              # Índice da documentação
 │
 ├── trellis-chart/             # Trellis Chart (hospedado no Railway)

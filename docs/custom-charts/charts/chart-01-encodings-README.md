@@ -99,9 +99,9 @@ Adicionar screenshots em: `screenshots/`
 
 ## 📚 Documentação Adicional
 
-- **[GUIA_MUZE_STUDIO.md](./GUIA_MUZE_STUDIO.md)** - Guia passo a passo para usar no Muze Studio
-- **[COMO_USAR.md](./COMO_USAR.md)** - Instruções de uso no ThoughtSpot
+- **[GUIA_COMPLETO.md](../GUIA_COMPLETO.md)** - Guia completo consolidado (Muze Studio + Upload)
 - **[ACHADOS_E_APRENDIZADOS.md](./ACHADOS_E_APRENDIZADOS.md)** - Problemas encontrados e soluções aplicadas ⭐
+- **[Aprendizados Muze](../../muze/APRENDIZADOS_COMPLETOS.md)** - Lições fundamentais sobre Muze
 
 ## 🔑 Principais Aprendizados
 

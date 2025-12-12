@@ -1,8 +1,8 @@
-# Aprendizados Gerais - Projeto Muze
+# Aprendizados Completos - Muze Studio
 
-## 📚 Documentação Compartilhada
+## 📚 Documentação Consolidada
 
-Este documento registra os principais aprendizados obtidos durante o desenvolvimento dos Custom Charts usando Muze no ThoughtSpot. Esses aprendizados aplicam-se a todos os charts do projeto.
+Este documento consolida **todos os aprendizados** obtidos durante o desenvolvimento dos Custom Charts usando Muze no ThoughtSpot. Combina lições gerais aplicáveis a todos os charts com exemplos práticos e soluções específicas.
 
 ---
 
@@ -44,7 +44,7 @@ muze.canvas().data(dataArray); // Errado!
 #### Problema Comum
 Acessar dados usando `dataArray[0][columnName]` retorna `undefined` porque os dados podem estar em formato diferente.
 
-#### Solução
+#### Solução Completa
 ```javascript
 const dataResult = dm.getData();
 const dataArray = dataResult.data || [];
@@ -61,7 +61,8 @@ if (Array.isArray(dataArray[0])) {
   const availableKeys = Object.keys(firstRow);
   const measureKey = availableKeys.find(k => 
     k === measureCol || 
-    k.toLowerCase() === measureCol.toLowerCase()
+    k.toLowerCase() === measureCol.toLowerCase() ||
+    k.toLowerCase().replace(/\s+/g, '_') === measureCol.toLowerCase().replace(/\s+/g, '_')
   );
   const values = dataArray.map(row => parseFloat(row[measureKey]) || 0);
 }
@@ -71,6 +72,7 @@ if (Array.isArray(dataArray[0])) {
 - **Sempre verificar** se os dados são array de arrays ou array de objetos
 - Os nomes das colunas podem ter espaços, variações ou case diferente
 - Usar o schema para encontrar os índices corretos quando for array de arrays
+- Tratar variações de nomes (espaços, underscores, case)
 
 ---
 
@@ -91,17 +93,28 @@ const dmWithCalculated = dm.calculateVariable(
 );
 ```
 
-#### Exemplo Real
+#### Exemplo Real - Color Encoding Condicional
 ```javascript
+const colorCategoryField = '_color_category';
+
 const dmWithColor = dm.calculateVariable(
   {
-    name: '_color_category',
+    name: colorCategoryField,
     type: 'dimension',
   },
-  [measureCol], // Campo usado
+  [measureCol],  // Campo usado para calcular
   (measureValue) => {
     const value = parseFloat(measureValue) || 0;
-    return value > mean ? 'above' : 'below';
+    const distance = value - mean;
+    const percentDistance = mean > 0 ? Math.abs(distance / mean) : 0;
+    
+    if (percentDistance <= CHART_CONFIG.threshold && percentDistance >= 0) {
+      return 'near';   // Próximo da média (±5%)
+    } else if (value > mean) {
+      return 'above';  // Acima da média
+    } else {
+      return 'below';  // Abaixo da média
+    }
   }
 );
 ```
@@ -111,6 +124,7 @@ const dmWithColor = dm.calculateVariable(
 - A ordem dos parâmetros corresponde à ordem dos campos no array
 - Campos de tipo `'dimension'` podem ser usados em color encoding
 - Campos de tipo `'measure'` podem ser usados em cálculos
+- O campo calculado deve ser do tipo `'dimension'` para usar em color encoding
 
 ---
 
@@ -118,7 +132,7 @@ const dmWithColor = dm.calculateVariable(
 
 #### Padrão Correto
 ```javascript
-// Opção 1: Campo de dimensão
+// Opção 1: Campo de dimensão com range
 .color({
   field: 'nome_campo',
   range: ['#cor1', '#cor2', '#cor3']
@@ -137,6 +151,18 @@ const dmWithColor = dm.calculateVariable(
 })
 ```
 
+#### Exemplo Real - Color Encoding Condicional
+```javascript
+.color({
+  field: colorCategoryField,
+  range: [
+    CHART_CONFIG.colors.belowBenchmark,  // 'below'
+    CHART_CONFIG.colors.nearBenchmark,   // 'near'
+    CHART_CONFIG.colors.aboveBenchmark   // 'above'
+  ]
+})
+```
+
 #### ❌ Não Funciona
 ```javascript
 // NÃO fazer:
@@ -145,8 +171,9 @@ const dmWithColor = dm.calculateVariable(
 
 #### Aprendizado
 - Color encoding funciona melhor com **campos de dimensão**
-- O `range` é um array de cores mapeado aos valores únicos do campo
+- O `range` é um array de cores mapeado automaticamente aos valores únicos do campo
 - Para cores condicionais, criar um campo calculado primeiro
+- Os valores devem ser strings categóricas ('above', 'below', 'near')
 
 ---
 
@@ -202,6 +229,113 @@ const measureCol = measureField.name;
 
 ---
 
+### 7. **Cálculo de Agregações**
+
+#### Problema Comum
+Tentamos usar `getFieldData()` e `groupBy()` com AVG, mas não funcionaram porque os dados não estavam acessíveis dessa forma.
+
+#### Solução
+Calcular agregações manualmente dos valores extraídos:
+
+```javascript
+// Extrair valores corretamente
+let measureValues = [];
+if (Array.isArray(dataArray[0])) {
+  const measureIndex = schema.findIndex(f => f.name === measureCol && f.type === 'measure');
+  measureValues = dataArray.map(row => parseFloat(row[measureIndex]) || 0);
+} else {
+  const measureKey = availableKeys.find(k => 
+    k === measureCol || 
+    k.toLowerCase() === measureCol.toLowerCase()
+  );
+  measureValues = dataArray.map(row => parseFloat(row[measureKey]) || 0);
+}
+
+// Calcular média manualmente
+const sum = measureValues.reduce((acc, val) => acc + val, 0);
+const mean = sum / measureValues.length;
+```
+
+#### Aprendizado
+- **Calcular agregações manualmente** quando métodos do DataModel não estão disponíveis
+- Sempre validar se a agregação foi calculada corretamente (não deve ser 0)
+- Usar `parseFloat()` para garantir valores numéricos
+
+---
+
+## 📝 Código Completo de Referência
+
+### Template Base para Custom Charts
+
+```javascript
+// 1. Obter DataModel
+const { muze, getDataFromSearchQuery } = viz;
+const dm = getDataFromSearchQuery();
+
+// 2. Obter dados e schema
+const dataResult = dm.getData();
+const dataArray = dataResult.data || [];
+const schema = dataResult.schema || [];
+
+// 3. Identificar colunas automaticamente
+const dimensionField = schema.find(f => f.type === 'dimension');
+const measureField = schema.find(f => f.type === 'measure');
+
+if (!dimensionField || !measureField) {
+  throw new Error('Dimension ou measure não encontrada');
+}
+
+const dimensionCol = dimensionField.name;
+const measureCol = measureField.name;
+
+// 4. Extrair valores da medida (tratando ambos os formatos)
+let measureValues = [];
+if (Array.isArray(dataArray[0])) {
+  // Array de arrays
+  const measureIndex = schema.findIndex(f => f.name === measureCol && f.type === 'measure');
+  measureValues = dataArray.map(row => parseFloat(row[measureIndex]) || 0);
+} else {
+  // Array de objetos
+  const firstRow = dataArray[0] || {};
+  const availableKeys = Object.keys(firstRow);
+  const measureKey = availableKeys.find(k => 
+    k === measureCol || 
+    k.toLowerCase() === measureCol.toLowerCase() ||
+    k.toLowerCase().replace(/\s+/g, '_') === measureCol.toLowerCase().replace(/\s+/g, '_')
+  );
+  measureValues = dataArray.map(row => parseFloat(row[measureKey]) || 0);
+}
+
+// 5. Calcular agregações necessárias (ex: média)
+const mean = measureValues.reduce((acc, val) => acc + val, 0) / measureValues.length;
+
+// 6. Criar campos calculados (se necessário)
+const dmWithCalculated = dm.calculateVariable(
+  { name: '_color_category', type: 'dimension' },
+  [measureCol],
+  (measureValue) => {
+    const value = parseFloat(measureValue) || 0;
+    // Lógica de cálculo
+    return resultado;
+  }
+);
+
+// 7. Renderizar gráfico
+muze
+  .canvas()
+  .data(dmWithCalculated)
+  .rows([measureCol])
+  .columns([dimensionCol])
+  .color({
+    field: '_color_category',
+    range: ['#ef4444', '#eab308', '#22c55e']
+  })
+  .layers([{ mark: 'bar' }])
+  .mount("#chart");
+```
+
+---
+
 ## 🐛 Debugging Útil
 
 ### Logs Essenciais
@@ -219,6 +353,7 @@ console.log('📊 Média calculada:', mean);
 // Verificar campos calculados
 const result = dmWithCalculated.getData().data;
 console.log('📊 Primeiro registro com campo calculado:', result[0]);
+console.log('📊 Distribuição de valores:', colorCounts);
 ```
 
 ---
@@ -235,30 +370,34 @@ Ao criar um novo chart, verificar:
 - [ ] Color encoding usa campo de dimensão, não função
 - [ ] Layers é array de objetos com propriedade `mark`
 - [ ] Logs de debug estão presentes para troubleshooting
+- [ ] Agregações são validadas (não devem ser 0)
+- [ ] Tratamento de erros está implementado
 
 ---
 
 ## 📚 Referências
 
-- **Chart 01 - Aprendizados Detalhados**: [charts/ACHADOS_E_APRENDIZADOS.md](./charts/ACHADOS_E_APRENDIZADOS.md)
 - **Documentação Oficial Muze**: https://developers.thoughtspot.com/charts/muze/Documentation/
 - **Documentação Completa**: [muze_documentation_complete.md](./muze_documentation_complete.md)
+- **Exemplos Práticos**: [../custom-charts/charts/](../custom-charts/charts/)
 
 ---
 
 ## 🔄 Histórico de Aprendizados
 
-### 2025-01-XX - Chart 01
-- Descoberta sobre acesso aos dados do DataModel
-- Solução para cálculo de média
-- Implementação de campos calculados com `calculateVariable`
-- Color encoding com campos calculados
+### 2025-01-XX - Chart 01 - Conditional Color Encoding
+- ✅ Descoberta sobre acesso aos dados do DataModel
+- ✅ Solução para cálculo de média manual
+- ✅ Implementação de campos calculados com `calculateVariable`
+- ✅ Color encoding com campos calculados
+- ✅ Tratamento de diferentes formatos de dados (array de arrays vs objetos)
+- ✅ Tratamento de variações de nomes de colunas
 
 ---
 
 ## 👥 Contribuições
 
 - Documentado pela equipe iFood Data Team
-- Baseado em desenvolvimento real do Chart 01 - Conditional Color Encoding
-
+- Baseado em desenvolvimento real dos Custom Charts
+- Consolidado de múltiplas fontes para máxima completude
 
