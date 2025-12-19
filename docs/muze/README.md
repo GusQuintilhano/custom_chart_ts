@@ -7,9 +7,15 @@ Esta seção contém toda a documentação relacionada ao **Muze Studio** - a bi
 ```
 muze/
 ├── guias/              # Guias práticos de uso
-├── aprendizados/        # Lições aprendidas e melhores práticas
+│   └── guia-completo.md ⭐
+├── aprendizados/       # Lições aprendidas e melhores práticas
+│   └── aprendizados-completos.md ⭐
 ├── referencia/         # Documentação de referência oficial
+│   └── documentacao-oficial.md
 └── exemplos/           # Exemplos práticos de charts desenvolvidos
+    └── charts/
+        ├── chart-01-encodings/
+        └── chart-06-multi-measures/
 ```
 
 ## 🎯 Como Usar
