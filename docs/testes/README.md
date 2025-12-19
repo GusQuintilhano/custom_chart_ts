@@ -1,14 +1,28 @@
 # Testes de Integração
 
-Esta pasta contém a documentação dos testes de integração com o ThoughtSpot.
+Esta seção contém a documentação dos testes de integração com o ThoughtSpot, aplicáveis tanto para charts Muze quanto SDK.
 
-## Documentação Disponível
+## 📁 Estrutura
+
+```
+testes/
+├── DEPLOY.md                    # Processo de implantação
+├── EMPACOTAMENTO.md            # Processo de empacotamento
+├── A3.3-teste-acesso/          # Validação de acesso
+├── A3.4-persistencia/          # Testes de persistência
+├── A3.5-filtros-globais/       # Validação de filtros globais
+└── A3.6-manutencao/            # Processo de atualização
+```
+
+## 📋 Documentação Disponível
 
 ### A3.1 - Empacotamento
 - **EMPACOTAMENTO.md**: Processo de criação de pacotes .zip para upload no ThoughtSpot
+- ✅ **Status**: Documentado
 
 ### A3.2 - Implantação
 - **DEPLOY.md**: Passo-a-passo de implantação no ambiente ThoughtSpot
+- ✅ **Status**: Documentado
 
 ### A3.3 - Teste de Acesso
 - **A3.3-teste-acesso/**: Validação de acesso para diferentes perfis de usuário
@@ -32,3 +46,7 @@ Esta pasta contém a documentação dos testes de integração com o ThoughtSpot
 - ✅ **A3.2 - Implantação**: Documentado
 - ⏳ **A3.3 a A3.6**: Aguardando implementação
 
+## 🔗 Documentação Relacionada
+
+- **Muze Studio**: [../muze/](../muze/)
+- **Chart SDK**: [../sdk/](../sdk/)

@@ -379,7 +379,7 @@ Ao criar um novo chart, verificar:
 
 - **Documentação Oficial Muze**: https://developers.thoughtspot.com/charts/muze/Documentation/
 - **Documentação Completa**: [muze_documentation_complete.md](./muze_documentation_complete.md)
-- **Exemplos Práticos**: [../custom-charts/charts/](../custom-charts/charts/)
+- **Exemplos Práticos**: [../sdk/charts/](../sdk/charts/)
 
 ---
 

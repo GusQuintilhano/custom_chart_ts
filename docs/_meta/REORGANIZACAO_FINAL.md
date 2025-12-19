@@ -35,7 +35,7 @@ docs/
 │       ├── COLUMNS_VIZ_PROP_DEFINITION.md (Consolidado)
 │       └── [documentação técnica]
 │
-├── integration-tests/           # 🧪 Testes de integração
+├── testes/           # 🧪 Testes de integração
 │   ├── README.md
 │   ├── EMPACOTAMENTO.md
 │   ├── DEPLOY.md
@@ -153,7 +153,7 @@ docs/
 → `custom-charts/charts/` ou `custom-charts/trellis-chart/`
 
 ### Para Processos de Integração
-→ `integration-tests/`
+→ `testes/`
 
 ---
 

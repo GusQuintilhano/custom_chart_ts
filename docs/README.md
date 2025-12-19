@@ -1,114 +1,107 @@
-# Documentação do Projeto Muze
+# Documentação - Projeto de Gráficos Customizados
 
-Esta pasta contém toda a documentação do projeto, organizada em duas categorias principais: **Muze Studio** e **Custom Charts**.
+Esta pasta contém toda a documentação do projeto de gráficos customizados para ThoughtSpot, servindo como **base de conhecimento** para desenvolvimento de novos charts usando **Muze Studio** ou **ThoughtSpot Chart SDK**.
+
+## 🎯 Visão Geral
+
+Este projeto suporta duas abordagens principais para criar gráficos customizados:
+
+1. **Muze Studio** - Charts desenvolvidos diretamente no ThoughtSpot usando a biblioteca Muze
+2. **Chart SDK** - Charts desenvolvidos externamente e hospedados (ex: Railway, Vercel)
 
 ## 📁 Estrutura
 
-### 📚 Muze Studio (`muze/`)
-Documentação sobre a biblioteca Muze Studio e como usá-la:
+```
+docs/
+├── muze/                    # 📚 Documentação Muze Studio
+│   ├── guias/              # Guias práticos de uso
+│   ├── aprendizados/       # Lições aprendidas
+│   ├── referencia/         # Documentação oficial
+│   └── exemplos/           # Charts desenvolvidos
+│
+├── sdk/                     # 🎨 Documentação Chart SDK
+│   ├── guias/              # Guias práticos de implementação
+│   ├── aprendizados/       # Lições aprendidas
+│   ├── referencia/         # Documentação técnica oficial
+│   └── exemplos/           # Charts desenvolvidos
+│
+├── testes/                  # 🧪 Testes de Integração
+│   ├── DEPLOY.md
+│   ├── EMPACOTAMENTO.md
+│   └── A3.X/               # Fases de teste
+│
+└── _meta/                   # 📋 Documentação Meta
+    └── ...                  # Histórico e organização
+```
 
-- **APRENDIZADOS_COMPLETOS.md** ⭐ - **Documento principal consolidado**
-  - Todas as lições fundamentais sobre Muze
-  - Como usar o DataModel do ThoughtSpot
-  - Como acessar dados corretamente
-  - Como criar campos calculados
-  - Como aplicar color encoding
-  - Template completo de código
-  - Checklist para novos charts
+## 🚀 Início Rápido
 
-- **muze_documentation_complete.md** - Referência à documentação oficial
+### Para Criar um Chart com Muze Studio
 
-### 🎨 Custom Charts (`custom-charts/`)
-Documentação sobre os Custom Charts desenvolvidos:
+1. **Aprenda**: [`muze/aprendizados/aprendizados-completos.md`](./muze/aprendizados/aprendizados-completos.md)
+2. **Use**: [`muze/guias/guia-completo.md`](./muze/guias/guia-completo.md)
+3. **Veja exemplos**: [`muze/exemplos/charts/`](./muze/exemplos/charts/)
 
-- **GUIA_COMPLETO.md** ⭐ - **Guia principal consolidado**
-  - Como usar no Muze Studio (editor interativo)
-  - Como fazer upload como Custom Chart tradicional
-  - Processo de empacotamento
-  - Troubleshooting completo
+### Para Criar um Chart com Chart SDK
 
-- **charts/**: Documentação dos Custom Charts tradicionais
-  - Chart 01 - Encodings: Achados e aprendizados
-  - Chart 06 - Multi-Measures: Análise de problemas
+1. **Aprenda**: [`sdk/aprendizados/aprendizados-completos.md`](./sdk/aprendizados/aprendizados-completos.md)
+2. **Veja exemplo**: [`sdk/exemplos/trellis-chart/`](./sdk/exemplos/trellis-chart/)
+3. **Referência**: [`sdk/referencia/documentacao-tecnica-oficial.md`](./sdk/referencia/documentacao-tecnica-oficial.md)
 
-- **trellis-chart/**: Documentação do Trellis Chart SDK
-  - **APRENDIZADOS_COMPLETOS.md** ⭐ - **Documento principal consolidado**
-    - Todas as lições fundamentais sobre Chart SDK
-    - Como inicializar o Chart Context
-    - Como processar dados do ThoughtSpot
-    - Template completo de código
-  - Guia completo da aba Configure
-  - Guia completo sobre columnsVizPropDefinition
-  - Soluções para forçar atualização
+## 📚 Documentos Principais
 
-### 🧪 Testes de Integração (`integration-tests/`)
-Documentação dos testes de integração:
+### ⭐ Muze Studio
 
-- A3.1 - Empacotamento (✅ Documentado)
-- A3.2 - Implantação (✅ Documentado)
-- A3.3 - Teste de Acesso (⏳ A implementar)
-- A3.4 - Persistência (⏳ A implementar)
-- A3.5 - Filtros Globais (⏳ A implementar)
-- A3.6 - Manutenção (⏳ A implementar)
+- **`muze/aprendizados/aprendizados-completos.md`** - Todas as lições sobre Muze
+- **`muze/guias/guia-completo.md`** - Guia prático de uso e implantação
 
-### 📋 Meta (`_meta/`)
-Documentação sobre organização e histórico do projeto:
+### ⭐ Chart SDK
 
-- Histórico de otimizações
-- Organização completa
-- Status do GitLab
+- **`sdk/aprendizados/aprendizados-completos.md`** - Todas as lições sobre Chart SDK
+- **`sdk/referencia/documentacao-tecnica-oficial.md`** - Referência técnica consolidada
 
-## 📚 Como Navegar
+### 🧪 Testes
 
-### Para Aprender Muze Studio
-1. **Comece por**: `muze/APRENDIZADOS_COMPLETOS.md`
-   - Documento consolidado com todas as informações
-   - Exemplos práticos e código completo
+- **`testes/EMPACOTAMENTO.md`** - Processo de empacotamento
+- **`testes/DEPLOY.md`** - Processo de implantação
 
-### Para Criar Custom Charts
-1. **Para charts tradicionais**: `custom-charts/GUIA_COMPLETO.md`
-   - Guia passo a passo completo
-   - Duas formas de usar (Muze Studio e Upload)
+## 🎯 Quando Usar Cada Abordagem
 
-2. **Para Chart SDK (Trellis Chart)**: `custom-charts/trellis-chart/APRENDIZADOS_COMPLETOS.md`
-   - Todas as lições sobre ThoughtSpot Chart SDK
-   - Template completo de código
-   - Guia de implementação
+### Use Muze Studio quando:
+- ✅ Você quer desenvolver rapidamente dentro do ThoughtSpot
+- ✅ Não precisa de hospedagem externa
+- ✅ Quer atualizar facilmente (re-upload do .zip)
+- ✅ Charts mais simples
 
-### Para Processos de Integração
-1. **Consulte**: `integration-tests/`
-   - Documentação de cada fase de teste
-
-## 🎯 Documentos Principais
-
-### ⭐ Documentos Consolidados (Mais Completos)
-
-1. **`muze/APRENDIZADOS_COMPLETOS.md`**
-   - Todas as lições sobre Muze Studio
-   - Template completo de código
-   - Soluções para problemas comuns
-
-2. **`custom-charts/GUIA_COMPLETO.md`**
-   - Guia completo de uso e implantação
-   - Muze Studio + Upload tradicional
-   - Empacotamento e troubleshooting
-
-3. **`custom-charts/trellis-chart/APRENDIZADOS_COMPLETOS.md`**
-   - Todas as lições sobre ThoughtSpot Chart SDK
-   - Como inicializar Chart Context
-   - Como processar dados do ThoughtSpot
-   - Template completo de código
-   - Deploy e configuração
+### Use Chart SDK quando:
+- ✅ Você precisa de mais flexibilidade na renderização
+- ✅ Quer deploy automático e versionamento
+- ✅ Precisa de configurações visuais dinâmicas avançadas
+- ✅ Charts mais complexos
 
 ## 📊 Estatísticas
 
 - **Total de documentos**: 30+ arquivos
-- **Documentos consolidados**: 2 principais
-- **Estrutura**: 3 categorias principais (muze, custom-charts, integration-tests)
+- **Documentos consolidados**: 3 principais
+- **Estrutura**: 2 categorias principais (muze, sdk) + testes
 
 ## 🔗 Links Rápidos
 
-- [Aprendizados Muze](./muze/APRENDIZADOS_COMPLETOS.md)
-- [Guia Custom Charts](./custom-charts/GUIA_COMPLETO.md)
-- [Trellis Chart](./custom-charts/trellis-chart/)
-- [Testes de Integração](./integration-tests/)
+- [Aprendizados Muze](./muze/aprendizados/aprendizados-completos.md)
+- [Guia Muze](./muze/guias/guia-completo.md)
+- [Aprendizados SDK](./sdk/aprendizados/aprendizados-completos.md)
+- [Exemplo SDK](./sdk/exemplos/trellis-chart/)
+- [Testes de Integração](./testes/)
+
+## 📝 Convenções
+
+- **Documentos principais** são marcados com ⭐
+- **Guias** são documentos práticos passo-a-passo
+- **Aprendizados** são lições consolidadas e templates
+- **Referência** são documentações oficiais
+- **Exemplos** são implementações práticas funcionais
+
+---
+
+**Última atualização:** 2025-01-03  
+**Estrutura:** Base para projeto de gráficos customizados

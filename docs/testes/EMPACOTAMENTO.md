@@ -22,7 +22,7 @@ O arquivo `.zip` será gerado em: `dist/ifood-muze-[nome]-v[versao].zip`
 
 ```bash
 # Na raiz do projeto
-cd muze-tests/integration-tests/A3.1-empacotamento
+cd muze-tests/testes/A3.1-empacotamento
 
 # Executar script
 ./build-all.sh

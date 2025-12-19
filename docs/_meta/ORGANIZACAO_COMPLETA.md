@@ -38,7 +38,7 @@ MUZE/
 │   │   ├── .railway-deploy-summary.md
 │   │   └── [documentação técnica do SDK - 4 arquivos]
 │   │
-│   └── integration-tests/         # Documentação dos testes
+│   └── testes/         # Documentação dos testes
 │       ├── README.md
 │       ├── EMPACOTAMENTO.md
 │       ├── DEPLOY.md
@@ -68,7 +68,7 @@ MUZE/
     ├── chart-06-boxplot/
     └── chart-06-multi-measures/
     │
-    ├── integration-tests/         # Scripts de teste
+    ├── testes/         # Scripts de teste
     │   ├── A3.1-empacotamento/
     │   ├── A3.2-implantacao/
     │   ├── A3.3-teste-acesso/

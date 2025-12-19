@@ -12,6 +12,6 @@ Esta pasta contém documentação sobre a organização e histórico do projeto.
 
 Estes documentos são para referência histórica e administrativa. Para documentação técnica, consulte:
 - [Muze Studio](../muze/)
-- [Custom Charts](../custom-charts/)
-- [Testes de Integração](../integration-tests/)
+- [Custom Charts](../sdk/)
+- [Testes de Integração](../testes/)
 

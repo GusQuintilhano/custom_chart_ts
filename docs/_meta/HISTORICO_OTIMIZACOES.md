@@ -18,7 +18,7 @@
    - **Atualizado**: Referências corrigidas para apontar para `docs/trellis-chart/`
    - **Melhorado**: Lista completa de documentos disponíveis
 
-3. **docs/integration-tests/README.md**
+3. **docs/testes/README.md**
    - **Criado**: README consolidado com status de cada teste
    - **Organizado**: Indicação clara de quais testes estão documentados e quais estão pendentes
 
@@ -114,7 +114,7 @@ docs/
 │   ├── .railway-deploy-summary.md
 │   └── [documentação técnica do SDK]
 │
-└── integration-tests/             # Documentação dos testes
+└── testes/             # Documentação dos testes
     ├── README.md
     ├── EMPACOTAMENTO.md
     ├── DEPLOY.md

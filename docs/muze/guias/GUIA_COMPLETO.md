@@ -134,7 +134,7 @@ O arquivo `.zip` será gerado em: `dist/ifood-muze-[nome]-v[versao].zip`
 
 ```bash
 # Na raiz do projeto
-cd muze-tests/integration-tests/A3.1-empacotamento
+cd muze-tests/testes/A3.1-empacotamento
 
 # Executar script
 ./build-all.sh
@@ -258,8 +258,8 @@ const CHART_CONFIG = {
 
 - **Aprendizados Completos**: [../muze/APRENDIZADOS_COMPLETOS.md](../muze/APRENDIZADOS_COMPLETOS.md)
 - **Documentação Oficial Muze**: https://developers.thoughtspot.com/charts/muze/Documentation/
-- **Empacotamento**: [integration-tests/EMPACOTAMENTO.md](./integration-tests/EMPACOTAMENTO.md)
-- **Deploy**: [integration-tests/DEPLOY.md](./integration-tests/DEPLOY.md)
+- **Empacotamento**: [testes/EMPACOTAMENTO.md](./testes/EMPACOTAMENTO.md)
+- **Deploy**: [testes/DEPLOY.md](./testes/DEPLOY.md)
 
 ---
 
