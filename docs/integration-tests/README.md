@@ -11,19 +11,19 @@ Esta pasta contém a documentação dos testes de integração com o ThoughtSpot
 - **DEPLOY.md**: Passo-a-passo de implantação no ambiente ThoughtSpot
 
 ### A3.3 - Teste de Acesso
-- **A3.3-teste-acesso/README.md**: Validação de acesso para diferentes perfis de usuário
+- **A3.3-teste-acesso/**: Validação de acesso para diferentes perfis de usuário
 - ⚠️ **Status**: A implementar
 
 ### A3.4 - Persistência em Liveboard
-- **A3.4-persistencia/README.md**: Testes de persistência e carregamento em Liveboards
+- **A3.4-persistencia/**: Testes de persistência e carregamento em Liveboards
 - ⚠️ **Status**: A implementar
 
 ### A3.5 - Filtros Globais
-- **A3.5-filtros-globais/README.md**: Validação de reatividade a filtros globais
+- **A3.5-filtros-globais/**: Validação de reatividade a filtros globais
 - ⚠️ **Status**: A implementar
 
 ### A3.6 - Manutenção
-- **A3.6-manutencao/README.md**: Processo de atualização e versionamento
+- **A3.6-manutencao/**: Processo de atualização e versionamento
 - ⚠️ **Status**: A implementar
 
 ## Status Geral
