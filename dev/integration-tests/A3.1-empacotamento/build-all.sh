@@ -18,7 +18,7 @@ for chart_info in "${charts[@]}"; do
   
   echo ""
   echo "📦 Building: $name"
-  cd "../../custom-charts/$dir"
+  cd "../../charts/$dir"
   
   if [ -f "build.sh" ]; then
     bash build.sh
@@ -31,7 +31,7 @@ done
 
 echo ""
 echo "✅ Todos os builds concluídos!"
-echo "📁 Pacotes gerados em: custom-charts/*/dist/"
+echo "📁 Pacotes gerados em: dev/charts/*/dist/"
 
 
 

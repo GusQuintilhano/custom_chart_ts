@@ -17,7 +17,7 @@ const charts = [
 ];
 
 function validatePackage(chartDir) {
-  const zipPath = path.join('..', 'custom-charts', chartDir, 'dist', '*.zip');
+  const zipPath = path.join('..', '..', 'charts', chartDir, 'dist', '*.zip');
   const zipFiles = fs.globSync(zipPath);
   
   if (zipFiles.length === 0) {

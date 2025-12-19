@@ -36,29 +36,30 @@ O chart está hospedado no Railway. Para fazer deploy:
 
 ## 📚 Documentação
 
-Toda a documentação técnica está organizada em [`../../`](../../):
+### ⭐ Documentação Local (Específica do Trellis Chart)
 
-### Documentação Principal
-
-- **[Aprendizados Completos](../../aprendizados/aprendizados-completos.md)** ⭐
+- **[APRENDIZADOS_COMPLETOS.md](./APRENDIZADOS_COMPLETOS.md)** ⭐ - Documento principal consolidado
   - Todas as lições fundamentais sobre Chart SDK
   - Como inicializar o Chart Context
   - Como processar dados do ThoughtSpot
   - Template completo de código
   - 9 problemas encontrados e soluções
 
-- **[Aprendizados e Achados](../../aprendizados/aprendizados-e-achados.md)**
+- **[APRENDIZADOS_E_ACHADOS.md](./APRENDIZADOS_E_ACHADOS.md)**
   - Histórico detalhado de desenvolvimento
   - Evolução completa do código
   - Limitações conhecidas
 
-- **[columnsVizPropDefinition](../../aprendizados/columns-viz-prop-definition.md)**
-  - Guia detalhado sobre configurações por coluna
-  - Impacto prático e migração
-
-- **[Documentação Técnica Oficial](../../referencia/documentacao-tecnica-oficial.md)**
+- **[DOCUMENTACAO_TECNICA_OFICIAL.md](./DOCUMENTACAO_TECNICA_OFICIAL.md)**
   - Referência técnica consolidada
   - API Reference
+
+### 📖 Documentação Geral do SDK
+
+- **[Aprendizados Completos](../../aprendizados/aprendizados-completos.md)** - Versão consolidada geral
+- **[Aprendizados e Achados](../../aprendizados/aprendizados-e-achados.md)** - Versão consolidada geral
+- **[columnsVizPropDefinition](../../aprendizados/columns-viz-prop-definition.md)** - Guia sobre configurações por coluna
+- **[Documentação Técnica Oficial](../../referencia/documentacao-tecnica-oficial.md)** - Versão consolidada geral
 
 ## ✅ Status
 
