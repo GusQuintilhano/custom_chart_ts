@@ -16,20 +16,25 @@ sdk/
 
 ### Para Aprender Chart SDK
 
-1. **Comece por**: [`aprendizados/aprendizados-completos.md`](./aprendizados/aprendizados-completos.md) ⭐
+1. **Comece por**: [`guias/guia-completo.md`](./guias/guia-completo.md) ⭐
+   - Guia prático passo-a-passo
+   - Início rápido e configuração
+   - Processo de deploy
+   - Troubleshooting
+
+2. **Para lições detalhadas**: [`aprendizados/aprendizados-completos.md`](./aprendizados/aprendizados-completos.md) ⭐
    - Todas as lições fundamentais sobre Chart SDK
    - Como inicializar o Chart Context
    - Como processar dados do ThoughtSpot
-   - Como renderizar gráficos
    - Template completo de código
-   - Deploy e configuração
+   - Problemas e soluções
 
-2. **Para referência técnica**: [`referencia/documentacao-tecnica-oficial.md`](./referencia/documentacao-tecnica-oficial.md)
+3. **Para referência técnica**: [`referencia/documentacao-tecnica-oficial.md`](./referencia/documentacao-tecnica-oficial.md)
    - Documentação oficial consolidada
    - API Reference
    - Arquitetura do SDK
 
-3. **Para ver exemplos**: [`exemplos/trellis-chart/`](./exemplos/trellis-chart/)
+4. **Para ver exemplos**: [`exemplos/trellis-chart/`](./exemplos/trellis-chart/)
    - Exemplo completo: Trellis Chart
    - Código funcional de referência
 
