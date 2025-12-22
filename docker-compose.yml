@@ -1,0 +1,26 @@
+# Docker Compose para ambiente de desenvolvimento local
+# Útil para testar charts em ambiente isolado
+
+version: '3.8'
+
+services:
+  dev-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: muze-dev-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run serve
+    networks:
+      - muze-network
+
+networks:
+  muze-network:
+    driver: bridge
+

@@ -1,0 +1,49 @@
+# Arquivos e pastas a serem ignorados no build Docker
+
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build e dist
+dist/
+*.zip
+build/
+
+# Git
+.git/
+.gitignore
+
+# Documentação (opcional - pode incluir se necessário)
+# docs/
+
+# Arquivos de desenvolvimento
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Testes e desenvolvimento
+dev/charts/*/dist/
+screenshots/
+*.tmp
+
+# Railway
+.railway/
+
+# Tracking local
+TASK.md
+
