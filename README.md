@@ -143,7 +143,7 @@ MUZE/
 │   └── (charts finais prontos para uso)
 │
 ├── sdk/                        # 🚀 Charts SDK de PRODUÇÃO
-│   └── trellis-chart/         # Trellis Chart SDK (hospedado no Railway)
+│   └── trellis-chart/         # Trellis Chart SDK
 │       ├── src/                # Código TypeScript
 │       ├── dist/               # Build de produção
 │       └── package.json         # Dependências do SDK
