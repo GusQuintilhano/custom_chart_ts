@@ -4,4 +4,4 @@ include:
     ref: ifood-security-4-stable
     file: pipelines/ifood-security/main.yml
 variables:
-  SERVICE_NAME: {{ service_name }}
+  SERVICE_NAME: dataviz-custom-charts
