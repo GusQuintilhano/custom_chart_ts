@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://nexus.dc.ifood.com.br/repository/schemastore/gitlab-pipelines/ifood-security-4-stable.schema.json
+include:
+  - project: ifood/pipelines/gitlab-pipelines
+    ref: ifood-security-4-stable
+    file: pipelines/ifood-security/main.yml
+variables:
+  SERVICE_NAME: {{ service_name }}
