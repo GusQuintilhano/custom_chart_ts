@@ -1,0 +1,44 @@
+
+# Important Notice
+#
+# This file is managed by Tompero’s indexing process.
+# Manual changes to the managed fields won’t take effect and will be overwritted by Tompero.
+#
+# Tompero will also push commits directly to this file when needed
+# without previous Notice.
+# Currently, the fields managed by Tompero are the following:
+# * requiredForDR
+
+apiVersion: ifood/v2
+kind: Repository
+tags: []
+metadata:
+  costCenter: data
+  tribe: data-platform
+  squad: dataviz
+  team:
+    channel: thoughtspot-community
+    alias: viz
+    owner: dataviz
+    email: dataviz@ifood.com.br
+spec:
+  contents:
+    - name: dataviz-custom-charts
+      description: Custom charts for ThoughtSpot
+      type: other
+      subType:
+        - other
+      impactLevel: 3
+      links: []
+      deployment:
+        type: container_registry
+      certifications:
+        - name: irc-dtb
+          version: NOT_APPLICABLE
+        - name: irc-fail
+          version: NOT_APPLICABLE
+        - name: irc-log
+          version: NOT_APPLICABLE
+        - name: irc-watch
+          version: NOT_APPLICABLE
+      ownerLayerSlug: dataviz
