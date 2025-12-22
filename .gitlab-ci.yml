@@ -1,13 +1,16 @@
 # GitLab CI/CD Configuration
-# Pipeline para validação e testes do projeto
+# Pipeline para validação e testes do projeto usando Docker
 
 stages:
   - validate
   - build
+  - docker-build
   - test
 
 variables:
   NODE_VERSION: "18"
+  DOCKER_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+  DOCKER_DRIVER: overlay2
 
 # Validação de estrutura e arquivos
 validate:
@@ -17,6 +20,8 @@ validate:
     - echo "Validando estrutura do projeto..."
     - test -f README.md || (echo "README.md não encontrado" && exit 1)
     - test -f package.json || (echo "package.json não encontrado" && exit 1)
+    - test -f Dockerfile || (echo "Dockerfile não encontrado" && exit 1)
+    - test -f docker-compose.yml || (echo "docker-compose.yml não encontrado" && exit 1)
     - echo "✅ Validação de estrutura concluída"
   only:
     - main
@@ -39,6 +44,24 @@ build-charts:
   only:
     - main
     - tags
+
+# Build da imagem Docker
+docker-build:
+  stage: docker-build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "Construindo imagem Docker..."
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+    - echo "✅ Imagem Docker construída e publicada: $DOCKER_IMAGE"
+  only:
+    - main
+    - tags
+  when: manual
 
 # Testes (quando implementados)
 # test:
