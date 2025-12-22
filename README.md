@@ -77,7 +77,7 @@ Os charts estão em desenvolvimento em [`dev/charts/`](./dev/charts/):
 
 - [Trellis Chart](./sdk/trellis-chart/)
   - Chart SDK desenvolvido com ThoughtSpot Chart SDK e Muze Studio
-  - Hospedado externamente no Railway
+  - Hospedado externamente
   - Localizado em [`sdk/trellis-chart/`](./sdk/trellis-chart/)
 
 ## Requisitos

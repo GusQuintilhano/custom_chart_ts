@@ -21,7 +21,6 @@ repository:
   
   platforms:
     - "ThoughtSpot"
-    - "Railway"
   
   status: "active"
   version: "1.0.0"

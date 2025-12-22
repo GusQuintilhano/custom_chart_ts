@@ -7,7 +7,7 @@ Esta pasta contém toda a documentação do projeto de gráficos customizados pa
 Este projeto suporta duas abordagens principais para criar gráficos customizados:
 
 1. **Muze Studio** - Charts desenvolvidos diretamente no ThoughtSpot usando a biblioteca Muze
-2. **Chart SDK** - Charts desenvolvidos externamente e hospedados (ex: Railway, Vercel)
+2. **Chart SDK** - Charts desenvolvidos externamente e hospedados
 
 ## 📁 Estrutura
 

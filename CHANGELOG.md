@@ -14,7 +14,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Documentação completa em `docs/`
 - Scripts de empacotamento e validação
 - 7 Custom Charts desenvolvidos com Muze Studio
-- Trellis Chart SDK desenvolvido e hospedado no Railway
+- Trellis Chart SDK desenvolvido
 
 ### Mudado
 - Reorganização completa da estrutura de pastas

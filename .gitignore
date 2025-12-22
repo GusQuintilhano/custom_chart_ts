@@ -39,7 +39,6 @@ screenshots/*.tmp
 src.backup*/
 
 # Arquivos de configuração de deploy (secrets devem estar em variáveis de ambiente)
-.railway/
 
 # Arquivos de tracking local
 TASK.md
