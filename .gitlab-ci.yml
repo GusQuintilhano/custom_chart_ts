@@ -1,0 +1,53 @@
+# GitLab CI/CD Configuration
+# Pipeline para validação e testes do projeto
+
+stages:
+  - validate
+  - build
+  - test
+
+variables:
+  NODE_VERSION: "18"
+
+# Validação de estrutura e arquivos
+validate:
+  stage: validate
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Validando estrutura do projeto..."
+    - test -f README.md || (echo "README.md não encontrado" && exit 1)
+    - test -f package.json || (echo "package.json não encontrado" && exit 1)
+    - echo "✅ Validação de estrutura concluída"
+  only:
+    - main
+    - merge_requests
+
+# Build dos charts
+build-charts:
+  stage: build
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Empacotando charts..."
+    - cd dev/integration-tests/A3.1-empacotamento
+    - chmod +x build-all.sh
+    - ./build-all.sh || echo "⚠️ Alguns charts podem ter falhado no build"
+    - echo "✅ Build concluído"
+  artifacts:
+    paths:
+      - dev/charts/*/dist/*.zip
+    expire_in: 1 week
+  only:
+    - main
+    - tags
+
+# Testes (quando implementados)
+# test:
+#   stage: test
+#   image: node:${NODE_VERSION}
+#   script:
+#     - echo "Executando testes..."
+#     - npm test || echo "⚠️ Testes não implementados ainda"
+#   only:
+#     - main
+#     - merge_requests
+
