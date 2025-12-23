@@ -8,7 +8,7 @@ spec:
     - name: custom-charts
       type: library
       subType:
-        - application
+        - tool
       impactLevel: 1
       ownerLayerSlug: data-viz
       deployment:
