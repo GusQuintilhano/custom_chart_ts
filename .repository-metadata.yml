@@ -1,6 +1,8 @@
 # Repository Metadata
 # Metadados do repositório para catalogação e descoberta
 
+apiVersion: ifood/v2.6
+
 repository:
   name: custom-charts
   display_name: "Custom Charts - ThoughtSpot Muze Studio"
@@ -54,4 +56,3 @@ repository:
   ci_cd:
     pipeline: ".gitlab-ci.yml"
     stages: ["validate", "build", "test"]
-
