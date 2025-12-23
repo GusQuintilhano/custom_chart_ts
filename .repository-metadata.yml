@@ -2,8 +2,8 @@
 # Metadados do repositório para catalogação e descoberta
 
 apiVersion: ifood/v2.6
-
-repository:
+kind: Repository
+spec:
   name: custom-charts
   display_name: "Custom Charts - ThoughtSpot Muze Studio"
   description: "Projeto de Custom Charts desenvolvidos com Muze Studio e ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
