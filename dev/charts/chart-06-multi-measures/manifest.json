@@ -1,0 +1,36 @@
+{
+  "name": "ifood-muze-multi-measures-crosstab",
+  "version": "1.0.0",
+  "description": "Crosstab com múltiplas medidas (cada uma com seu próprio eixo Y) e múltiplas dimensões nas colunas, com formatação customizada por medida",
+  "author": "iFood Data Team",
+  "type": "custom-chart",
+  "requiresData": true,
+  "inputColumns": [
+    {
+      "id": "dimension1",
+      "name": "Dimensão 1",
+      "type": "string"
+    },
+    {
+      "id": "dimension2",
+      "name": "Dimensão 2 (opcional)",
+      "type": "string"
+    },
+    {
+      "id": "measure1",
+      "name": "Medida 1",
+      "type": "number"
+    },
+    {
+      "id": "measure2",
+      "name": "Medida 2",
+      "type": "number"
+    }
+  ],
+  "notes": "Requer pelo menos 1 dimensão e 2 medidas. Suporta múltiplas dimensões nas colunas e múltiplas medidas nas linhas."
+}
+
+
+
+
+

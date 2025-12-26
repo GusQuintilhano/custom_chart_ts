@@ -1,0 +1,21 @@
+{
+  "name": "ifood-muze-ranked-bars",
+  "version": "1.0.0",
+  "description": "Gráfico de barras com rank e linha de percentual acumulado usando transformações DataModel",
+  "author": "iFood Data Team",
+  "type": "custom-chart",
+  "requiresData": true,
+  "inputColumns": [
+    {
+      "id": "dimension",
+      "name": "Categoria",
+      "type": "string"
+    },
+    {
+      "id": "measure",
+      "name": "Valor",
+      "type": "number"
+    }
+  ]
+}
+

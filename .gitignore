@@ -1,0 +1,48 @@
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Pacotes gerados
+dist/
+*.zip
+
+# Logs
+*.log
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Screenshots temporários
+screenshots/temp/
+screenshots/*.tmp
+
+# Arquivos de ambiente
+.env
+.env.local
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build temporário
+*.temp
+.cache/
+
+# Arquivos de backup
+*.backup-*
+*backup*/
+src.backup*/
+
+# Arquivos de configuração de deploy (secrets devem estar em variáveis de ambiente)
+
+# Arquivos de tracking local
+TASK.md
+
+
+
+

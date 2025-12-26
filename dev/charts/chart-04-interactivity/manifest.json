@@ -1,0 +1,26 @@
+{
+  "name": "ifood-muze-interactive-dual",
+  "version": "1.0.0",
+  "description": "Dois gráficos interconectados com filtros dinâmicos (barras e pizza) usando ActionModel do Muze",
+  "author": "iFood Data Team",
+  "type": "custom-chart",
+  "requiresData": true,
+  "inputColumns": [
+    {
+      "id": "dimension1",
+      "name": "Dimensão 1 (Barras)",
+      "type": "string"
+    },
+    {
+      "id": "dimension2",
+      "name": "Dimensão 2 (Pizza)",
+      "type": "string"
+    },
+    {
+      "id": "measure",
+      "name": "Medida",
+      "type": "number"
+    }
+  ]
+}
+

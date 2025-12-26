@@ -1,8 +1,7 @@
-
 # Important Notice
 #
-# This file is managed by Tompero’s indexing process.
-# Manual changes to the managed fields won’t take effect and will be overwritted by Tompero.
+# This file is managed by Tompero's indexing process.
+# Manual changes to the managed fields won't take effect and will be overwritted by Tompero.
 #
 # Tompero will also push commits directly to this file when needed
 # without previous Notice.
@@ -24,12 +23,18 @@ metadata:
 spec:
   contents:
     - name: dataviz-custom-charts
-      description: Custom charts for ThoughtSpot
+      description: "Projeto de Custom Charts desenvolvidos com Muze Studio e ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
       type: other
       subType:
         - other
       impactLevel: 3
-      links: []
+      links:
+        - type: docs
+          title: "Documentação"
+          href: "https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts/-/tree/main/docs"
+        - type: other
+          title: "Repositório"
+          href: "https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts"
       deployment:
         type: container_registry
       certifications:
