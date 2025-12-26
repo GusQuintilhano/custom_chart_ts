@@ -1,14 +1,13 @@
-# GitLab CI/CD Configuration
-# Pipeline para validação e testes do projeto usando Docker
-
-stages:
-  - validate
-  - build
-  - test
+# yaml-language-server: $schema=https://nexus.dc.ifood.com.br/repository/schemastore/gitlab-pipelines/ifood-security-4-stable.schema.json
+include:
+  - project: ifood/pipelines/gitlab-pipelines
+    ref: ifood-security-4-stable
+    file: pipelines/ifood-security/main.yml
 
 variables:
   NODE_VERSION: "18"
   DOCKER_DRIVER: overlay2
+  SERVICE_NAME: dataviz-custom-charts
 
 # Validação de estrutura e arquivos
 validate:
@@ -43,24 +42,13 @@ build-charts:
     - main
     - tags
 
-# Build da imagem Docker
-# TODO: Implementar usando pipeline oficial do iFood
-# docker-build:
-#   stage: docker-build
-#   trigger:
-#     include:
-#       - project: ifood/pipelines/gitlab-pipelines
-#         ref: ifood-docker-1-stable
-#         file: pipelines/ifood-docker/main.yml
-
 # Testes (quando implementados)
 # test:
 #   stage: test
 #   image: node:${NODE_VERSION}
 #   script:
 #     - echo "Executando testes..."
-#     - npm test || echo "⚠️ Testes não implementados ainda"
+#     - npm test || echo "Testes não implementados ainda"
 #   only:
 #     - main
 #     - merge_requests
-

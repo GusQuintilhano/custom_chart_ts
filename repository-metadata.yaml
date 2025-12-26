@@ -22,7 +22,7 @@ metadata:
     email: dataviz@ifood.com.br
 spec:
   contents:
-    - name: custom-charts
+    - name: dataviz-custom-charts
       description: "Projeto de Custom Charts desenvolvidos com Muze Studio e ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
       type: other
       subType:
@@ -36,7 +36,7 @@ spec:
           title: "Repositório"
           href: "https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts"
       deployment:
-        type: static
+        type: container_registry
       certifications:
         - name: irc-dtb
           version: NOT_APPLICABLE
