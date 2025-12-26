@@ -21,7 +21,7 @@ validate:
     - test -f package.json || (echo "package.json não encontrado" && exit 1)
     - test -f Dockerfile || (echo "Dockerfile não encontrado" && exit 1)
     - test -f docker-compose.yml || (echo "docker-compose.yml não encontrado" && exit 1)
-    - echo "✅ Validação de estrutura concluída"
+    - echo "Validacao de estrutura concluida"
   only:
     - main
     - merge_requests
@@ -34,8 +34,8 @@ build-charts:
     - echo "Empacotando charts..."
     - cd dev/integration-tests/A3.1-empacotamento
     - chmod +x build-all.sh
-    - ./build-all.sh || echo "⚠️ Alguns charts podem ter falhado no build"
-    - echo "✅ Build concluído"
+    - ./build-all.sh || echo "Alguns charts podem ter falhado no build"
+    - echo "Build concluido"
   artifacts:
     paths:
       - dev/charts/*/dist/*.zip
@@ -55,9 +55,9 @@ docker-build:
   script:
     - echo "Construindo imagem Docker..."
     - DOCKER_IMAGE="${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
-    - docker build -t "${DOCKER_IMAGE}" .
-    - docker push "${DOCKER_IMAGE}"
-    - echo "✅ Imagem Docker construída e publicada: ${DOCKER_IMAGE}"
+    - docker build -t "$DOCKER_IMAGE" .
+    - docker push "$DOCKER_IMAGE"
+    - echo "Imagem Docker construida e publicada: $DOCKER_IMAGE"
   only:
     - main
     - tags
