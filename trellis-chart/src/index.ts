@@ -900,9 +900,22 @@ const renderChart = async (ctx: CustomChartContext) => {
         const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
         
         // Posição do eixo X secundário (na parte superior) - formato particionado
+        const secondaryAxisLineY = topMargin - 20; // Linha do eixo X secundário
         const partitionTopY = topMargin - secondaryAxisHeight; // Linha superior da partição
         const partitionBottomY = topMargin - secondaryAxisHeight + 15; // Linha inferior da partição
         const labelY = topMargin - secondaryAxisHeight - 8; // Labels acima das partições
+        
+        // Linha completa do eixo X secundário (como o primeiro eixo X)
+        secondaryXAxisHtml += `
+            <line 
+                x1="${leftMargin}" 
+                y1="${secondaryAxisLineY}" 
+                x2="${leftMargin + plotAreaWidth}" 
+                y2="${secondaryAxisLineY}" 
+                stroke="#374151" 
+                stroke-width="1.5"
+            />
+        `;
         
         // Renderizar cada partição (grupo) no segundo eixo X
         groupEntries.forEach((group, groupIdx) => {
@@ -1011,16 +1024,16 @@ const renderChart = async (ctx: CustomChartContext) => {
       let containerOverflow: string;
       if (fitWidth && fitHeight) {
           // Ambos ativados: sem scroll
-          containerOverflow = 'hidden';
+          containerOverflow = 'overflow: hidden;';
       } else if (fitWidth) {
           // Apenas largura: scroll vertical permitido, horizontal bloqueado
-          containerOverflow = 'auto hidden';
+          containerOverflow = 'overflow-x: hidden; overflow-y: auto;';
       } else if (fitHeight) {
           // Apenas altura: scroll horizontal permitido, vertical bloqueado
-          containerOverflow = 'hidden auto';
+          containerOverflow = 'overflow-x: auto; overflow-y: hidden;';
       } else {
           // Nenhum ativado: scroll em ambas direções quando necessário
-          containerOverflow = 'auto';
+          containerOverflow = 'overflow: auto;';
       }
       
       // Quando não está em 100% da largura, garantir que o gráfico possa ser rolado
@@ -1029,7 +1042,7 @@ const renderChart = async (ctx: CustomChartContext) => {
       const wrapperStyle = !fitWidth
           ? `width: ${chartWidth}px; height: ${fitHeight ? '100%' : `${chartHeight}px`}; flex-shrink: 0;` 
           : 'width: 100%; height: 100%;';
-      const containerStyle = `padding: 0; margin: 0; width: 100%; height: 100%; overflow: ${containerOverflow}; display: flex; align-items: flex-start; justify-content: flex-start;`;
+      const containerStyle = `padding: 0; margin: 0; width: 100%; height: 100%; ${containerOverflow} display: flex; align-items: flex-start; justify-content: flex-start;`;
       
       const svgStyle = 'overflow: visible;';
       
@@ -1356,9 +1369,22 @@ const renderChart = async (ctx: CustomChartContext) => {
                           const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
                           
                           // Posição do eixo X secundário (na parte superior) - formato particionado
+                          const secondaryAxisLineY = topMargin - 20; // Linha do eixo X secundário
                           const partitionTopY = topMargin - secondaryAxisHeight; // Linha superior da partição
                           const partitionBottomY = topMargin - secondaryAxisHeight + 15; // Linha inferior da partição
                           const labelY = topMargin - secondaryAxisHeight - 8; // Labels acima das partições
+                          
+                          // Linha completa do eixo X secundário (como o primeiro eixo X)
+                          newSecondaryXAxisHtml += `
+                              <line 
+                                  x1="${leftMargin}" 
+                                  y1="${secondaryAxisLineY}" 
+                                  x2="${leftMargin + newPlotAreaWidth}" 
+                                  y2="${secondaryAxisLineY}" 
+                                  stroke="#374151" 
+                                  stroke-width="1.5"
+                              />
+                          `;
                           
                           // Renderizar cada partição (grupo) no segundo eixo X
                           groupEntries.forEach((group, groupIdx) => {
