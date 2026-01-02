@@ -126,6 +126,7 @@ const renderChart = async (ctx: CustomChartContext) => {
     // Agora a ordem já está correta (definida no Configure)
     const primaryDimension = dimensions[0];
     const secondaryDimensions = dimensions.slice(1);
+    const hasSecondaryDimension = secondaryDimensions.length >= 1;
     
     logger.debug('Dimensões (ordenadas pela ordem do Configure):', {
         primary: primaryDimension?.name,
@@ -310,13 +311,33 @@ const renderChart = async (ctx: CustomChartContext) => {
     // Processar dados usando função tipada
     logger.debug('renderChart - Processando', dataArr.dataValue.length, 'linhas...');
     
-    const chartData = processChartData(
+    let chartData = processChartData(
         dataArr,
         columnIndexMap,
         primaryDimension,
         secondaryDimensions,
         measureCols
     );
+    
+    // Ordenar dados para garantir agrupamento correto:
+    // Primeiro pela segunda dimensão (horário da refeição - Almoço/Jantar)
+    // Depois pela primeira dimensão (dia da semana - Segunda/Terça/etc)
+    // Isso garante que os dados venham agrupados: Almoço-Segunda, Almoço-Terça, ... Jantar-Segunda, Jantar-Terça...
+    if (hasSecondaryDimension && secondaryDimensions.length > 0) {
+        chartData = [...chartData].sort((a, b) => {
+            // Comparar segunda dimensão primeiro (horário da refeição)
+            const secondaryA = a.secondaryLabels[0] || '';
+            const secondaryB = b.secondaryLabels[0] || '';
+            const secondaryCompare = secondaryA.localeCompare(secondaryB);
+            
+            if (secondaryCompare !== 0) {
+                return secondaryCompare;
+            }
+            
+            // Se segunda dimensão é igual, comparar primeira dimensão (dia da semana)
+            return a.primaryLabel.localeCompare(b.primaryLabel);
+        });
+    }
     
     logger.debug('renderChart - chartData final:', chartData);
     logger.debug('renderChart - chartData.length:', chartData.length);
@@ -331,9 +352,7 @@ const renderChart = async (ctx: CustomChartContext) => {
         return Promise.resolve();
     }
 
-    // Não agrupar - cada combinação de dimensões é um ponto único no eixo X
-    // Cada item já representa uma combinação única de todas as dimensões
-    const hasMultipleDimensions = secondaryDimensions.length > 0;
+    // hasSecondaryDimension já foi definido anteriormente, reutilizar
     
     logger.debug('🎨 [DEBUG] Total de pontos no eixo X:', chartData.length);
     logger.debug('🎨 [DEBUG] Primeiro ponto:', chartData[0]);
@@ -409,8 +428,7 @@ const renderChart = async (ctx: CustomChartContext) => {
     
     // Usar o espaço configurável para as labels das medidas
     const leftMargin = measureLabelSpace;
-    // Ajustar margens: se houver segunda dimensão, ela aparecerá como segundo eixo X acima do gráfico
-    const hasSecondaryDimension = secondaryDimensions.length >= 1;
+    // hasSecondaryDimension já foi definido anteriormente
     const secondaryAxisHeight = hasSecondaryDimension ? 40 : 0; // Altura reservada para o segundo eixo X
     const topMargin = hasSecondaryDimension ? 50 : 20; // Espaço para segundo eixo X acima + margem
     const bottomMargin = 60; // Apenas primeira dimensão embaixo
@@ -906,9 +924,12 @@ const renderChart = async (ctx: CustomChartContext) => {
         // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
         const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
         groupEntries.forEach((group) => {
-            // Calcular posições baseadas nas barras do grupo
-            const startX = leftMargin + group.startIdx * (barWidth + barSpacing) + barWidth / 2;
-            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth / 2;
+            // Calcular posições baseadas nas bordas do grupo (não centro das barras)
+            // startX = borda esquerda da primeira barra do grupo
+            const startX = leftMargin + group.startIdx * (barWidth + barSpacing);
+            // endX = borda direita da última barra do grupo
+            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth;
+            // centerX = centro do grupo (entre as bordas)
             const centerX = (startX + endX) / 2;
             
             // Label centralizada no grupo (estilo cabeçalho de coluna)
@@ -1311,9 +1332,12 @@ const renderChart = async (ctx: CustomChartContext) => {
                           // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
                           const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
                           newSecondaryXAxisLabelsHtml = groupEntries.map((group) => {
-                              // Calcular posições baseadas nas barras do grupo
-                              const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing) + newBarWidth / 2;
-                              const endX = leftMargin + group.endIdx * (newBarWidth + newBarSpacing) + newBarWidth / 2;
+                              // Calcular posições baseadas nas bordas do grupo (não centro das barras)
+                              // startX = borda esquerda da primeira barra do grupo
+                              const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing);
+                              // endX = borda direita da última barra do grupo
+                              const endX = leftMargin + group.endIdx * (newBarWidth + newBarSpacing) + newBarWidth;
+                              // centerX = centro do grupo (entre as bordas)
                               const centerX = (startX + endX) / 2;
                               
                               return `
