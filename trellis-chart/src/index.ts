@@ -897,8 +897,8 @@ const renderChart = async (ctx: CustomChartContext) => {
         
         // Posição do eixo X secundário (na parte superior) - labels agrupados como cabeçalhos
         // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
-        const firstMeasureRowTop = topMargin;
-        const labelY = firstMeasureRowTop - 20; // Labels acima da primeira linha de medida
+        // Usar uma posição fixa acima da primeira linha de medida para garantir alinhamento
+        const labelY = 15; // Posição fixa no topo do SVG (dentro do topMargin)
         
         // Não renderizar linha de eixo superior (apenas labels agrupados)
         secondaryXAxisHtml = '';
@@ -906,8 +906,9 @@ const renderChart = async (ctx: CustomChartContext) => {
         // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
         const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
         groupEntries.forEach((group) => {
-            const startX = leftMargin + group.startIdx * (barWidth + barSpacing);
-            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth;
+            // Calcular posições baseadas nas barras do grupo
+            const startX = leftMargin + group.startIdx * (barWidth + barSpacing) + barWidth / 2;
+            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth / 2;
             const centerX = (startX + endX) / 2;
             
             // Label centralizada no grupo (estilo cabeçalho de coluna)
@@ -1301,8 +1302,8 @@ const renderChart = async (ctx: CustomChartContext) => {
                           
                           // Posição do eixo X secundário (na parte superior) - labels agrupados como cabeçalhos
                           // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
-                          const firstMeasureRowTop = topMargin;
-                          const labelY = firstMeasureRowTop - 20; // Labels acima da primeira linha de medida
+                          // Posição fixa no topo do SVG (dentro do topMargin)
+                          const secondaryLabelY = 15;
                           
                           // Não renderizar linha de eixo superior (apenas labels agrupados)
                           newSecondaryXAxisHtml = '';
@@ -1310,14 +1311,15 @@ const renderChart = async (ctx: CustomChartContext) => {
                           // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
                           const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
                           newSecondaryXAxisLabelsHtml = groupEntries.map((group) => {
-                              const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing);
-                              const endX = leftMargin + group.endIdx * (newBarWidth + newBarSpacing) + newBarWidth;
+                              // Calcular posições baseadas nas barras do grupo
+                              const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing) + newBarWidth / 2;
+                              const endX = leftMargin + group.endIdx * (newBarWidth + newBarSpacing) + newBarWidth / 2;
                               const centerX = (startX + endX) / 2;
                               
                               return `
                                   <text 
                                       x="${centerX}" 
-                                      y="${labelY}" 
+                                      y="${secondaryLabelY}" 
                                       text-anchor="middle"
                                       font-size="${labelFontSize}"
                                       fill="#374151"
