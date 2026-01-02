@@ -379,6 +379,13 @@ const renderChart = async (ctx: CustomChartContext) => {
         showGridLines: chartVisual.hasOwnProperty('showGridLines')
             ? chartVisual.showGridLines !== false
             : (chartOptionsConsolidated.hasOwnProperty('showGridLines') ? chartOptionsConsolidated.showGridLines !== false : true),
+        dividerLinesBetweenMeasures: chartVisual.hasOwnProperty('dividerLinesBetweenMeasures')
+            ? chartVisual.dividerLinesBetweenMeasures !== false
+            : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenMeasures') ? chartOptionsConsolidated.dividerLinesBetweenMeasures !== false : true),
+        dividerLinesBetweenGroups: chartVisual.hasOwnProperty('dividerLinesBetweenGroups')
+            ? chartVisual.dividerLinesBetweenGroups !== false
+            : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenGroups') ? chartOptionsConsolidated.dividerLinesBetweenGroups !== false : true),
+        dividerLinesColor: chartVisual.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db',
         measureNameRotation: chartVisual.measureNameRotation || chartOptionsConsolidated.measureNameRotation || '0',
         forceLabels: chartVisual.hasOwnProperty('forceLabels')
             ? chartVisual.forceLabels
@@ -411,7 +418,10 @@ const renderChart = async (ctx: CustomChartContext) => {
     const measureNameRotation = Number(chartOptions?.measureNameRotation || '-90'); // Default: -90 graus (vertical)
     const fitWidth = chartOptions?.fitWidth || false; // Default: false
     const fitHeight = chartOptions?.fitHeight || false; // Default: false
-    const showGridLines = chartOptions?.showGridLines !== false; // Default: true
+    const showGridLines = chartOptions?.showGridLines !== false; // Default: true (controla linhas divisórias)
+    const dividerLinesBetweenMeasures = chartOptions?.dividerLinesBetweenMeasures !== false; // Default: true
+    const dividerLinesBetweenGroups = chartOptions?.dividerLinesBetweenGroups !== false; // Default: true
+    const dividerLinesColor = chartOptions?.dividerLinesColor || '#d1d5db'; // Default: cinza claro
     // Espaço das labels das medidas configurável pelo usuário (default baseado no showYAxis)
     const measureLabelSpace = chartOptions?.measureLabelSpace ?? (showYAxis ? 120 : 60);
     // Altura da linha configurável (default: 50px)
@@ -797,48 +807,6 @@ const renderChart = async (ctx: CustomChartContext) => {
     const yAxesHtml = measureRanges.map((range, measureIdx) => {
         const measureRowTop = topMargin + measureIdx * (measureRowHeight + spacingBetweenMeasures);
         const axisX = leftMargin - 10;
-        const numGridLines = 6;
-        
-        // Grid lines apenas para esta linha de medida (se mostrar grades estiver ativo)
-        // Usar min/max específicos desta medida
-        const gridLinesStartX = showYAxis ? axisX : leftMargin;
-        const gridLines = showGridLines ? Array.from({ length: numGridLines }, (_, i) => {
-            const ratio = i / (numGridLines - 1);
-            // Posição Y na linha desta medida específica
-            const y = measureRowTop + (1 - ratio) * measureRowHeight;
-            // Valor do eixo Y específico desta medida (usando min/max desta medida)
-            const value = range.min + (range.max - range.min) * (1 - ratio);
-            
-            // Formatar valor baseado no tamanho desta medida (eixo Y sempre decimal)
-            const formattedValue = range.max < 0.01 
-                ? value.toExponential(1) 
-                : range.max < 1 
-                    ? value.toFixed(3) 
-                    : value.toFixed(1);
-            
-            return `
-                <line 
-                    x1="${gridLinesStartX}" 
-                    y1="${y}" 
-                    x2="${leftMargin + plotAreaWidth}" 
-                    y2="${y}" 
-                    stroke="#e5e7eb" 
-                    stroke-width="1"
-                    stroke-dasharray="2,2"
-                    opacity="0.5"
-                />
-                ${showYAxis ? `
-                <text 
-                    x="${axisX - 5}" 
-                    y="${y + 4}" 
-                    text-anchor="end"
-                    font-size="9"
-                    fill="#6b7280"
-                    font-weight="400"
-                >${formattedValue}</text>
-                ` : ''}
-            `;
-        }).join('') : '';
 
         // Linha do eixo Y para esta medida
         const yAxisLine = `
@@ -868,13 +836,32 @@ const renderChart = async (ctx: CustomChartContext) => {
             >${range.measure.name}</text>
         `;
 
-        // Se o eixo Y estiver oculto, mostrar apenas o título da medida e as grades (se configurado)
+        // Se o eixo Y estiver oculto, mostrar apenas o título da medida
         if (!showYAxis) {
-            return gridLines + measureTitle;
+            return measureTitle;
         }
 
-        return gridLines + yAxisLine + measureTitle;
+        return yAxisLine + measureTitle;
     }).join('');
+
+    // Linhas divisórias horizontais entre medidas (se habilitado)
+    let dividerLinesBetweenMeasuresHtml = '';
+    if (showGridLines && dividerLinesBetweenMeasures && measureCols.length > 1) {
+        for (let measureIdx = 0; measureIdx < measureCols.length - 1; measureIdx++) {
+            const measureRowTop = topMargin + measureIdx * (measureRowHeight + spacingBetweenMeasures);
+            const dividerY = measureRowTop + measureRowHeight + spacingBetweenMeasures / 2;
+            dividerLinesBetweenMeasuresHtml += `
+                <line 
+                    x1="${leftMargin}" 
+                    y1="${dividerY}" 
+                    x2="${leftMargin + plotAreaWidth}" 
+                    y2="${dividerY}" 
+                    stroke="${dividerLinesColor}" 
+                    stroke-width="1"
+                />
+            `;
+        }
+    }
 
     // Segundo eixo X (eixo X secundário) - segunda dimensão na parte superior
     // Agrupa categorias secundárias (como no Trellis Chart) - uma label por grupo
@@ -948,8 +935,8 @@ const renderChart = async (ctx: CustomChartContext) => {
                 >${group.label}</text>
             `;
             
-            // Adicionar linha divisória após cada grupo (exceto o último)
-            if (groupIdx < groupEntries.length - 1) {
+            // Adicionar linha divisória após cada grupo (exceto o último, se habilitado)
+            if (groupIdx < groupEntries.length - 1 && showGridLines && dividerLinesBetweenGroups) {
                 const dividerX = endX + barSpacing / 2; // Posição entre o último item deste grupo e o primeiro do próximo
                 secondaryXAxisHtml += `
                     <line 
@@ -957,7 +944,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                         y1="${dividerLineTop}" 
                         x2="${dividerX}" 
                         y2="${dividerLineBottom}" 
-                        stroke="#d1d5db" 
+                        stroke="${dividerLinesColor}" 
                         stroke-width="1"
                     />
                 `;
@@ -1067,8 +1054,9 @@ const renderChart = async (ctx: CustomChartContext) => {
                     ${secondaryXAxisHtml}
                     ${secondaryXAxisLabelsHtml}
                     ${yAxesHtml}
-                    ${xAxis}
+                    ${dividerLinesBetweenMeasuresHtml}
                     ${allChartElementsHtml}
+                    ${xAxis}
                     ${xAxisLabels}
                 </svg>
             </div>
@@ -1147,47 +1135,13 @@ const renderChart = async (ctx: CustomChartContext) => {
                       const newYAxesHtml = measureRanges.map((range, measureIdx) => {
                           const measureRowTop = topMargin + measureIdx * (newMeasureRowHeight + spacingBetweenMeasures);
                           const axisX = leftMargin - 10;
-                          const numGridLines = 6;
-                          
-                          const gridLines = Array.from({ length: numGridLines }, (_, i) => {
-                              const ratio = i / (numGridLines - 1);
-                              const y = measureRowTop + (1 - ratio) * measureRowHeight;
-                              const value = range.min + (range.max - range.min) * (1 - ratio);
-                              
-                              const formattedValue = range.max < 0.01 
-                                  ? value.toExponential(1) 
-                                  : range.max < 1 
-                                      ? value.toFixed(3) 
-                                      : value.toFixed(1);
-                              
-                              return `
-                                  <line 
-                                      x1="${axisX}" 
-                                      y1="${y}" 
-                                      x2="${leftMargin + newPlotAreaWidth}" 
-                                      y2="${y}" 
-                                      stroke="#e5e7eb" 
-                                      stroke-width="1"
-                                      stroke-dasharray="2,2"
-                                      opacity="0.5"
-                                  />
-                                  <text 
-                                      x="${axisX - 5}" 
-                                      y="${y + 4}" 
-                                      text-anchor="end"
-                                      font-size="9"
-                                      fill="#6b7280"
-                                      font-weight="400"
-                                  >${formattedValue}</text>
-                              `;
-                          }).join('');
-                          
+
                           const yAxisLine = `
                               <line 
                                   x1="${axisX}" 
                                   y1="${measureRowTop}" 
                                   x2="${axisX}" 
-                                  y2="${measureRowTop + measureRowHeight}" 
+                                  y2="${measureRowTop + newMeasureRowHeight}" 
                                   stroke="#374151" 
                                   stroke-width="1.5"
                               />
@@ -1195,13 +1149,13 @@ const renderChart = async (ctx: CustomChartContext) => {
                           
                           // Centralizar o título no espaço configurável para as labels
                           const titleX = measureLabelSpace / 2;
-                          const titleY = measureRowTop + measureRowHeight / 2;
+                          const titleY = measureRowTop + newMeasureRowHeight / 2;
                           const measureTitle = `
                               <text 
                                   x="${titleX}" 
                                   y="${titleY}" 
                                   text-anchor="middle"
-                                  font-size="10"
+                                  font-size="${measureTitleFontSize}"
                                   fill="#374151"
                                   font-weight="500"
                                   transform="rotate(${measureNameRotation} ${titleX} ${titleY})"
@@ -1212,8 +1166,27 @@ const renderChart = async (ctx: CustomChartContext) => {
                               return measureTitle;
                           }
                           
-                          return gridLines + yAxisLine + measureTitle;
+                          return yAxisLine + measureTitle;
                       }).join('');
+
+                      // Linhas divisórias horizontais entre medidas (se habilitado)
+                      let newDividerLinesBetweenMeasuresHtml = '';
+                      if (showGridLines && dividerLinesBetweenMeasures && measureCols.length > 1) {
+                          for (let measureIdx = 0; measureIdx < measureCols.length - 1; measureIdx++) {
+                              const measureRowTop = topMargin + measureIdx * (newMeasureRowHeight + spacingBetweenMeasures);
+                              const dividerY = measureRowTop + newMeasureRowHeight + spacingBetweenMeasures / 2;
+                              newDividerLinesBetweenMeasuresHtml += `
+                                  <line 
+                                      x1="${leftMargin}" 
+                                      y1="${dividerY}" 
+                                      x2="${leftMargin + newPlotAreaWidth}" 
+                                      y2="${dividerY}" 
+                                      stroke="${dividerLinesColor}" 
+                                      stroke-width="1"
+                                  />
+                              `;
+                          }
+                      }
                       
                       // Recalcular barras/linhas com novo espaçamento e altura
                       const newAllChartElementsHtml = measureCols.map((measure, measureIdx) => {
@@ -1461,7 +1434,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                       const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
                       if (svgElement) {
                           svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
-                          svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + newXAxis + newAllChartElementsHtml + newXAxisLabels;
+                          svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + newDividerLinesBetweenMeasuresHtml + newAllChartElementsHtml + newXAxis + newXAxisLabels;
                       }
                   }
               };
@@ -1631,8 +1604,26 @@ const init = async () => {
                     {
                         type: 'toggle',
                         key: 'showGridLines',
-                        label: 'Mostrar Grades',
+                        label: 'Mostrar Linhas Divisórias',
                         defaultValue: savedChartOptions?.showGridLines !== false, // Default: true
+                    },
+                    {
+                        type: 'toggle',
+                        key: 'dividerLinesBetweenMeasures',
+                        label: 'Linhas entre Medidas',
+                        defaultValue: savedChartOptions?.dividerLinesBetweenMeasures !== false, // Default: true
+                    },
+                    {
+                        type: 'toggle',
+                        key: 'dividerLinesBetweenGroups',
+                        label: 'Linhas entre Grupos',
+                        defaultValue: savedChartOptions?.dividerLinesBetweenGroups !== false, // Default: true
+                    },
+                    {
+                        type: 'text',
+                        key: 'dividerLinesColor',
+                        label: 'Cor das Linhas Divisórias',
+                        defaultValue: savedChartOptions?.dividerLinesColor || '#d1d5db',
                     },
                     {
                         type: 'dropdown',
