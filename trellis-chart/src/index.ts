@@ -21,7 +21,6 @@ import {
     Section,
     ChartConfigEditorDefinition,
 } from '@thoughtspot/ts-chart-sdk';
-import _ from 'lodash';
 import { logger } from './utils/logger';
 import { 
     extractDataPointsArray, 
@@ -1352,8 +1351,7 @@ const init = async () => {
             // map all the columns in the config to the query array
             const queries = chartConfig.map(
                 (config: ChartConfig): Query =>
-                    _.reduce(
-                        config.dimensions,
+                    config.dimensions.reduce(
                         (acc: Query, dimension) => ({
                             queryColumns: [
                                 ...acc.queryColumns,
