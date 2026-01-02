@@ -385,6 +385,9 @@ const renderChart = async (ctx: CustomChartContext) => {
         dividerLinesBetweenGroups: chartVisual.hasOwnProperty('dividerLinesBetweenGroups')
             ? chartVisual.dividerLinesBetweenGroups !== false
             : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenGroups') ? chartOptionsConsolidated.dividerLinesBetweenGroups !== false : true),
+        dividerLinesBetweenBars: chartVisual.hasOwnProperty('dividerLinesBetweenBars')
+            ? chartVisual.dividerLinesBetweenBars !== false
+            : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenBars') ? chartOptionsConsolidated.dividerLinesBetweenBars !== false : false),
         dividerLinesColor: chartVisual.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db',
         measureNameRotation: chartVisual.measureNameRotation || chartOptionsConsolidated.measureNameRotation || '0',
         forceLabels: chartVisual.hasOwnProperty('forceLabels')
@@ -421,6 +424,7 @@ const renderChart = async (ctx: CustomChartContext) => {
     const showGridLines = chartOptions?.showGridLines !== false; // Default: true (controla linhas divisórias)
     const dividerLinesBetweenMeasures = chartOptions?.dividerLinesBetweenMeasures !== false; // Default: true
     const dividerLinesBetweenGroups = chartOptions?.dividerLinesBetweenGroups !== false; // Default: true
+    const dividerLinesBetweenBars = chartOptions?.dividerLinesBetweenBars !== false; // Default: false
     const dividerLinesColor = chartOptions?.dividerLinesColor || '#d1d5db'; // Default: cinza claro
     // Espaço das labels das medidas configurável pelo usuário (default baseado no showYAxis)
     const measureLabelSpace = chartOptions?.measureLabelSpace ?? (showYAxis ? 120 : 60);
@@ -862,6 +866,27 @@ const renderChart = async (ctx: CustomChartContext) => {
             `;
         }
     }
+    
+    // Linhas divisórias verticais entre barras (se habilitado)
+    let dividerLinesBetweenBarsHtml = '';
+    if (showGridLines && dividerLinesBetweenBars && chartData.length > 1) {
+        for (let barIdx = 0; barIdx < chartData.length - 1; barIdx++) {
+            const barX = leftMargin + (barIdx + 1) * (barWidth + barSpacing) - barSpacing / 2;
+            const dividerStartY = topMargin;
+            const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
+            const dividerEndY = lastMeasureRowTop + measureRowHeight;
+            dividerLinesBetweenBarsHtml += `
+                <line 
+                    x1="${barX}" 
+                    y1="${dividerStartY}" 
+                    x2="${barX}" 
+                    y2="${dividerEndY}" 
+                    stroke="${dividerLinesColor}" 
+                    stroke-width="1"
+                />
+            `;
+        }
+    }
 
     // Segundo eixo X (eixo X secundário) - segunda dimensão na parte superior
     // Agrupa categorias secundárias (como no Trellis Chart) - uma label por grupo
@@ -906,7 +931,7 @@ const renderChart = async (ctx: CustomChartContext) => {
         const labelY = 15; // Posição fixa no topo do SVG (dentro do topMargin)
         const firstMeasureRowTop = topMargin;
         const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
-        const dividerLineTop = labelY + 10; // Começar logo abaixo dos labels
+        const dividerLineTop = labelY + 20; // Começar abaixo dos labels (aumentado para não sobrepor)
         const dividerLineBottom = lastMeasureRowTop + measureRowHeight; // Até o fim do gráfico
         
         // Não renderizar linha de eixo superior (apenas labels agrupados)
@@ -965,7 +990,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                 y="${lastMeasureRowTop + measureRowHeight + 30}" 
                 text-anchor="middle"
                 font-size="${labelFontSize}"
-                fill="#6b7280"
+                fill="#374151"
                 transform="rotate(-45 ${labelX} ${lastMeasureRowTop + measureRowHeight + 30})"
             >${primaryLabel}</text>
         `;
@@ -1188,6 +1213,27 @@ const renderChart = async (ctx: CustomChartContext) => {
                           }
                       }
                       
+                      // Linhas divisórias verticais entre barras (se habilitado)
+                      let newDividerLinesBetweenBarsHtml = '';
+                      if (showGridLines && dividerLinesBetweenBars && chartData.length > 1) {
+                          for (let barIdx = 0; barIdx < chartData.length - 1; barIdx++) {
+                              const barX = leftMargin + (barIdx + 1) * (newBarWidth + newBarSpacing) - newBarSpacing / 2;
+                              const dividerStartY = topMargin;
+                              const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (newMeasureRowHeight + spacingBetweenMeasures);
+                              const dividerEndY = lastMeasureRowTop + newMeasureRowHeight;
+                              newDividerLinesBetweenBarsHtml += `
+                                  <line 
+                                      x1="${barX}" 
+                                      y1="${dividerStartY}" 
+                                      x2="${barX}" 
+                                      y2="${dividerEndY}" 
+                                      stroke="${dividerLinesColor}" 
+                                      stroke-width="1"
+                                  />
+                              `;
+                          }
+                      }
+                      
                       // Recalcular barras/linhas com novo espaçamento e altura
                       const newAllChartElementsHtml = measureCols.map((measure, measureIdx) => {
                           const measureRowTop = topMargin + measureIdx * (newMeasureRowHeight + spacingBetweenMeasures);
@@ -1317,7 +1363,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                           // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
                           // Posição fixa no topo do SVG (dentro do topMargin)
                           const secondaryLabelY = 15;
-                          const dividerLineTop = secondaryLabelY + 10; // Começar logo abaixo dos labels
+                          const dividerLineTop = secondaryLabelY + 20; // Começar abaixo dos labels (aumentado para não sobrepor)
                           const dividerLineBottom = lastMeasureRowTop + newMeasureRowHeight; // Até o fim do gráfico
                           
                           // Não renderizar linha de eixo superior (apenas labels agrupados)
@@ -1374,7 +1420,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                                       y="${lastMeasureRowTop + newMeasureRowHeight + 30}" 
                                       text-anchor="middle"
                                       font-size="${labelFontSize}"
-                                      fill="#6b7280"
+                                      fill="#374151"
                                       transform="rotate(-45 ${labelX} ${lastMeasureRowTop + newMeasureRowHeight + 30})"
                                   >${primaryLabel}</text>
                               `;
@@ -1395,7 +1441,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                                       y="${lastMeasureRowTop + newMeasureRowHeight + 30}" 
                                       text-anchor="middle"
                                       font-size="${labelFontSize}"
-                                      fill="#6b7280"
+                                      fill="#374151"
                                       transform="rotate(-45 ${labelX} ${lastMeasureRowTop + newMeasureRowHeight + 30})"
                                   >${primaryLabel}</text>
                               `;
@@ -1434,7 +1480,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                       const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
                       if (svgElement) {
                           svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
-                          svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + newDividerLinesBetweenMeasuresHtml + newAllChartElementsHtml + newXAxis + newXAxisLabels;
+                          svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newAllChartElementsHtml + newXAxis + newXAxisLabels;
                       }
                   }
               };
@@ -1589,63 +1635,87 @@ const init = async () => {
             const savedChartOptions = (currentVisualProps.visualProps as any)?.chart_options || {};
             
             // Seção 1: Layout e Visualização
+            const chartVisualChildren: any[] = [
+                {
+                    type: 'toggle',
+                    key: 'showYAxis',
+                    label: 'Mostrar Eixo Y',
+                    defaultValue: savedChartOptions?.showYAxis !== false, // Default: true
+                },
+                {
+                    type: 'toggle',
+                    key: 'showGridLines',
+                    label: 'Mostrar Linhas Divisórias',
+                    defaultValue: savedChartOptions?.showGridLines !== false, // Default: true
+                },
+            ];
+            
+            // Adicionar campos adicionais
+            chartVisualChildren.push(
+                {
+                    type: 'dropdown',
+                    key: 'measureNameRotation',
+                    label: 'Rotação do Nome da Medida',
+                    defaultValue: savedChartOptions?.measureNameRotation || '-90',
+                    values: [
+                        '-90',
+                        '0',
+                        '45',
+                        '-45',
+                        '90',
+                    ],
+                },
+                {
+                    type: 'toggle',
+                    key: 'forceLabels',
+                    label: 'Forçar Labels',
+                    defaultValue: savedChartOptions?.forceLabels || false, // Default: false
+                }
+            );
+            
             elements.push({
                 type: 'section',
                 key: 'chart_visual',
                 label: 'Layout e Visualização',
                 isAccordianExpanded: true,
-                children: [
-                    {
-                        type: 'toggle',
-                        key: 'showYAxis',
-                        label: 'Mostrar Eixo Y',
-                        defaultValue: savedChartOptions?.showYAxis !== false, // Default: true
-                    },
-                    {
-                        type: 'toggle',
-                        key: 'showGridLines',
-                        label: 'Mostrar Linhas Divisórias',
-                        defaultValue: savedChartOptions?.showGridLines !== false, // Default: true
-                    },
-                    {
-                        type: 'toggle',
-                        key: 'dividerLinesBetweenMeasures',
-                        label: 'Linhas entre Medidas',
-                        defaultValue: savedChartOptions?.dividerLinesBetweenMeasures !== false, // Default: true
-                    },
-                    {
-                        type: 'toggle',
-                        key: 'dividerLinesBetweenGroups',
-                        label: 'Linhas entre Grupos',
-                        defaultValue: savedChartOptions?.dividerLinesBetweenGroups !== false, // Default: true
-                    },
-                    {
-                        type: 'text',
-                        key: 'dividerLinesColor',
-                        label: 'Cor das Linhas Divisórias',
-                        defaultValue: savedChartOptions?.dividerLinesColor || '#d1d5db',
-                    },
-                    {
-                        type: 'dropdown',
-                        key: 'measureNameRotation',
-                        label: 'Rotação do Nome da Medida',
-                        defaultValue: savedChartOptions?.measureNameRotation || '-90',
-                        values: [
-                            '-90',
-                            '0',
-                            '45',
-                            '-45',
-                            '90',
-                        ],
-                    },
-                    {
-                        type: 'toggle',
-                        key: 'forceLabels',
-                        label: 'Forçar Labels',
-                        defaultValue: savedChartOptions?.forceLabels || false, // Default: false
-                    },
-                ],
+                children: chartVisualChildren,
             });
+            
+            // Seção de Linhas Divisórias (subgrupo condicional)
+            if (savedChartOptions?.showGridLines !== false) {
+                elements.push({
+                    type: 'section',
+                    key: 'chart_divider_lines',
+                    label: 'Configurações de Linhas Divisórias',
+                    isAccordianExpanded: false,
+                    children: [
+                        {
+                            type: 'toggle',
+                            key: 'dividerLinesBetweenMeasures',
+                            label: 'Linhas entre Medidas',
+                            defaultValue: savedChartOptions?.dividerLinesBetweenMeasures !== false, // Default: true
+                        },
+                        {
+                            type: 'toggle',
+                            key: 'dividerLinesBetweenGroups',
+                            label: 'Linhas entre Grupos',
+                            defaultValue: savedChartOptions?.dividerLinesBetweenGroups !== false, // Default: true
+                        },
+                        {
+                            type: 'toggle',
+                            key: 'dividerLinesBetweenBars',
+                            label: 'Linhas entre Barras',
+                            defaultValue: savedChartOptions?.dividerLinesBetweenBars || false, // Default: false
+                        },
+                        {
+                            type: 'text',
+                            key: 'dividerLinesColor',
+                            label: 'Cor das Linhas Divisórias',
+                            defaultValue: savedChartOptions?.dividerLinesColor || '#d1d5db',
+                        },
+                    ],
+                });
+            }
             
             // Seção 2: Dimensões e Tamanhos
             elements.push({
