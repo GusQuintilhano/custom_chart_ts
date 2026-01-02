@@ -48,10 +48,7 @@ sdk/
 - **`aprendizados/aprendizados-completos.md`** ⭐ - Documento principal consolidado
 - **`aprendizados/aprendizados-e-achados.md`** - Histórico detalhado de desenvolvimento
 - **`aprendizados/columns-viz-prop-definition.md`** - Guia sobre configurações por coluna
+- **`aprendizados/qualidade-e-refatoracao.md`** - Análise de métricas, qualidade de código e refatoração
 - **`referencia/documentacao-tecnica-oficial.md`** - Referência técnica consolidada
 
-## 🔗 Documentação Relacionada
-
-- **Muze Studio**: [../muze/](../muze/) - Documentação do Muze Studio
-- **Testes**: [../testes/](../testes/) - Testes de integração
 

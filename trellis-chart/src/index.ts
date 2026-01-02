@@ -22,27 +22,34 @@ import {
     ChartConfigEditorDefinition,
 } from '@thoughtspot/ts-chart-sdk';
 import _ from 'lodash';
+import { logger } from './utils/logger';
+import { 
+    extractDataPointsArray, 
+    createColumnIndexMap, 
+    filterAndSortColumns,
+    separateDimensionsAndMeasures,
+    processChartData,
+    findMissingMeasures
+} from './utils/dataProcessing';
+import type { TypedDataPointsArray, ChartElement, ChartDataPoint } from './types/chartTypes';
 
 const renderChart = async (ctx: CustomChartContext) => {
     const chartModel = ctx.getChartModel();
-    console.log('🎨 [DEBUG] renderChart - chartModel completo:', chartModel);
-    console.log('🎨 [DEBUG] renderChart - Timestamp:', new Date().toISOString());
+    logger.debug('renderChart - chartModel completo:', chartModel);
+    logger.debug('renderChart - Timestamp:', new Date().toISOString());
         
-        const chartElement = document.getElementById('chart');
-        if (!chartElement) {
-          console.error('❌ Elemento #chart não encontrado');
+    const chartElement = document.getElementById('chart') as ChartElement | null;
+    if (!chartElement) {
+        logger.error('Elemento #chart não encontrado');
         return Promise.resolve();
     }
 
     const { columns, data, visualProps } = chartModel;
-    console.log('🎨 [DEBUG] renderChart - data:', data);
-    console.log('🎨 [DEBUG] renderChart - data.length:', data?.length);
-    console.log('🎨 [DEBUG] renderChart - data[0]:', data?.[0]);
-    console.log('🎨 [DEBUG] renderChart - data[0]?.data:', data?.[0]?.data);
-    console.log('🎨 [DEBUG] renderChart - visualProps:', visualProps);
-    console.log('🎨 [DEBUG] renderChart - visualProps.chart_options:', (visualProps as any)?.chart_options);
-    console.log('🎨 [DEBUG] renderChart - visualProps.text_sizes:', (visualProps as any)?.text_sizes);
-    console.log('🎨 [DEBUG] renderChart - visualProps completo (JSON):', JSON.stringify(visualProps, null, 2));
+    logger.debug('renderChart - data:', data);
+    logger.debug('renderChart - data.length:', data?.length);
+    logger.debug('renderChart - data[0]:', data?.[0]);
+    logger.debug('renderChart - data[0]?.data:', data?.[0]?.data);
+    logger.debug('renderChart - visualProps:', visualProps);
     
     // Validação básica
         if (!data || data.length === 0) {
@@ -55,19 +62,17 @@ const renderChart = async (ctx: CustomChartContext) => {
         }
         
     // Extrair dados primeiro para usar a ordem do chartConfig
-    console.log('🎨 [DEBUG] renderChart - Verificando estrutura de dados...');
+    logger.debug('renderChart - Verificando estrutura de dados...');
     
-    // Seguindo exemplo do bar chart: data[0].data é DataPointsArray
-    const dataArr = (Array.isArray(data) && data.length > 0 && (data[0] as any)?.data) 
-        ? (data[0] as any).data 
-        : null;
+    // Extrair DataPointsArray usando função tipada
+    const dataArr = extractDataPointsArray(data);
     
-    console.log('🎨 [DEBUG] renderChart - dataArr:', dataArr);
-    console.log('🎨 [DEBUG] renderChart - dataArr?.columns:', (dataArr as any)?.columns);
-    console.log('🎨 [DEBUG] renderChart - dataArr?.dataValue:', (dataArr as any)?.dataValue);
-    console.log('🎨 [DEBUG] renderChart - dataArr?.dataValue?.length:', (dataArr as any)?.dataValue?.length);
+    logger.debug('renderChart - dataArr:', dataArr);
+    logger.debug('renderChart - dataArr?.columns:', dataArr?.columns);
+    logger.debug('renderChart - dataArr?.dataValue:', dataArr?.dataValue);
+    logger.debug('renderChart - dataArr?.dataValue?.length:', dataArr?.dataValue?.length);
     
-    if (!dataArr || !Array.isArray((dataArr as any).columns) || !Array.isArray((dataArr as any).dataValue)) {
+    if (!dataArr) {
         chartElement.innerHTML = `
             <div style="padding: 20px; color: #ef4444; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;">
                 <h4 style="margin: 0 0 10px 0;">❌ Estrutura de dados inválida</h4>
@@ -83,49 +88,28 @@ const renderChart = async (ctx: CustomChartContext) => {
     
     // A ordem das colunas em dataArr.columns reflete a ordem definida no Configure (chartConfig)
     // Primeiro vêm as dimensões (x-axis), depois as medidas (y-axis)
-    const columnOrder = (dataArr as any).columns as string[];
-    const columnOrderMap = new Map<string, number>();
-    columnOrder.forEach((colId, idx) => {
-        columnOrderMap.set(colId, idx);
-    });
-    
-    // Criar mapa de índices de colunas
-    const columnIndexMap = new Map<string, number>();
-    columnOrder.forEach((colId: string, idx: number) => {
-        columnIndexMap.set(colId, idx);
-    });
+    const columnOrder = dataArr.columns;
+    const columnOrderMap = createColumnIndexMap(columnOrder);
+    const columnIndexMap = createColumnIndexMap(columnOrder);
     
     // Separar dimensões e medidas da lista completa de colunas
-    const allDimensions = columns.filter((c: ChartColumn) => c.type === ColumnType.ATTRIBUTE);
-    const allMeasures = columns.filter((c: ChartColumn) => c.type === ColumnType.MEASURE);
+    const { dimensions: allDimensions, measures: allMeasures } = separateDimensionsAndMeasures(columns);
     
     // Filtrar e ordenar dimensões pela ordem do chartConfig (dataArr.columns)
     const availableColumnIds = new Set(columnOrder);
-    const dimensions = allDimensions
-        .filter(d => availableColumnIds.has(d.id))
-        .sort((a, b) => {
-            const orderA = columnOrderMap.get(a.id) ?? Infinity;
-            const orderB = columnOrderMap.get(b.id) ?? Infinity;
-            return orderA - orderB;
-        });
+    const dimensions = filterAndSortColumns(allDimensions, availableColumnIds, columnOrderMap);
     
     // Filtrar e ordenar medidas pela ordem do chartConfig (dataArr.columns)
     // Medidas "Not visualized" não aparecem nos dados, então não serão incluídas
     const notVisualizedMeasures = allMeasures.filter(m => !availableColumnIds.has(m.id));
     if (notVisualizedMeasures.length > 0) {
-        console.log('🎨 [DEBUG] Medidas "Not visualized" (serão ignoradas):', 
+        logger.debug('Medidas "Not visualized" (serão ignoradas):', 
             notVisualizedMeasures.map(m => ({ id: m.id, name: m.name })));
     }
     
-    const measureCols = allMeasures
-        .filter(m => availableColumnIds.has(m.id))
-        .sort((a, b) => {
-            const orderA = columnOrderMap.get(a.id) ?? Infinity;
-            const orderB = columnOrderMap.get(b.id) ?? Infinity;
-            return orderA - orderB;
-        });
+    const measureCols = filterAndSortColumns(allMeasures, availableColumnIds, columnOrderMap);
     
-    console.log('🎨 [DEBUG] Medidas visualizadas (ordenadas pela ordem do Configure):', 
+    logger.debug('Medidas visualizadas (ordenadas pela ordem do Configure):', 
         measureCols.map(m => ({ id: m.id, name: m.name })));
     
     if (dimensions.length === 0 || measureCols.length === 0) {
@@ -143,34 +127,36 @@ const renderChart = async (ctx: CustomChartContext) => {
     const primaryDimension = dimensions[0];
     const secondaryDimensions = dimensions.slice(1);
     
-    console.log('🎨 [DEBUG] Dimensões (ordenadas pela ordem do Configure):', {
+    logger.debug('Dimensões (ordenadas pela ordem do Configure):', {
         primary: primaryDimension?.name,
         secondary: secondaryDimensions.map(d => d.name),
         total: dimensions.length
     });
     
-    console.log('🎨 [DEBUG] renderChart - Column map:', columnIndexMap);
-    console.log('🎨 [DEBUG] renderChart - primaryDimension.id:', primaryDimension.id);
-    console.log('🎨 [DEBUG] renderChart - secondaryDimensions IDs:', secondaryDimensions.map(d => d.id));
-    console.log('🎨 [DEBUG] renderChart - measureCols IDs:', measureCols.map(m => m.id));
-    console.log('🎨 [DEBUG] renderChart - Colunas disponíveis nos dados:', (dataArr as any).columns);
+    logger.debug('renderChart - Column map:', columnIndexMap);
+    logger.debug('renderChart - primaryDimension.id:', primaryDimension.id);
+    logger.debug('renderChart - secondaryDimensions IDs:', secondaryDimensions.map(d => d.id));
+    logger.debug('renderChart - measureCols IDs:', measureCols.map(m => m.id));
+    logger.debug('renderChart - Colunas disponíveis nos dados:', dataArr.columns);
     
     // Verificar se todas as medidas estão nos dados (apenas para medidas visualizadas)
     // Nota: medidas "Not visualized" são intencionalmente excluídas e não são consideradas "missing"
-    const missingMeasures = measureCols.filter(m => !columnIndexMap.has(m.id));
+    const missingMeasures = findMissingMeasures(measureCols, columnIndexMap);
     if (missingMeasures.length > 0) {
-        console.warn('⚠️ [DEBUG] Medidas não encontradas nos dados (pode ser que os dados ainda estejam carregando):', 
+        logger.warn('Medidas não encontradas nos dados (pode ser que os dados ainda estejam carregando):', 
             missingMeasures.map(m => ({ id: m.id, name: m.name })));
-        console.warn('⚠️ [DEBUG] Essas medidas aparecerão com valor 0 até que os dados sejam carregados');
-        console.warn('⚠️ [DEBUG] Colunas disponíveis nos dados:', (dataArr as any).columns);
-        console.warn('⚠️ [DEBUG] IDs das medidas esperadas:', measureCols.map(m => ({ id: m.id, name: m.name })));
+        logger.warn('Essas medidas aparecerão com valor 0 até que os dados sejam carregados');
+        logger.warn('Colunas disponíveis nos dados:', dataArr.columns);
+        logger.warn('IDs das medidas esperadas:', measureCols.map(m => ({ id: m.id, name: m.name })));
         
         // Limpar qualquer retry anterior para evitar múltiplos intervalos
-        if ((chartElement as any).__retryTimeout) {
-            clearTimeout((chartElement as any).__retryTimeout);
+        if (chartElement.__retryTimeout) {
+            clearTimeout(chartElement.__retryTimeout);
+            chartElement.__retryTimeout = null;
         }
-        if ((chartElement as any).__retryInterval) {
-            clearInterval((chartElement as any).__retryInterval);
+        if (chartElement.__retryInterval) {
+            clearInterval(chartElement.__retryInterval);
+            chartElement.__retryInterval = null;
         }
         
         // Criar uma cópia dos IDs das medidas faltantes para evitar problemas de referência
@@ -190,24 +176,24 @@ const renderChart = async (ctx: CustomChartContext) => {
                 const currentRefreshTrigger = (columnDependency as any)?._refresh_trigger || 0;
                 const newRefreshTrigger = currentRefreshTrigger + 1;
                 
-                console.log(`🔄 [DEBUG] Tentando forçar atualização emitindo UpdateVisualProps...`);
-                console.log(`🔄 [DEBUG] Refresh trigger atual: ${currentRefreshTrigger} -> novo: ${newRefreshTrigger}`);
-                console.log(`🔄 [DEBUG] Medidas faltando:`, missingMeasures.map(m => m.name));
+                logger.debug(`🔄 [DEBUG] Tentando forçar atualização emitindo UpdateVisualProps...`);
+                logger.debug(`🔄 [DEBUG] Refresh trigger atual: ${currentRefreshTrigger} -> novo: ${newRefreshTrigger}`);
+                logger.debug(`🔄 [DEBUG] Medidas faltando:`, missingMeasures.map(m => m.name));
                 
                 await ctx.emitEvent(ChartToTSEvent.UpdateVisualProps, {
                     visualProps: {
-                        ...currentVisualProps,
+                        ...(currentVisualProps as Record<string, unknown>),
                         _column_dependency: {
-                            ...columnDependency,
+                            ...(columnDependency as Record<string, unknown>),
                             _refresh_trigger: newRefreshTrigger,
                             _missing_measures_count: missingMeasures.length,
                         },
-                    } as any,
+                    },
                 });
                 
-                console.log('✅ [DEBUG] UpdateVisualProps emitido com sucesso - isso pode forçar o ThoughtSpot a re-executar getDefaultChartConfig');
+                logger.debug('✅ [DEBUG] UpdateVisualProps emitido com sucesso - isso pode forçar o ThoughtSpot a re-executar getDefaultChartConfig');
             } catch (error) {
-                console.warn('⚠️ [DEBUG] Erro ao tentar emitir UpdateVisualProps para forçar atualização:', error);
+                logger.warn('⚠️ [DEBUG] Erro ao tentar emitir UpdateVisualProps para forçar atualização:', error);
             }
         };
         
@@ -216,51 +202,48 @@ const renderChart = async (ctx: CustomChartContext) => {
         
         // Função para verificar e re-renderizar se necessário
         const checkAndRetry = async (attemptNumber: number): Promise<boolean> => {
-            console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: Verificando se dados das medidas faltantes foram carregados...`);
+            logger.debug(`🔄 [DEBUG] Tentativa ${attemptNumber}: Verificando se dados das medidas faltantes foram carregados...`);
             
             try {
                 const updatedChartModel = ctx.getChartModel();
                 const updatedData = updatedChartModel.data;
                 
                 if (!updatedData || updatedData.length === 0) {
-                    console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: Ainda não há dados disponíveis`);
+                    logger.debug(`🔄 [DEBUG] Tentativa ${attemptNumber}: Ainda não há dados disponíveis`);
                     return false;
                 }
                 
-                const updatedDataArr = (updatedData[0] as any)?.data;
-                if (!updatedDataArr || !updatedDataArr.columns) {
-                    console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: Estrutura de dados ainda não está pronta`);
+                const updatedDataArr = extractDataPointsArray(updatedData);
+                if (!updatedDataArr) {
+                    logger.debug(`Tentativa ${attemptNumber}: Estrutura de dados ainda não está pronta`);
                     return false;
                 }
                 
-                const updatedColumnMap = new Map<string, number>();
-                updatedDataArr.columns.forEach((colId: string, idx: number) => {
-                    updatedColumnMap.set(colId, idx);
-                });
+                const updatedColumnMap = createColumnIndexMap(updatedDataArr.columns);
                 
                 // Verificar se as medidas que estavam faltando agora estão presentes
                 const nowAvailable = missingMeasureIds.filter(id => updatedColumnMap.has(id));
                 const stillMissing = missingMeasureIds.filter(id => !updatedColumnMap.has(id));
                 
-                console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: Colunas disponíveis:`, updatedDataArr.columns);
-                console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: ${nowAvailable.length} medida(s) agora disponível(is), ${stillMissing.length} ainda faltando`);
-                console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: IDs encontrados:`, nowAvailable);
-                console.log(`🔄 [DEBUG] Tentativa ${attemptNumber}: IDs ainda faltando:`, stillMissing);
+                logger.debug(`Tentativa ${attemptNumber}: Colunas disponíveis:`, updatedDataArr.columns);
+                logger.debug(`Tentativa ${attemptNumber}: ${nowAvailable.length} medida(s) agora disponível(is), ${stillMissing.length} ainda faltando`);
+                logger.debug(`Tentativa ${attemptNumber}: IDs encontrados:`, nowAvailable);
+                logger.debug(`Tentativa ${attemptNumber}: IDs ainda faltando:`, stillMissing);
                 
                 if (nowAvailable.length > 0) {
                     const availableMeasures = missingMeasures.filter(m => nowAvailable.includes(m.id));
-                    console.log(`✅ [DEBUG] Dados atualizados após ${attemptNumber} tentativa(s)! Medidas encontradas:`, 
+                    logger.debug(`Dados atualizados após ${attemptNumber} tentativa(s)! Medidas encontradas:`, 
                         availableMeasures.map(m => m.name));
-                    console.log('✅ [DEBUG] Re-renderizando gráfico com dados atualizados...');
+                    logger.debug('Re-renderizando gráfico com dados atualizados...');
                     
                     // Limpar intervalos antes de re-renderizar
-                    if ((chartElement as any).__retryTimeout) {
-                        clearTimeout((chartElement as any).__retryTimeout);
-                        (chartElement as any).__retryTimeout = null;
+                    if (chartElement.__retryTimeout) {
+                        clearTimeout(chartElement.__retryTimeout);
+                        chartElement.__retryTimeout = null;
                     }
-                    if ((chartElement as any).__retryInterval) {
-                        clearInterval((chartElement as any).__retryInterval);
-                        (chartElement as any).__retryInterval = null;
+                    if (chartElement.__retryInterval) {
+                        clearInterval(chartElement.__retryInterval);
+                        chartElement.__retryInterval = null;
                     }
                     
                     // Aguardar um pouco mais antes de re-renderizar para garantir que os dados estão completos
@@ -271,7 +254,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                     return true; // Indica que o retry foi bem-sucedido
                 }
             } catch (error) {
-                console.error(`❌ [DEBUG] Erro na tentativa ${attemptNumber}:`, error);
+                logger.error(`❌ [DEBUG] Erro na tentativa ${attemptNumber}:`, error);
             }
             
             return false; // Indica que ainda não há dados
@@ -283,7 +266,7 @@ const renderChart = async (ctx: CustomChartContext) => {
         // Por isso, continuamos tentando por um tempo maior para detectar quando os dados finalmente chegam.
         
         // Primeira tentativa após 1 segundo
-        (chartElement as any).__retryTimeout = setTimeout(async () => {
+        chartElement.__retryTimeout = setTimeout(async () => {
             const success = await checkAndRetry(1);
             if (!success) {
                 // Se ainda não funcionou, iniciar intervalos
@@ -291,107 +274,52 @@ const renderChart = async (ctx: CustomChartContext) => {
                 const maxRetries = 30; // 30 tentativas = ~30 segundos
                 let retryCount = 1; // Já fizemos a primeira tentativa
                 
-                (chartElement as any).__retryInterval = setInterval(async () => {
+                chartElement.__retryInterval = setInterval(async () => {
                     retryCount++;
                     if (retryCount > maxRetries) {
-                        console.warn(`⚠️ [DEBUG] Número máximo de tentativas (${maxRetries}) atingido. Parando retry.`);
-                        console.warn('⚠️ [DEBUG] Medidas que nunca apareceram nos dados:', 
+                        logger.warn(`⚠️ [DEBUG] Número máximo de tentativas (${maxRetries}) atingido. Parando retry.`);
+                        logger.warn('⚠️ [DEBUG] Medidas que nunca apareceram nos dados:', 
                             missingMeasures.map(m => ({ id: m.id, name: m.name })));
-                        console.warn('⚠️ [DEBUG] POSSÍVEL CAUSA: Quando uma nova medida é adicionada, o ThoughtSpot pode não incluí-la na query imediatamente.');
-                        console.warn('⚠️ [DEBUG] SOLUÇÃO: Tente mudar alguma configuração do gráfico (ex: Mostrar Eixo Y) para forçar o ThoughtSpot a re-executar a query.');
-                        clearInterval((chartElement as any).__retryInterval);
-                        (chartElement as any).__retryInterval = null;
+                        logger.warn('⚠️ [DEBUG] POSSÍVEL CAUSA: Quando uma nova medida é adicionada, o ThoughtSpot pode não incluí-la na query imediatamente.');
+                        logger.warn('⚠️ [DEBUG] SOLUÇÃO: Tente mudar alguma configuração do gráfico (ex: Mostrar Eixo Y) para forçar o ThoughtSpot a re-executar a query.');
+                        if (chartElement.__retryInterval) {
+                            clearInterval(chartElement.__retryInterval);
+                            chartElement.__retryInterval = null;
+                        }
                         return;
                     }
                     
                     // Tentar forçar atualização a cada 5 tentativas para tentar desbloquear o cache do ThoughtSpot
                     if (retryCount % 5 === 0) {
-                        console.log(`🔄 [DEBUG] Tentativa ${retryCount}: Tentando forçar atualização novamente...`);
+                        logger.debug(`🔄 [DEBUG] Tentativa ${retryCount}: Tentando forçar atualização novamente...`);
                         await tryForceRefresh();
                     }
                     
                     const success = await checkAndRetry(retryCount);
                     if (success) {
-                        clearInterval((chartElement as any).__retryInterval);
-                        (chartElement as any).__retryInterval = null;
+                        if (chartElement.__retryInterval) {
+                            clearInterval(chartElement.__retryInterval);
+                            chartElement.__retryInterval = null;
+                        }
                     }
                 }, 1000); // Verificar a cada 1 segundo
             }
         }, 1000);
     }
 
-    // Agrupar dados por todas as dimensões
-    interface ChartDataPoint {
-        primaryLabel: string;
-        secondaryLabels: string[];
-        labels: string[]; // Todas as labels combinadas
-        values: number[];
-    }
+    // Processar dados usando função tipada
+    logger.debug('renderChart - Processando', dataArr.dataValue.length, 'linhas...');
     
-    const chartData: ChartDataPoint[] = [];
-    const dataValue = (dataArr as any).dataValue;
-
-    console.log('🎨 [DEBUG] renderChart - Processando', dataValue.length, 'linhas...');
+    const chartData = processChartData(
+        dataArr,
+        columnIndexMap,
+        primaryDimension,
+        secondaryDimensions,
+        measureCols
+    );
     
-    dataValue.forEach((row: any[], rowIdx: number) => {
-        const primaryDimIdx = columnIndexMap.get(primaryDimension.id);
-        
-        if (primaryDimIdx === undefined || row[primaryDimIdx] === undefined) {
-            console.warn(`🎨 [DEBUG] renderChart - Dimensão principal não encontrada na linha ${rowIdx}`);
-    return;
-  }
-
-        // Extrair valor da dimensão principal
-        const primaryDimValue = row[primaryDimIdx];
-        const primaryLabelRaw = primaryDimValue?.v?.s || primaryDimValue?.v || primaryDimValue;
-        
-        // Extrair valores das dimensões secundárias
-        const secondaryLabels = secondaryDimensions.map(secDim => {
-            const secDimIdx = columnIndexMap.get(secDim.id);
-            if (secDimIdx !== undefined && row[secDimIdx] !== undefined) {
-                const secDimValue = row[secDimIdx];
-                return secDimValue?.v?.s || secDimValue?.v || secDimValue;
-            }
-            return null;
-        }).filter(label => label !== null);
-        
-        // Combinar todas as labels (serão formatadas depois quando renderizar)
-        const allLabelsRaw = [primaryLabelRaw, ...secondaryLabels];
-
-        // Extrair valores das medidas
-        const values = measureCols.map((measure) => {
-            const measIdx = columnIndexMap.get(measure.id);
-            if (measIdx !== undefined && row[measIdx] !== undefined) {
-                const measValue = row[measIdx];
-                const value = (measValue as any)?.v?.n ?? (measValue as any)?.v ?? measValue;
-                const numValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
-                
-                // Log apenas se o valor for 0 e não for esperado
-                if (numValue === 0 && rowIdx === 0) {
-                    console.log(`🔍 [DEBUG] Medida "${measure.name}" (${measure.id}) - valor: ${numValue}, raw:`, measValue);
-                }
-                
-                return numValue;
-            }
-            
-            // Se a medida não está nos dados, pode ser que ainda esteja carregando
-            if (rowIdx === 0) {
-                console.warn(`⚠️ [DEBUG] Medida "${measure.name}" (${measure.id}) não encontrada nos dados - retornando 0 (pode estar carregando)`);
-            }
-            
-            return 0;
-        });
-        
-        chartData.push({
-            primaryLabel: primaryLabelRaw,
-            secondaryLabels,
-            labels: allLabelsRaw, // Labels brutos (serão formatados na renderização)
-            values
-        });
-    });
-    
-    console.log('🎨 [DEBUG] renderChart - chartData final:', chartData);
-    console.log('🎨 [DEBUG] renderChart - chartData.length:', chartData.length);
+    logger.debug('renderChart - chartData final:', chartData);
+    logger.debug('renderChart - chartData.length:', chartData.length);
 
     if (chartData.length === 0) {
           chartElement.innerHTML = `
@@ -407,15 +335,15 @@ const renderChart = async (ctx: CustomChartContext) => {
     // Cada item já representa uma combinação única de todas as dimensões
     const hasMultipleDimensions = secondaryDimensions.length > 0;
     
-    console.log('🎨 [DEBUG] Total de pontos no eixo X:', chartData.length);
-    console.log('🎨 [DEBUG] Primeiro ponto:', chartData[0]);
+    logger.debug('🎨 [DEBUG] Total de pontos no eixo X:', chartData.length);
+    logger.debug('🎨 [DEBUG] Primeiro ponto:', chartData[0]);
 
     // Obter configuração do eixo Y antes de calcular margens
     // IMPORTANTE: visualProps pode vir de diferentes estruturas:
     // - Primeira renderização: configurações em seções separadas (chart_visual, chart_dimensions, etc.)
     // - Renderizações seguintes: configurações consolidadas em chart_options
     const allVisualProps = visualProps as any;
-    console.log('🔍 [DEBUG] visualProps completo na leitura:', JSON.stringify(allVisualProps, null, 2));
+    logger.debug('🔍 [DEBUG] visualProps completo na leitura:', JSON.stringify(allVisualProps, null, 2));
     
     // IMPORTANTE: SEMPRE priorizar seções individuais sobre chart_options consolidado
     // Isso garante que mudanças recentes sejam aplicadas imediatamente
@@ -454,7 +382,7 @@ const renderChart = async (ctx: CustomChartContext) => {
             : (chartOptionsConsolidated.hasOwnProperty('barWidth') ? chartOptionsConsolidated.barWidth : 50),
     };
     
-    console.log('🔍 [DEBUG] chartOptions lido (após consolidação):', JSON.stringify(chartOptions, null, 2));
+    logger.debug('🔍 [DEBUG] chartOptions lido (após consolidação):', JSON.stringify(chartOptions, null, 2));
     
     // Para showYAxis, verificar se está undefined (não configurado) ou false (desabilitado)
     // Se for undefined, usar true como padrão. Se for false explicitamente, usar false.
@@ -532,9 +460,9 @@ const renderChart = async (ctx: CustomChartContext) => {
         const plotAreaWidth = totalBarWidth + totalBarSpacing;
         chartWidth = plotAreaWidth + leftMargin + rightMargin;
         
-        console.log('📏 [DEBUG] Largura da barra configurada:', fixedBarWidth);
-        console.log('📏 [DEBUG] Número de barras:', numBars);
-        console.log('📏 [DEBUG] Largura total calculada:', chartWidth);
+        logger.debug('📏 [DEBUG] Largura da barra configurada:', fixedBarWidth);
+        logger.debug('📏 [DEBUG] Número de barras:', numBars);
+        logger.debug('📏 [DEBUG] Largura total calculada:', chartWidth);
     }
     
     const plotAreaWidth = chartWidth - leftMargin - rightMargin;
@@ -653,7 +581,7 @@ const renderChart = async (ctx: CustomChartContext) => {
         secondaryDateFormat = secondaryDimensionConfig.dateFormat || dimensionConfigOld?.dateFormat || 'auto';
     }
     
-    console.log('🔍 [DEBUG] Formatação de dimensão:', {
+    logger.debug('🔍 [DEBUG] Formatação de dimensão:', {
         primaryDimensionId: primaryDimension.id,
         primaryDateFormat: primaryDateFormat,
         secondaryDimensionId: hasSecondaryDimension && secondaryDimensions.length > 0 ? secondaryDimensions[0].id : null,
@@ -687,22 +615,22 @@ const renderChart = async (ctx: CustomChartContext) => {
         const chartType = measureConfig?.chartType || 'bar'; // 'bar' ou 'line'
         
         // Log apenas para primeira medida na primeira renderização
-        if (measureIdx === 0 && !(chartElement as any).__configLogged) {
-            console.log('🔍 [DEBUG] === LEITURA DE CONFIGURAÇÕES ===');
-            console.log('🔍 [DEBUG] columnVisualProps:', columnVisualProps);
-            console.log(`🔍 [DEBUG] Config para "${measure.name}":`, {
+        if (measureIdx === 0 && !chartElement.__configLogged) {
+            logger.debug('🔍 [DEBUG] === LEITURA DE CONFIGURAÇÕES ===');
+            logger.debug('🔍 [DEBUG] columnVisualProps:', columnVisualProps);
+            logger.debug(`🔍 [DEBUG] Config para "${measure.name}":`, {
                 fromColumnVisualProps: configFromColumnVisualProps,
                 fromMeasureKeyOld: configOld,
                 fromMeasureId: configNew,
                 finalConfig: measureConfig
             });
-            (chartElement as any).__configLogged = true;
+            chartElement.__configLogged = true;
         }
         
         return { color, format, decimals, chartType };
     });
     
-    console.log('🎨 [DEBUG] Configurações finais das medidas:', measureConfigs.map((c, i) => ({
+    logger.debug('🎨 [DEBUG] Configurações finais das medidas:', measureConfigs.map((c, i) => ({
         measure: measureCols[i].name,
         color: c.color,
         format: c.format,
@@ -728,7 +656,7 @@ const renderChart = async (ctx: CustomChartContext) => {
           };
         });
     
-    console.log('🎨 [DEBUG] measureRanges individuais:', measureRanges.map(r => ({
+    logger.debug('🎨 [DEBUG] measureRanges individuais:', measureRanges.map(r => ({
         measure: r.measure.name,
         min: r.min,
         max: r.max,
@@ -738,7 +666,7 @@ const renderChart = async (ctx: CustomChartContext) => {
     
     // Validar que cada medida tem sua própria escala
     measureRanges.forEach((range, idx) => {
-        console.log(`🎨 [DEBUG] Medida ${idx} (${range.measure.name}): min=${range.min}, max=${range.max}, range=${range.max - range.min}`);
+        logger.debug(`🎨 [DEBUG] Medida ${idx} (${range.measure.name}): min=${range.min}, max=${range.max}, range=${range.max - range.min}`);
     });
 
     // Função para converter valor de uma medida em coordenada Y dentro de sua linha
@@ -1157,8 +1085,8 @@ const renderChart = async (ctx: CustomChartContext) => {
       // Quando fitWidth ou fitHeight está ativo, ajustar dinamicamente após renderizar
       if (fitWidth || fitHeight) {
           // Limpar observer anterior se existir
-          if ((chartElement as any).__resizeObserver) {
-              ((chartElement as any).__resizeObserver as ResizeObserver).disconnect();
+          if (chartElement.__resizeObserver) {
+              chartElement.__resizeObserver.disconnect();
           }
           
           const containerDiv = chartElement.querySelector('div') as HTMLElement;
@@ -1573,20 +1501,20 @@ const renderChart = async (ctx: CustomChartContext) => {
                   });
                   
                   resizeObserver.observe(containerDiv);
-                  (chartElement as any).__resizeObserver = resizeObserver;
+                  chartElement.__resizeObserver = resizeObserver;
               }, 100);
           }
       }
 
-    console.log('✅ Gráfico renderizado com sucesso');
+    logger.debug('✅ Gráfico renderizado com sucesso');
     
     // Emitir evento RenderComplete para o ThoughtSpot saber que terminou
     // RenderComplete não precisa de payload (array vazio no tipo)
     try {
         ctx.emitEvent(ChartToTSEvent.RenderComplete);
-        console.log('✅ [DEBUG] Evento RenderComplete emitido');
+        logger.debug('✅ [DEBUG] Evento RenderComplete emitido');
         } catch (error) {
-        console.warn('⚠️ [DEBUG] Erro ao emitir RenderComplete:', error);
+        logger.warn('⚠️ [DEBUG] Erro ao emitir RenderComplete:', error);
     }
     
     return Promise.resolve();
@@ -1594,13 +1522,13 @@ const renderChart = async (ctx: CustomChartContext) => {
 
 // Inicialização seguindo EXATAMENTE o exemplo do Bar Chart oficial do repositório
 const init = async () => {
-    console.log('🚀 [DEBUG] Iniciando getChartContext...');
+    logger.debug('🚀 [DEBUG] Iniciando getChartContext...');
     
     try {
         const ctx = await getChartContext({
             getDefaultChartConfig: (chartModel: ChartModel): ChartConfig[] => {
-                console.log('📊 [DEBUG] ===== getDefaultChartConfig CHAMADO =====');
-                console.log('📊 [DEBUG] chartModel.columns.length:', chartModel.columns?.length);
+                logger.debug('📊 [DEBUG] ===== getDefaultChartConfig CHAMADO =====');
+                logger.debug('📊 [DEBUG] chartModel.columns.length:', chartModel.columns?.length);
                 
                 const cols = chartModel.columns;
 
@@ -1612,13 +1540,13 @@ const init = async () => {
                     (col) => col.type === ColumnType.ATTRIBUTE,
                 );
 
-                console.log('📊 [DEBUG] Medidas encontradas no chartModel:', measureColumns.length);
-                console.log('📊 [DEBUG] Nomes das medidas:', measureColumns.map(m => ({ id: m.id, name: m.name })));
-                console.log('📊 [DEBUG] Dimensões encontradas:', attributeColumns.length);
-                console.log('📊 [DEBUG] Nomes das dimensões:', attributeColumns.map(d => ({ id: d.id, name: d.name })));
+                logger.debug('📊 [DEBUG] Medidas encontradas no chartModel:', measureColumns.length);
+                logger.debug('📊 [DEBUG] Nomes das medidas:', measureColumns.map(m => ({ id: m.id, name: m.name })));
+                logger.debug('📊 [DEBUG] Dimensões encontradas:', attributeColumns.length);
+                logger.debug('📊 [DEBUG] Nomes das dimensões:', attributeColumns.map(d => ({ id: d.id, name: d.name })));
 
                 if (attributeColumns.length === 0 || measureColumns.length === 0) {
-                    console.warn('⚠️ [DEBUG] Sem colunas válidas, retornando []');
+                    logger.warn('⚠️ [DEBUG] Sem colunas válidas, retornando []');
                     return [];
                 }
 
@@ -1638,21 +1566,21 @@ const init = async () => {
                     ],
                 };
                 
-                console.log('📊 [DEBUG] ChartConfig gerado com', measureColumns.length, 'medidas e', attributeColumns.length, 'dimensões');
-                console.log('📊 [DEBUG] ===== FIM getDefaultChartConfig =====');
+                logger.debug('📊 [DEBUG] ChartConfig gerado com', measureColumns.length, 'medidas e', attributeColumns.length, 'dimensões');
+                logger.debug('📊 [DEBUG] ===== FIM getDefaultChartConfig =====');
                 return [axisConfig];
             },
         getQueriesFromChartConfig: (
             chartConfig: ChartConfig[],
         ): Array<Query> => {
-            console.log('📤 [DEBUG] getQueriesFromChartConfig chamado');
-            console.log('📤 [DEBUG] chartConfig recebido:', JSON.stringify(chartConfig, null, 2));
+            logger.debug('📤 [DEBUG] getQueriesFromChartConfig chamado');
+            logger.debug('📤 [DEBUG] chartConfig recebido:', JSON.stringify(chartConfig, null, 2));
             
             // Contar medidas no chartConfig para detectar possíveis problemas
             const measuresInConfig = chartConfig.flatMap(config => 
                 config.dimensions.find(d => d.key === 'y')?.columns || []
             );
-            console.log(`📤 [DEBUG] Medidas no chartConfig: ${measuresInConfig.length}`, 
+            logger.debug(`📤 [DEBUG] Medidas no chartConfig: ${measuresInConfig.length}`, 
                 measuresInConfig.map(m => ({ id: m.id, name: m.name })));
             
             // ⚠️ AVISO CRÍTICO: Se getQueriesFromChartConfig está sendo chamado mas getDefaultChartConfig
@@ -1679,12 +1607,12 @@ const init = async () => {
                     ),
             );
             
-            console.log('📤 [DEBUG] Queries geradas:', JSON.stringify(queries, null, 2));
-            console.log('📤 [DEBUG] Total de queries:', queries.length);
+            logger.debug('📤 [DEBUG] Queries geradas:', JSON.stringify(queries, null, 2));
+            logger.debug('📤 [DEBUG] Total de queries:', queries.length);
             queries.forEach((q, idx) => {
-                console.log(`📤 [DEBUG] Query ${idx} tem ${q.queryColumns?.length || 0} colunas`);
+                logger.debug(`📤 [DEBUG] Query ${idx} tem ${q.queryColumns?.length || 0} colunas`);
                 const measureCols = q.queryColumns.filter(col => col.type === ColumnType.MEASURE);
-                console.log(`📤 [DEBUG] Query ${idx} - Medidas incluídas: ${measureCols.length}`, 
+                logger.debug(`📤 [DEBUG] Query ${idx} - Medidas incluídas: ${measureCols.length}`, 
                     measureCols.map(m => ({ id: m.id, name: m.name })));
             });
             
@@ -1694,15 +1622,15 @@ const init = async () => {
             currentVisualProps: ChartModel,
             ctx: CustomChartContext,
         ): VisualPropEditorDefinition => {
-            console.log('🎨 [DEBUG] visualPropEditorDefinition chamado');
-            console.log('🎨 [DEBUG] currentVisualProps:', currentVisualProps);
+            logger.debug('🎨 [DEBUG] visualPropEditorDefinition chamado');
+            logger.debug('🎨 [DEBUG] currentVisualProps:', currentVisualProps);
             
             const columns = currentVisualProps.columns || [];
             const measureColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.MEASURE);
             const dimensionColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.ATTRIBUTE);
             
-            console.log('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
-            console.log('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
+            logger.debug('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
+            logger.debug('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
             
             // Criar configurações por coluna (medida)
             // Colocar diretamente em elements para aparecer no painel principal
@@ -1992,13 +1920,13 @@ const init = async () => {
             const measureIds = measureColumns.map(m => m.id).sort();
             const measureSignature = measureIds.join(',');
             
-            console.log('🎨 [DEBUG] ===== ASSINATURA DAS COLUNAS =====');
-            console.log('🎨 [DEBUG] Total de colunas:', columns.length);
-            console.log('🎨 [DEBUG] Total de medidas:', measureColumns.length);
-            console.log('🎨 [DEBUG] Total de dimensões:', dimensionColumns.length);
-            console.log('🎨 [DEBUG] IDs das medidas:', measureIds);
-            console.log('🎨 [DEBUG] Assinatura das colunas:', columnSignature);
-            console.log('🎨 [DEBUG] Assinatura das medidas:', measureSignature);
+            logger.debug('🎨 [DEBUG] ===== ASSINATURA DAS COLUNAS =====');
+            logger.debug('🎨 [DEBUG] Total de colunas:', columns.length);
+            logger.debug('🎨 [DEBUG] Total de medidas:', measureColumns.length);
+            logger.debug('🎨 [DEBUG] Total de dimensões:', dimensionColumns.length);
+            logger.debug('🎨 [DEBUG] IDs das medidas:', measureIds);
+            logger.debug('🎨 [DEBUG] Assinatura das colunas:', columnSignature);
+            logger.debug('🎨 [DEBUG] Assinatura das medidas:', measureSignature);
             
             // Retornar definição de propriedades visuais
             // elements: Configurações globais (aba Settings)
@@ -2013,26 +1941,26 @@ const init = async () => {
                 ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
             };
             
-            console.log('🎨 [DEBUG] visualPropEditorDefinition retornando:', JSON.stringify(result, null, 2));
-            console.log('🎨 [DEBUG] columnsVizPropDefinition:', columnsVizPropDefinition.length > 0 ? 'SIM - ' + columnsVizPropDefinition.length + ' colunas' : 'NÃO');
-            console.log('🎨 [DEBUG] Medidas processadas:', measureColumns.map(m => m.id));
+            logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', JSON.stringify(result, null, 2));
+            logger.debug('🎨 [DEBUG] columnsVizPropDefinition:', columnsVizPropDefinition.length > 0 ? 'SIM - ' + columnsVizPropDefinition.length + ' colunas' : 'NÃO');
+            logger.debug('🎨 [DEBUG] Medidas processadas:', measureColumns.map(m => m.id));
             if (columnsVizPropDefinition.length > 0) {
                 const measuresInConfig = Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}).length || 0;
-                console.log('🎨 [DEBUG] Medidas no columnsVizPropDefinition:', measuresInConfig);
-                console.log('🎨 [DEBUG] Estrutura columnsVizPropDefinition completa:', JSON.stringify(columnsVizPropDefinition, null, 2));
-                console.log('🎨 [DEBUG] IDs das colunas nas configurações:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
+                logger.debug('🎨 [DEBUG] Medidas no columnsVizPropDefinition:', measuresInConfig);
+                logger.debug('🎨 [DEBUG] Estrutura columnsVizPropDefinition completa:', JSON.stringify(columnsVizPropDefinition, null, 2));
+                logger.debug('🎨 [DEBUG] IDs das colunas nas configurações:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
                 
                 // AVISO: Se o número de medidas no columnsVizPropDefinition não corresponder
                 // ao número de medidas no chartModel, pode indicar que getDefaultChartConfig
                 // precisa ser re-executado.
                 if (measureColumns.length !== measuresInConfig) {
-                    console.warn(`⚠️ [DEBUG] DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
-                    console.warn('⚠️ [DEBUG] Isso indica que getDefaultChartConfig precisa ser re-executado!');
-                    console.warn('⚠️ [DEBUG] Medidas no chartModel:', measureColumns.map(m => ({ id: m.id, name: m.name })));
-                    console.warn('⚠️ [DEBUG] IDs no columnsVizPropDefinition:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
+                    logger.warn(`⚠️ [DEBUG] DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
+                    logger.warn('⚠️ [DEBUG] Isso indica que getDefaultChartConfig precisa ser re-executado!');
+                    logger.warn('⚠️ [DEBUG] Medidas no chartModel:', measureColumns.map(m => ({ id: m.id, name: m.name })));
+                    logger.warn('⚠️ [DEBUG] IDs no columnsVizPropDefinition:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
                 }
             }
-            console.log('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
+            logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
             
             return result;
         },
@@ -2064,21 +1992,21 @@ const init = async () => {
             ];
         },
         renderChart: (context) => {
-            console.log('🎨 [DEBUG] renderChart chamado dentro do getChartContext');
+            logger.debug('🎨 [DEBUG] renderChart chamado dentro do getChartContext');
             return renderChart(context);
         },
     });
     
-    console.log('✅ [DEBUG] getChartContext concluído com sucesso');
-    console.log('✅ [DEBUG] Contexto obtido:', ctx);
+    logger.debug('✅ [DEBUG] getChartContext concluído com sucesso');
+    logger.debug('✅ [DEBUG] Contexto obtido:', ctx);
     
     // For initial load we need to call renderChart explicitly
-    console.log('🔄 [DEBUG] Chamando renderChart explicitamente...');
+    logger.debug('🔄 [DEBUG] Chamando renderChart explicitamente...');
     await renderChart(ctx);
-    console.log('✅ [DEBUG] renderChart concluído');
+    logger.debug('✅ [DEBUG] renderChart concluído');
     } catch (error) {
-        console.error('❌ [DEBUG] Erro no init:', error);
-        console.error('❌ [DEBUG] Stack:', error instanceof Error ? error.stack : 'N/A');
+        logger.error('❌ [DEBUG] Erro no init:', error);
+        logger.error('❌ [DEBUG] Stack:', error instanceof Error ? error.stack : 'N/A');
         throw error;
     }
 };

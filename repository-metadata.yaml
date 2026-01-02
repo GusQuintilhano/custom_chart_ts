@@ -23,7 +23,7 @@ metadata:
 spec:
   contents:
     - name: dataviz-custom-charts
-      description: "Projeto de Custom Charts desenvolvidos com Muze Studio e ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
+      description: "Projeto de Custom Charts desenvolvidos com ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
       type: other
       subType:
         - other

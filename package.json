@@ -1,32 +1,16 @@
 {
-  "name": "ifood-muze-tests",
+  "name": "ifood-charts-sdk",
   "version": "1.0.0",
-  "description": "Validação de capacidades Muze Studio para integração com ThoughtSpot",
-  "scripts": {
-    "build:all": "cd dev/integration-tests/A3.1-empacotamento && bash build-all.sh",
-    "test:local": "echo 'Escolha um chart para testar:\n  chart-01-encodings\n  chart-02-layers\n  chart-03-transforms\n  chart-04-interactivity\n  chart-05-customization\n  chart-06-boxplot'",
-    "serve": "npx live-server --port=8080 --host=0.0.0.0 --open=/dev/charts/chart-01-encodings/src/index.html",
-    "serve:python": "python3 -m http.server 8080",
-    "docker:build": "docker build -t ifood-muze-charts .",
-    "docker:run": "docker run -p 8080:8080 -v $(pwd):/app ifood-muze-charts",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
-  },
+  "description": "Custom Charts desenvolvidos com ThoughtSpot Chart SDK para integração com ThoughtSpot",
+  "scripts": {},
   "dependencies": {},
-  "devDependencies": {
-    "archiver": "^5.3.0",
-    "live-server": "^1.2.1"
-  },
+  "devDependencies": {},
   "keywords": [
-    "muze",
     "thoughtspot",
+    "chart-sdk",
     "custom-charts",
     "data-visualization"
   ],
   "author": "iFood Data Team",
   "license": "ISC"
 }
-
-
-
-

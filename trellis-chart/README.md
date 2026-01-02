@@ -32,7 +32,7 @@ O chart está hospedado no Railway. Para fazer deploy:
 
 ## Documentação
 
-Toda a documentação técnica, aprendizados e guias estão disponíveis em [`../docs/trellis-chart/`](../docs/trellis-chart/).
+Toda a documentação técnica, aprendizados e guias estão disponíveis em [`../docs/sdk/exemplos/trellis-chart/`](../docs/sdk/exemplos/trellis-chart/).
 
 ## Status
 
