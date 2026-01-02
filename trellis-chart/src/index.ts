@@ -193,7 +193,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                 
                 logger.debug('✅ [DEBUG] UpdateVisualProps emitido com sucesso - isso pode forçar o ThoughtSpot a re-executar getDefaultChartConfig');
             } catch (error) {
-                logger.warn('⚠️ [DEBUG] Erro ao tentar emitir UpdateVisualProps para forçar atualização:', error);
+                logger.warn('Erro ao tentar emitir UpdateVisualProps para forçar atualização:', error);
             }
         };
         
@@ -254,7 +254,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                     return true; // Indica que o retry foi bem-sucedido
                 }
             } catch (error) {
-                logger.error(`❌ [DEBUG] Erro na tentativa ${attemptNumber}:`, error);
+                logger.error(`Erro na tentativa ${attemptNumber}:`, error);
             }
             
             return false; // Indica que ainda não há dados
@@ -277,11 +277,11 @@ const renderChart = async (ctx: CustomChartContext) => {
                 chartElement.__retryInterval = setInterval(async () => {
                     retryCount++;
                     if (retryCount > maxRetries) {
-                        logger.warn(`⚠️ [DEBUG] Número máximo de tentativas (${maxRetries}) atingido. Parando retry.`);
-                        logger.warn('⚠️ [DEBUG] Medidas que nunca apareceram nos dados:', 
+                        logger.warn(`Número máximo de tentativas (${maxRetries}) atingido. Parando retry.`);
+                        logger.debug('Medidas que nunca apareceram nos dados:', 
                             missingMeasures.map(m => ({ id: m.id, name: m.name })));
-                        logger.warn('⚠️ [DEBUG] POSSÍVEL CAUSA: Quando uma nova medida é adicionada, o ThoughtSpot pode não incluí-la na query imediatamente.');
-                        logger.warn('⚠️ [DEBUG] SOLUÇÃO: Tente mudar alguma configuração do gráfico (ex: Mostrar Eixo Y) para forçar o ThoughtSpot a re-executar a query.');
+                        logger.debug('POSSÍVEL CAUSA: Quando uma nova medida é adicionada, o ThoughtSpot pode não incluí-la na query imediatamente.');
+                        logger.debug('SOLUÇÃO: Tente mudar alguma configuração do gráfico (ex: Mostrar Eixo Y) para forçar o ThoughtSpot a re-executar a query.');
                         if (chartElement.__retryInterval) {
                             clearInterval(chartElement.__retryInterval);
                             chartElement.__retryInterval = null;
@@ -1514,7 +1514,7 @@ const renderChart = async (ctx: CustomChartContext) => {
         ctx.emitEvent(ChartToTSEvent.RenderComplete);
         logger.debug('✅ [DEBUG] Evento RenderComplete emitido');
         } catch (error) {
-        logger.warn('⚠️ [DEBUG] Erro ao emitir RenderComplete:', error);
+        logger.warn('Erro ao emitir RenderComplete:', error);
     }
     
     return Promise.resolve();
@@ -1546,7 +1546,7 @@ const init = async () => {
                 logger.debug('📊 [DEBUG] Nomes das dimensões:', attributeColumns.map(d => ({ id: d.id, name: d.name })));
 
                 if (attributeColumns.length === 0 || measureColumns.length === 0) {
-                    logger.warn('⚠️ [DEBUG] Sem colunas válidas, retornando []');
+                    logger.debug('Sem colunas válidas, retornando []');
                     return [];
                 }
 
@@ -1954,10 +1954,10 @@ const init = async () => {
                 // ao número de medidas no chartModel, pode indicar que getDefaultChartConfig
                 // precisa ser re-executado.
                 if (measureColumns.length !== measuresInConfig) {
-                    logger.warn(`⚠️ [DEBUG] DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
-                    logger.warn('⚠️ [DEBUG] Isso indica que getDefaultChartConfig precisa ser re-executado!');
-                    logger.warn('⚠️ [DEBUG] Medidas no chartModel:', measureColumns.map(m => ({ id: m.id, name: m.name })));
-                    logger.warn('⚠️ [DEBUG] IDs no columnsVizPropDefinition:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
+                    logger.debug(`DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
+                    logger.debug('Isso indica que getDefaultChartConfig precisa ser re-executado!');
+                    logger.debug('Medidas no chartModel:', measureColumns.map(m => ({ id: m.id, name: m.name })));
+                    logger.debug('IDs no columnsVizPropDefinition:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
                 }
             }
             logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
@@ -2005,8 +2005,8 @@ const init = async () => {
     await renderChart(ctx);
     logger.debug('✅ [DEBUG] renderChart concluído');
     } catch (error) {
-        logger.error('❌ [DEBUG] Erro no init:', error);
-        logger.error('❌ [DEBUG] Stack:', error instanceof Error ? error.stack : 'N/A');
+        logger.error('Erro no init:', error);
+        logger.error('Stack:', error instanceof Error ? error.stack : 'N/A');
         throw error;
     }
 };
