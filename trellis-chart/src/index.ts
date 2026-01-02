@@ -859,54 +859,17 @@ const renderChart = async (ctx: CustomChartContext) => {
     }).join('');
 
     // Segundo eixo X (eixo X secundário) - segunda dimensão na parte superior
+    // Integrado ao gráfico como o eixo X primário: linha horizontal + labels individuais
     let secondaryXAxisHtml = '';
     let secondaryXAxisLabelsHtml = '';
     
     if (hasSecondaryDimension) {
-        // Agrupar dados por Dimensão 2 para criar grupos no segundo eixo X
-        const groups: { [key: string]: { startIdx: number; endIdx: number; label: string } } = {};
-        let currentGroupKey: string | null = null;
-        
-        chartData.forEach((item, idx) => {
-            const secondaryLabelRaw = item.secondaryLabels[0] || '';
-            // Usar formatação específica da dimensão secundária
-            const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
-            
-            if (currentGroupKey !== secondaryLabel) {
-                // Finalizar grupo anterior
-                if (currentGroupKey !== null && groups[currentGroupKey]) {
-                    groups[currentGroupKey].endIdx = idx - 1;
-                }
-                // Iniciar novo grupo
-                currentGroupKey = secondaryLabel;
-                groups[secondaryLabel] = {
-                    startIdx: idx,
-                    endIdx: idx,
-                    label: secondaryLabel
-                };
-            } else {
-                // Continuar grupo atual
-                groups[secondaryLabel].endIdx = idx;
-            }
-        });
-        
-        // Garantir que o último grupo tenha seu endIdx configurado
-        if (currentGroupKey !== null && groups[currentGroupKey]) {
-            groups[currentGroupKey].endIdx = chartData.length - 1;
-        }
-        
-        // Renderizar o segundo eixo X no formato particionado (tipo amCharts)
-        // Cada grupo da segunda dimensão cria uma partição visual no eixo X
-        const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
-        
-        // Posição do eixo X secundário (na parte superior) - formato particionado
-        const secondaryAxisLineY = topMargin - 20; // Linha do eixo X secundário
-        const partitionTopY = topMargin - secondaryAxisHeight; // Linha superior da partição
-        const partitionBottomY = topMargin - secondaryAxisHeight + 15; // Linha inferior da partição
-        const labelY = topMargin - secondaryAxisHeight - 8; // Labels acima das partições
+        // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
+        const firstMeasureRowTop = topMargin;
+        const secondaryAxisLineY = firstMeasureRowTop; // Linha do eixo X secundário na primeira linha de medida
         
         // Linha completa do eixo X secundário (como o primeiro eixo X)
-        secondaryXAxisHtml += `
+        secondaryXAxisHtml = `
             <line 
                 x1="${leftMargin}" 
                 y1="${secondaryAxisLineY}" 
@@ -917,72 +880,23 @@ const renderChart = async (ctx: CustomChartContext) => {
             />
         `;
         
-        // Renderizar cada partição (grupo) no segundo eixo X
-        groupEntries.forEach((group, groupIdx) => {
-            const startX = leftMargin + group.startIdx * (barWidth + barSpacing);
-            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth;
-            const centerX = (startX + endX) / 2;
+        // Labels individuais do segundo eixo X (acima da linha, como o eixo X primário embaixo)
+        secondaryXAxisLabelsHtml = chartData.map((item, idx) => {
+            const labelX = leftMargin + idx * (barWidth + barSpacing) + barWidth / 2;
+            const secondaryLabelRaw = item.secondaryLabels[0] || '';
+            const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
             
-            // Linha horizontal superior da partição - conecta todas as barras do grupo
-            secondaryXAxisHtml += `
-                <line 
-                    x1="${startX}" 
-                    y1="${partitionTopY}" 
-                    x2="${endX}" 
-                    y2="${partitionTopY}" 
-                    stroke="#374151" 
-                    stroke-width="2"
-                />
-            `;
-            
-            // Linha horizontal inferior da partição (opcional, para criar uma "caixa")
-            // secondaryXAxisHtml += `
-            //     <line 
-            //         x1="${startX}" 
-            //         y1="${partitionBottomY}" 
-            //         x2="${endX}" 
-            //         y2="${partitionBottomY}" 
-            //         stroke="#374151" 
-            //         stroke-width="1"
-            //     />
-            // `;
-            
-            // Linha vertical esquerda da partição
-            secondaryXAxisHtml += `
-                <line 
-                    x1="${startX}" 
-                    y1="${partitionTopY}" 
-                    x2="${startX}" 
-                    y2="${partitionBottomY}" 
-                    stroke="#374151" 
-                    stroke-width="1"
-                />
-            `;
-            
-            // Linha vertical direita da partição
-            secondaryXAxisHtml += `
-                <line 
-                    x1="${endX}" 
-                    y1="${partitionTopY}" 
-                    x2="${endX}" 
-                    y2="${partitionBottomY}" 
-                    stroke="#374151" 
-                    stroke-width="1"
-                />
-            `;
-            
-            // Label do grupo centralizado acima da partição
-            secondaryXAxisLabelsHtml += `
+            return `
                 <text 
-                    x="${centerX}" 
-                    y="${labelY}" 
+                    x="${labelX}" 
+                    y="${secondaryAxisLineY - 10}" 
                     text-anchor="middle"
                     font-size="${labelFontSize}"
-                    fill="#374151"
-                    font-weight="bold"
-                >${group.label}</text>
+                    fill="#6b7280"
+                    transform="rotate(-45 ${labelX} ${secondaryAxisLineY - 10})"
+                >${secondaryLabel}</text>
             `;
-        });
+        }).join('');
     }
     
     // Labels do eixo X - apenas primeira dimensão (embaixo)
@@ -1306,7 +1220,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                                               fill="${measureConfig.color}"
                                               opacity="0.9"
                                           />
-                                          ${barHeight > 15 ? `
+                                          ${(barHeight > 15 || forceLabels) ? `
                                           <text 
                                               x="${barX + newBarWidth / 2}" 
                                               y="${barY - 5}" 
@@ -1333,49 +1247,12 @@ const renderChart = async (ctx: CustomChartContext) => {
                       
                       // Se houver duas dimensões, renderizar segundo eixo X na parte superior
                       if (secondaryDimensions.length >= 1) {
-                          const secondaryDim = secondaryDimensions[0];
-                          const secondaryAxisY = topMargin - secondaryAxisHeight + 10; // Posição do eixo X secundário
-                          
-                          // Agrupar dados por Dimensão 2 para criar grupos no segundo eixo X
-                          const groups: { [key: string]: { startIdx: number; endIdx: number; label: string } } = {};
-                          let currentGroupKey: string | null = null;
-                          
-                          chartData.forEach((item, idx) => {
-                              const secondaryLabelRaw = item.secondaryLabels[0] || '';
-                              const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
-                              
-                              if (currentGroupKey !== secondaryLabel) {
-                                  if (currentGroupKey !== null && groups[currentGroupKey]) {
-                                      groups[currentGroupKey].endIdx = idx - 1;
-                                  }
-                                  
-                                  currentGroupKey = secondaryLabel;
-                                  groups[secondaryLabel] = {
-                                      startIdx: idx,
-                                      endIdx: idx,
-                                      label: secondaryLabel
-                                  };
-                              } else {
-                                  groups[secondaryLabel].endIdx = idx;
-                              }
-                          });
-                          
-                          // Garantir que o último grupo tenha seu endIdx configurado
-                          if (currentGroupKey !== null && groups[currentGroupKey]) {
-                              groups[currentGroupKey].endIdx = chartData.length - 1;
-                          }
-                          
-                          // Renderizar o segundo eixo X no formato particionado (tipo amCharts)
-                          const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
-                          
-                          // Posição do eixo X secundário (na parte superior) - formato particionado
-                          const secondaryAxisLineY = topMargin - 20; // Linha do eixo X secundário
-                          const partitionTopY = topMargin - secondaryAxisHeight; // Linha superior da partição
-                          const partitionBottomY = topMargin - secondaryAxisHeight + 15; // Linha inferior da partição
-                          const labelY = topMargin - secondaryAxisHeight - 8; // Labels acima das partições
+                          // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
+                          const firstMeasureRowTop = topMargin;
+                          const secondaryAxisLineY = firstMeasureRowTop; // Linha do eixo X secundário na primeira linha de medida
                           
                           // Linha completa do eixo X secundário (como o primeiro eixo X)
-                          newSecondaryXAxisHtml += `
+                          newSecondaryXAxisHtml = `
                               <line 
                                   x1="${leftMargin}" 
                                   y1="${secondaryAxisLineY}" 
@@ -1386,60 +1263,23 @@ const renderChart = async (ctx: CustomChartContext) => {
                               />
                           `;
                           
-                          // Renderizar cada partição (grupo) no segundo eixo X
-                          groupEntries.forEach((group, groupIdx) => {
-                              const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing);
-                              const endX = leftMargin + group.endIdx * (newBarWidth + newBarSpacing) + newBarWidth;
-                              const centerX = (startX + endX) / 2;
+                          // Labels individuais do segundo eixo X (acima da linha, como o eixo X primário embaixo)
+                          newSecondaryXAxisLabelsHtml = chartData.map((item, idx) => {
+                              const labelX = leftMargin + idx * (newBarWidth + newBarSpacing) + newBarWidth / 2;
+                              const secondaryLabelRaw = item.secondaryLabels[0] || '';
+                              const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
                               
-                              // Linha horizontal superior da partição - conecta todas as barras do grupo
-                              newSecondaryXAxisHtml += `
-                                  <line 
-                                      x1="${startX}" 
-                                      y1="${partitionTopY}" 
-                                      x2="${endX}" 
-                                      y2="${partitionTopY}" 
-                                      stroke="#374151" 
-                                      stroke-width="2"
-                                  />
-                              `;
-                              
-                              // Linha vertical esquerda da partição
-                              newSecondaryXAxisHtml += `
-                                  <line 
-                                      x1="${startX}" 
-                                      y1="${partitionTopY}" 
-                                      x2="${startX}" 
-                                      y2="${partitionBottomY}" 
-                                      stroke="#374151" 
-                                      stroke-width="1"
-                                  />
-                              `;
-                              
-                              // Linha vertical direita da partição
-                              newSecondaryXAxisHtml += `
-                                  <line 
-                                      x1="${endX}" 
-                                      y1="${partitionTopY}" 
-                                      x2="${endX}" 
-                                      y2="${partitionBottomY}" 
-                                      stroke="#374151" 
-                                      stroke-width="1"
-                                  />
-                              `;
-                              
-                              // Label do grupo centralizado acima da partição
-                              newSecondaryXAxisLabelsHtml += `
+                              return `
                                   <text 
-                                      x="${centerX}" 
-                                      y="${labelY}" 
+                                      x="${labelX}" 
+                                      y="${secondaryAxisLineY - 10}" 
                                       text-anchor="middle"
                                       font-size="${labelFontSize}"
-                                      fill="#374151"
-                                      font-weight="bold"
-                                  >${group.label}</text>
+                                      fill="#6b7280"
+                                      transform="rotate(-45 ${labelX} ${secondaryAxisLineY - 10})"
+                                  >${secondaryLabel}</text>
                               `;
-                          });
+                          }).join('');
                           
                           // Renderizar apenas Dimensão 1 embaixo (segundo eixo X já está acima)
                           const primaryLabelsHtml = chartData.map((item, idx) => {
