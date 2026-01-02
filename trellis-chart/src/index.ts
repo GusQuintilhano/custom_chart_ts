@@ -31,6 +31,12 @@ import {
     processChartData,
     findMissingMeasures
 } from './utils/dataProcessing';
+import {
+    readChartOptions,
+    readSavedValues,
+    getSavedValue,
+    type ChartOptions
+} from './utils/options';
 import type { TypedDataPointsArray, ChartElement, ChartDataPoint } from './types/chartTypes';
 
 const renderChart = async (ctx: CustomChartContext) => {
@@ -364,56 +370,9 @@ const renderChart = async (ctx: CustomChartContext) => {
     const allVisualProps = visualProps as any;
     logger.debug('🔍 [DEBUG] visualProps completo na leitura:', JSON.stringify(allVisualProps, null, 2));
     
-    // IMPORTANTE: SEMPRE priorizar seções individuais sobre chart_options consolidado
-    // Isso garante que mudanças recentes sejam aplicadas imediatamente
-    // Hierarquia: seção individual (chart_visual, chart_dimensions, chart_divider_lines) > chart_options consolidado > default
-    const chartVisual = allVisualProps?.chart_visual || {};
-    const chartDimensions = allVisualProps?.chart_dimensions || {};
-    const chartDividerLines = allVisualProps?.chart_divider_lines || {};
-    const chartOptionsConsolidated = allVisualProps?.chart_options || allVisualProps?.chartOptions || {};
-    
-    // Função auxiliar para ler valor com hierarquia correta
-    const getValue = (sectionValue: any, consolidatedValue: any, defaultValue: any, useHasOwnProperty = true) => {
-        if (useHasOwnProperty) {
-            if (sectionValue !== undefined && sectionValue !== null) {
-                return sectionValue;
-            }
-            if (consolidatedValue !== undefined && consolidatedValue !== null) {
-                return consolidatedValue;
-            }
-        } else {
-            // Para valores que podem ser falsy (como false ou 0)
-            if (sectionValue !== undefined) {
-                return sectionValue;
-            }
-            if (consolidatedValue !== undefined) {
-                return consolidatedValue;
-            }
-        }
-        return defaultValue;
-    };
-    
-    // Construir chartOptions SEMPRE mesclando: seções individuais têm prioridade máxima
-    const chartOptions: any = {
-        // Valores de chart_visual (prioridade máxima)
-        showYAxis: getValue(chartVisual.showYAxis, chartOptionsConsolidated.showYAxis, true, true) !== false,
-        showGridLines: getValue(chartVisual.showGridLines, chartOptionsConsolidated.showGridLines, true, true) !== false,
-        measureNameRotation: getValue(chartVisual.measureNameRotation, chartOptionsConsolidated.measureNameRotation, '-90', false),
-        forceLabels: getValue(chartVisual.forceLabels, chartOptionsConsolidated.forceLabels, false, true) === true,
-        
-        // Valores de chart_divider_lines (prioridade máxima) - opções de linhas divisórias
-        dividerLinesBetweenMeasures: getValue(chartDividerLines.dividerLinesBetweenMeasures, chartOptionsConsolidated.dividerLinesBetweenMeasures, true, true) !== false,
-        dividerLinesBetweenGroups: getValue(chartDividerLines.dividerLinesBetweenGroups, chartOptionsConsolidated.dividerLinesBetweenGroups, true, true) !== false,
-        dividerLinesBetweenBars: getValue(chartDividerLines.dividerLinesBetweenBars, chartOptionsConsolidated.dividerLinesBetweenBars, false, true) === true,
-        dividerLinesColor: getValue(chartDividerLines.dividerLinesColor, chartOptionsConsolidated.dividerLinesColor, '#d1d5db', false),
-        
-        // Valores de chart_dimensions (prioridade máxima)
-        fitWidth: getValue(chartDimensions.fitWidth, chartOptionsConsolidated.fitWidth, false, true) === true,
-        fitHeight: getValue(chartDimensions.fitHeight, chartOptionsConsolidated.fitHeight, false, true) === true,
-        measureLabelSpace: getValue(chartDimensions.measureLabelSpace, chartOptionsConsolidated.measureLabelSpace, null, false), // null = usar default baseado em showYAxis
-        measureRowHeight: getValue(chartDimensions.measureRowHeight, chartOptionsConsolidated.measureRowHeight, 50, false),
-        barWidth: getValue(chartDimensions.barWidth, chartOptionsConsolidated.barWidth, 40, false),
-    };
+    // Ler e consolidar todas as opções seguindo hierarquia correta
+    // Hierarquia: seção individual > chart_options consolidado > default
+    const chartOptions: ChartOptions = readChartOptions(allVisualProps as Record<string, unknown>);
     
     logger.debug('🔍 [DEBUG] chartOptions lido (após consolidação):', JSON.stringify(chartOptions, null, 2));
     
@@ -1637,22 +1596,8 @@ const init = async () => {
             
             // Ler valores salvos - priorizar seções individuais sobre chart_options consolidado
             // Isso garante que os valores salvos sejam exibidos corretamente no editor
-            const allSavedProps = (currentVisualProps.visualProps as any) || {};
-            const savedChartVisual = allSavedProps?.chart_visual || {};
-            const savedChartDimensions = allSavedProps?.chart_dimensions || {};
-            const savedChartDividerLines = allSavedProps?.chart_divider_lines || {};
-            const savedChartOptions = allSavedProps?.chart_options || {};
-            
-            // Função auxiliar para ler valor salvo com hierarquia correta
-            const getSavedValue = (sectionValue: any, consolidatedValue: any, defaultValue: any) => {
-                if (sectionValue !== undefined) {
-                    return sectionValue;
-                }
-                if (consolidatedValue !== undefined) {
-                    return consolidatedValue;
-                }
-                return defaultValue;
-            };
+            const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
+            const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions } = readSavedValues(allSavedProps);
             
             // Seção 1: Layout e Visualização
             const chartVisualChildren: any[] = [
