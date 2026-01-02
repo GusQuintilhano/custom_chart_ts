@@ -1309,9 +1309,10 @@ const renderChart = async (ctx: CustomChartContext) => {
                           }
                           
                           // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
+                          // O eixo X secundário fica acima da primeira linha de medida, mas integrado visualmente
                           const firstMeasureRowTop = topMargin;
-                          const secondaryAxisLineY = firstMeasureRowTop;
-                          const labelY = secondaryAxisLineY - 15;
+                          const secondaryAxisLineY = firstMeasureRowTop - 5; // Linha do eixo X secundário logo acima da primeira linha
+                          const labelY = secondaryAxisLineY - 20; // Labels acima da linha com espaço adequado
                           
                           // Linha completa do eixo X secundário
                           newSecondaryXAxisHtml = `
