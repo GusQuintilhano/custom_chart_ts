@@ -72,6 +72,33 @@ export function formatDimension(value: unknown, formatType: string = 'auto'): st
         }
         
         switch (effectiveFormatType.toLowerCase()) {
+            case 'dd/mm/yyyy':
+            case 'dd/MM/yyyy':
+                return date.toLocaleDateString('pt-BR');
+            case 'dd-mm-yyyy':
+            case 'dd-MM-yyyy':
+                return date.toLocaleDateString('pt-BR').replace(/\//g, '-');
+            case 'yyyy-mm-dd':
+            case 'yyyy-MM-dd':
+                return date.toISOString().split('T')[0];
+            case 'dd/mm/yyyy hh:mm':
+            case 'dd/MM/yyyy HH:mm':
+                return date.toLocaleString('pt-BR', { 
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+            case 'dd/mm/yyyy hh:mm:ss':
+            case 'dd/MM/yyyy HH:mm:ss':
+                return date.toLocaleString('pt-BR', { 
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            case 'dia':
+                return date.toLocaleDateString('pt-BR', { weekday: 'long' });
+            case 'mês':
+                return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            case 'ano':
+                return date.toLocaleDateString('pt-BR', { year: 'numeric' });
             case 'date':
             case 'data':
                 return date.toLocaleDateString('pt-BR');
