@@ -895,22 +895,13 @@ const renderChart = async (ctx: CustomChartContext) => {
             groups[currentGroupKey].endIdx = chartData.length - 1;
         }
         
-        // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
+        // Posição do eixo X secundário (na parte superior) - labels agrupados como cabeçalhos
+        // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
         const firstMeasureRowTop = topMargin;
-        const secondaryAxisLineY = firstMeasureRowTop; // Linha do eixo X secundário na primeira linha de medida
-        const labelY = secondaryAxisLineY - 15; // Labels acima da linha
+        const labelY = firstMeasureRowTop - 20; // Labels acima da primeira linha de medida
         
-        // Linha completa do eixo X secundário
-        secondaryXAxisHtml = `
-            <line 
-                x1="${leftMargin}" 
-                y1="${secondaryAxisLineY}" 
-                x2="${leftMargin + plotAreaWidth}" 
-                y2="${secondaryAxisLineY}" 
-                stroke="#374151" 
-                stroke-width="1.5"
-            />
-        `;
+        // Não renderizar linha de eixo superior (apenas labels agrupados)
+        secondaryXAxisHtml = '';
         
         // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
         const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
@@ -919,7 +910,7 @@ const renderChart = async (ctx: CustomChartContext) => {
             const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth;
             const centerX = (startX + endX) / 2;
             
-            // Label centralizada no grupo
+            // Label centralizada no grupo (estilo cabeçalho de coluna)
             secondaryXAxisLabelsHtml += `
                 <text 
                     x="${centerX}" 
@@ -927,7 +918,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                     text-anchor="middle"
                     font-size="${labelFontSize}"
                     fill="#374151"
-                    font-weight="500"
+                    font-weight="600"
                 >${group.label}</text>
             `;
         });
@@ -1308,23 +1299,13 @@ const renderChart = async (ctx: CustomChartContext) => {
                               groups[currentGroupKey].endIdx = chartData.length - 1;
                           }
                           
-                          // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
-                          // O eixo X secundário fica acima da primeira linha de medida, mas integrado visualmente
+                          // Posição do eixo X secundário (na parte superior) - labels agrupados como cabeçalhos
+                          // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
                           const firstMeasureRowTop = topMargin;
-                          const secondaryAxisLineY = firstMeasureRowTop - 5; // Linha do eixo X secundário logo acima da primeira linha
-                          const labelY = secondaryAxisLineY - 20; // Labels acima da linha com espaço adequado
+                          const labelY = firstMeasureRowTop - 20; // Labels acima da primeira linha de medida
                           
-                          // Linha completa do eixo X secundário
-                          newSecondaryXAxisHtml = `
-                              <line 
-                                  x1="${leftMargin}" 
-                                  y1="${secondaryAxisLineY}" 
-                                  x2="${leftMargin + newPlotAreaWidth}" 
-                                  y2="${secondaryAxisLineY}" 
-                                  stroke="#374151" 
-                                  stroke-width="1.5"
-                              />
-                          `;
+                          // Não renderizar linha de eixo superior (apenas labels agrupados)
+                          newSecondaryXAxisHtml = '';
                           
                           // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
                           const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
@@ -1340,7 +1321,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                                       text-anchor="middle"
                                       font-size="${labelFontSize}"
                                       fill="#374151"
-                                      font-weight="500"
+                                      font-weight="600"
                                   >${group.label}</text>
                               `;
                           }).join('');
