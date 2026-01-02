@@ -1,38 +1,31 @@
-# Dockerfile para ambiente de desenvolvimento e produção
-# Container para servir os charts e executar builds
+# Dockerfile para deploy do Trellis Chart no Railway
+# Chart SDK customizado para ThoughtSpot
 
 FROM node:18-alpine
 
 # Metadados
 LABEL maintainer="iFood Data Visualization Team"
-LABEL description="Custom Charts para ThoughtSpot usando Muze Studio"
+LABEL description="Trellis Chart - Custom Chart SDK para ThoughtSpot"
 LABEL version="1.0.0"
-
-# Instalar Python para alguns scripts e ferramentas úteis
-RUN apk add --no-cache python3 py3-pip bash git
 
 # Configurar diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos de configuração primeiro (para cache de layers)
-COPY package*.json ./
+# Copiar arquivos do trellis-chart
+COPY trellis-chart/package*.json ./
 
-# Instalar dependências (incluindo devDependencies para builds)
+# Instalar dependências
 RUN npm ci || npm install
 
-# Copiar código fonte
-COPY . .
+# Copiar código fonte do trellis-chart
+COPY trellis-chart/ ./
 
-# Criar diretórios necessários
-RUN mkdir -p dev/charts/*/dist
+# Build do projeto
+RUN npm run build
 
-# Expor porta para servidor de desenvolvimento
-EXPOSE 8080
+# Expor porta (Railway define a porta via $PORT)
+EXPOSE 3000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8080', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
-
-# Comando padrão - servidor HTTP para servir os charts
-CMD ["npm", "run", "serve"]
+# Comando de start (usa PORT do Railway)
+CMD ["npm", "start"]
 
