@@ -917,13 +917,17 @@ const renderChart = async (ctx: CustomChartContext) => {
         // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
         // Usar uma posição fixa acima da primeira linha de medida para garantir alinhamento
         const labelY = 15; // Posição fixa no topo do SVG (dentro do topMargin)
+        const firstMeasureRowTop = topMargin;
+        const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
+        const dividerLineTop = labelY + 10; // Começar logo abaixo dos labels
+        const dividerLineBottom = lastMeasureRowTop + measureRowHeight; // Até o fim do gráfico
         
         // Não renderizar linha de eixo superior (apenas labels agrupados)
         secondaryXAxisHtml = '';
         
         // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
         const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
-        groupEntries.forEach((group) => {
+        groupEntries.forEach((group, groupIdx) => {
             // Calcular posições baseadas nas bordas do grupo (não centro das barras)
             // startX = borda esquerda da primeira barra do grupo
             const startX = leftMargin + group.startIdx * (barWidth + barSpacing);
@@ -943,6 +947,21 @@ const renderChart = async (ctx: CustomChartContext) => {
                     font-weight="600"
                 >${group.label}</text>
             `;
+            
+            // Adicionar linha divisória após cada grupo (exceto o último)
+            if (groupIdx < groupEntries.length - 1) {
+                const dividerX = endX + barSpacing / 2; // Posição entre o último item deste grupo e o primeiro do próximo
+                secondaryXAxisHtml += `
+                    <line 
+                        x1="${dividerX}" 
+                        y1="${dividerLineTop}" 
+                        x2="${dividerX}" 
+                        y2="${dividerLineBottom}" 
+                        stroke="#d1d5db" 
+                        stroke-width="1"
+                    />
+                `;
+            }
         });
     }
     
@@ -1325,13 +1344,15 @@ const renderChart = async (ctx: CustomChartContext) => {
                           // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
                           // Posição fixa no topo do SVG (dentro do topMargin)
                           const secondaryLabelY = 15;
+                          const dividerLineTop = secondaryLabelY + 10; // Começar logo abaixo dos labels
+                          const dividerLineBottom = lastMeasureRowTop + newMeasureRowHeight; // Até o fim do gráfico
                           
                           // Não renderizar linha de eixo superior (apenas labels agrupados)
                           newSecondaryXAxisHtml = '';
                           
                           // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
                           const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
-                          newSecondaryXAxisLabelsHtml = groupEntries.map((group) => {
+                          newSecondaryXAxisLabelsHtml = groupEntries.map((group, groupIdx) => {
                               // Calcular posições baseadas nas bordas do grupo (não centro das barras)
                               // startX = borda esquerda da primeira barra do grupo
                               const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing);
@@ -1340,7 +1361,7 @@ const renderChart = async (ctx: CustomChartContext) => {
                               // centerX = centro do grupo (entre as bordas)
                               const centerX = (startX + endX) / 2;
                               
-                              return `
+                              let html = `
                                   <text 
                                       x="${centerX}" 
                                       y="${secondaryLabelY}" 
@@ -1350,6 +1371,23 @@ const renderChart = async (ctx: CustomChartContext) => {
                                       font-weight="600"
                                   >${group.label}</text>
                               `;
+                              
+                              // Adicionar linha divisória após cada grupo (exceto o último)
+                              if (groupIdx < groupEntries.length - 1) {
+                                  const dividerX = endX + newBarSpacing / 2; // Posição entre o último item deste grupo e o primeiro do próximo
+                                  html += `
+                                      <line 
+                                          x1="${dividerX}" 
+                                          y1="${dividerLineTop}" 
+                                          x2="${dividerX}" 
+                                          y2="${dividerLineBottom}" 
+                                          stroke="#d1d5db" 
+                                          stroke-width="1"
+                                      />
+                                  `;
+                              }
+                              
+                              return html;
                           }).join('');
                           
                           // Renderizar apenas Dimensão 1 embaixo (segundo eixo X já está acima)
