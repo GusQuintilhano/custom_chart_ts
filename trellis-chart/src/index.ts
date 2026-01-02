@@ -37,6 +37,13 @@ import {
     getSavedValue,
     type ChartOptions
 } from './utils/options';
+import { formatValue, formatDimension } from './utils/formatters';
+import { valueToY, calculateMeasureRowTop, calculateLastMeasureRowTop } from './utils/calculations';
+import { groupDataBySecondaryDimension, sortGroupsByStartIndex } from './utils/grouping';
+import { renderLineChart, renderBars, type MeasureConfig } from './rendering/chartElements';
+import { renderYAxes, renderXAxisLabels, renderXAxis, type MeasureRange } from './rendering/axes';
+import { renderDividerLinesBetweenMeasures, renderDividerLinesBetweenBars } from './rendering/dividerLines';
+import { renderSecondaryXAxis } from './rendering/secondaryAxis';
 import type { TypedDataPointsArray, ChartElement, ChartDataPoint } from './types/chartTypes';
 
 const renderChart = async (ctx: CustomChartContext) => {
@@ -664,14 +671,7 @@ const renderChart = async (ctx: CustomChartContext) => {
         logger.debug(`🎨 [DEBUG] Medida ${idx} (${range.measure.name}): min=${range.min}, max=${range.max}, range=${range.max - range.min}`);
     });
 
-    // Função para converter valor de uma medida em coordenada Y dentro de sua linha
-    // SVG: Y aumenta para baixo, então valor máximo fica no topo da linha (menor Y)
-    const valueToY = (value: number, minValue: number, maxValue: number, measureRowTop: number, measureRowHeight: number) => {
-        if (maxValue === minValue) return measureRowTop + measureRowHeight / 2;
-        const ratio = (value - minValue) / (maxValue - minValue);
-        // Valores maiores no topo da linha (menor coordenada Y), menores no fundo (maior coordenada Y)
-        return measureRowTop + (1 - ratio) * measureRowHeight;
-    };
+    // Funções de renderização agora importadas de rendering/
 
     // Renderizar barras ou linhas - cada medida em sua própria linha horizontal
     const allChartElementsHtml = measureCols.map((measure, measureIdx) => {
@@ -770,206 +770,98 @@ const renderChart = async (ctx: CustomChartContext) => {
         }
     }).join('');
 
-    // Renderizar eixos Y individuais para cada medida (cada uma em sua própria linha)
-    const yAxesHtml = measureRanges.map((range, measureIdx) => {
-        const measureRowTop = topMargin + measureIdx * (measureRowHeight + spacingBetweenMeasures);
-        const axisX = leftMargin - 10;
-
-        // Linha do eixo Y para esta medida
-        const yAxisLine = `
-            <line 
-                x1="${axisX}" 
-                y1="${measureRowTop}" 
-                x2="${axisX}" 
-                y2="${measureRowTop + measureRowHeight}" 
-                stroke="#374151" 
-                stroke-width="1.5"
-            />
-        `;
-
-        // Título da medida (sempre mostrar) - com rotação configurável
-        // Centralizar o título no espaço configurável para as labels
-        const titleX = measureLabelSpace / 2;
-        const titleY = measureRowTop + measureRowHeight / 2;
-        const measureTitle = `
-            <text 
-                x="${titleX}" 
-                y="${titleY}" 
-                text-anchor="middle"
-                font-size="${measureTitleFontSize}"
-                fill="#374151"
-                font-weight="500"
-                transform="rotate(${measureNameRotation} ${titleX} ${titleY})"
-            >${range.measure.name}</text>
-        `;
-
-        // Se o eixo Y estiver oculto, mostrar apenas o título da medida
-        if (!showYAxis) {
-            return measureTitle;
-        }
-
-        return yAxisLine + measureTitle;
-    }).join('');
+    // Renderizar eixos Y individuais para cada medida
+    const yAxesHtml = renderYAxes(
+        measureRanges,
+        measureCols,
+        topMargin,
+        measureRowHeight,
+        spacingBetweenMeasures,
+        leftMargin,
+        measureLabelSpace,
+        measureTitleFontSize,
+        measureNameRotation,
+        showYAxis
+    );
 
     // Linhas divisórias horizontais entre medidas (se habilitado)
-    let dividerLinesBetweenMeasuresHtml = '';
-    if (showGridLines && dividerLinesBetweenMeasures && measureCols.length > 1) {
-        for (let measureIdx = 0; measureIdx < measureCols.length - 1; measureIdx++) {
-            const measureRowTop = topMargin + measureIdx * (measureRowHeight + spacingBetweenMeasures);
-            const dividerY = measureRowTop + measureRowHeight + spacingBetweenMeasures / 2;
-            dividerLinesBetweenMeasuresHtml += `
-                <line 
-                    x1="${leftMargin}" 
-                    y1="${dividerY}" 
-                    x2="${leftMargin + plotAreaWidth}" 
-                    y2="${dividerY}" 
-                    stroke="${dividerLinesColor}" 
-                    stroke-width="1"
-                />
-            `;
-        }
-    }
+    const dividerLinesBetweenMeasuresHtml = (showGridLines && dividerLinesBetweenMeasures)
+        ? renderDividerLinesBetweenMeasures(
+            measureCols,
+            topMargin,
+            measureRowHeight,
+            spacingBetweenMeasures,
+            leftMargin,
+            plotAreaWidth,
+            dividerLinesColor
+          )
+        : '';
     
     // Linhas divisórias verticais entre barras (se habilitado)
-    let dividerLinesBetweenBarsHtml = '';
-    if (showGridLines && dividerLinesBetweenBars && chartData.length > 1) {
-        for (let barIdx = 0; barIdx < chartData.length - 1; barIdx++) {
-            const barX = leftMargin + (barIdx + 1) * (barWidth + barSpacing) - barSpacing / 2;
-            const dividerStartY = topMargin;
-            const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
-            const dividerEndY = lastMeasureRowTop + measureRowHeight;
-            dividerLinesBetweenBarsHtml += `
-                <line 
-                    x1="${barX}" 
-                    y1="${dividerStartY}" 
-                    x2="${barX}" 
-                    y2="${dividerEndY}" 
-                    stroke="${dividerLinesColor}" 
-                    stroke-width="1"
-                />
-            `;
-        }
-    }
+    const dividerLinesBetweenBarsHtml = (showGridLines && dividerLinesBetweenBars)
+        ? renderDividerLinesBetweenBars(
+            chartData.length,
+            leftMargin,
+            barWidth,
+            barSpacing,
+            topMargin,
+            measureCols,
+            measureRowHeight,
+            spacingBetweenMeasures,
+            dividerLinesColor
+          )
+        : '';
 
     // Segundo eixo X (eixo X secundário) - segunda dimensão na parte superior
-    // Agrupa categorias secundárias (como no Trellis Chart) - uma label por grupo
     let secondaryXAxisHtml = '';
     let secondaryXAxisLabelsHtml = '';
     
     if (hasSecondaryDimension) {
-        // Agrupar dados por dimensão secundária para criar grupos
-        const groups: { [key: string]: { startIdx: number; endIdx: number; label: string } } = {};
-        let currentGroupKey: string | null = null;
-        
-        chartData.forEach((item, idx) => {
-            const secondaryLabelRaw = item.secondaryLabels[0] || '';
-            const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
-            
-            if (currentGroupKey !== secondaryLabel) {
-                // Finalizar grupo anterior
-                if (currentGroupKey !== null && groups[currentGroupKey]) {
-                    groups[currentGroupKey].endIdx = idx - 1;
-                }
-                // Iniciar novo grupo
-                currentGroupKey = secondaryLabel;
-                groups[secondaryLabel] = {
-                    startIdx: idx,
-                    endIdx: idx,
-                    label: secondaryLabel
-                };
-            } else {
-                // Continuar grupo atual
-                groups[secondaryLabel].endIdx = idx;
-            }
-        });
-        
-        // Garantir que o último grupo tenha seu endIdx configurado
-        if (currentGroupKey !== null && groups[currentGroupKey]) {
-            groups[currentGroupKey].endIdx = chartData.length - 1;
-        }
-        
-        // Posição do eixo X secundário (na parte superior) - labels agrupados como cabeçalhos
-        // Similar ao exemplo: labels acima da área de plotagem, centralizados nos grupos
-        // Usar uma posição fixa acima da primeira linha de medida para garantir alinhamento
-        const labelY = 15; // Posição fixa no topo do SVG (dentro do topMargin)
-        const firstMeasureRowTop = topMargin;
-        const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
-        const dividerLineTop = labelY + 20; // Começar abaixo dos labels (aumentado para não sobrepor)
-        const dividerLineBottom = lastMeasureRowTop + measureRowHeight; // Até o fim do gráfico
-        
-        // Não renderizar linha de eixo superior (apenas labels agrupados)
-        secondaryXAxisHtml = '';
-        
-        // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
-        const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
-        groupEntries.forEach((group, groupIdx) => {
-            // Calcular posições baseadas nas bordas do grupo (não centro das barras)
-            // startX = borda esquerda da primeira barra do grupo
-            const startX = leftMargin + group.startIdx * (barWidth + barSpacing);
-            // endX = borda direita da última barra do grupo
-            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth;
-            // centerX = centro do grupo (entre as bordas)
-            const centerX = (startX + endX) / 2;
-            
-            // Label centralizada no grupo (estilo cabeçalho de coluna)
-            secondaryXAxisLabelsHtml += `
-                <text 
-                    x="${centerX}" 
-                    y="${labelY}" 
-                    text-anchor="middle"
-                    font-size="${labelFontSize}"
-                    fill="#374151"
-                    font-weight="600"
-                >${group.label}</text>
-            `;
-            
-            // Adicionar linha divisória após cada grupo (exceto o último, se habilitado)
-            if (groupIdx < groupEntries.length - 1 && showGridLines && dividerLinesBetweenGroups) {
-                const dividerX = endX + barSpacing / 2; // Posição entre o último item deste grupo e o primeiro do próximo
-                secondaryXAxisHtml += `
-                    <line 
-                        x1="${dividerX}" 
-                        y1="${dividerLineTop}" 
-                        x2="${dividerX}" 
-                        y2="${dividerLineBottom}" 
-                        stroke="${dividerLinesColor}" 
-                        stroke-width="1"
-                    />
-                `;
-            }
-        });
+        const secondaryAxis = renderSecondaryXAxis(
+            chartData,
+            leftMargin,
+            barWidth,
+            barSpacing,
+            measureCols,
+            topMargin,
+            measureRowHeight,
+            spacingBetweenMeasures,
+            labelFontSize,
+            dividerLinesColor,
+            showGridLines,
+            dividerLinesBetweenGroups,
+            secondaryDateFormat
+        );
+        secondaryXAxisHtml = secondaryAxis.axisHtml;
+        secondaryXAxisLabelsHtml = secondaryAxis.labelsHtml;
     }
     
     // Labels do eixo X - apenas primeira dimensão (embaixo)
-    const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
+    const lastMeasureRowTop = calculateLastMeasureRowTop(
+        measureCols.length,
+        topMargin,
+        measureRowHeight,
+        spacingBetweenMeasures
+    );
     
-    const xAxisLabels = chartData.map((item, idx) => {
-        const labelX = leftMargin + idx * (barWidth + barSpacing) + barWidth / 2;
-        const primaryLabel = formatDimension(item.primaryLabel, primaryDateFormat);
-        
-        return `
-            <text 
-                x="${labelX}" 
-                y="${lastMeasureRowTop + measureRowHeight + 30}" 
-                text-anchor="middle"
-                font-size="${labelFontSize}"
-                fill="#374151"
-                transform="rotate(-45 ${labelX} ${lastMeasureRowTop + measureRowHeight + 30})"
-            >${primaryLabel}</text>
-        `;
-    }).join('');
+    const xAxisLabels = renderXAxisLabels(
+        chartData,
+        leftMargin,
+        barWidth,
+        barSpacing,
+        lastMeasureRowTop,
+        measureRowHeight,
+        labelFontSize,
+        primaryDateFormat
+    );
 
     // Eixo X - apenas na última linha
-    const xAxis = `
-        <line 
-            x1="${leftMargin}" 
-            y1="${lastMeasureRowTop + measureRowHeight}" 
-            x2="${leftMargin + plotAreaWidth}" 
-            y2="${lastMeasureRowTop + measureRowHeight}" 
-            stroke="#374151" 
-            stroke-width="1.5"
-        />
-    `;
+    const xAxis = renderXAxis(
+        leftMargin,
+        plotAreaWidth,
+        lastMeasureRowTop,
+        measureRowHeight
+    );
 
       // Ajustar estilo baseado nas configurações fitWidth e fitHeight
       // - Apenas fitWidth ativado: scroll vertical permitido, sem scroll horizontal
