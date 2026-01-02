@@ -16,8 +16,6 @@ WORKDIR /app
 
 # Copiar arquivos de configuração primeiro (para cache de layers)
 COPY package*.json ./
-COPY .gitignore ./
-COPY .editorconfig ./
 
 # Instalar dependências (incluindo devDependencies para builds)
 RUN npm ci || npm install
