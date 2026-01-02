@@ -859,16 +859,48 @@ const renderChart = async (ctx: CustomChartContext) => {
     }).join('');
 
     // Segundo eixo X (eixo X secundário) - segunda dimensão na parte superior
-    // Integrado ao gráfico como o eixo X primário: linha horizontal + labels individuais
+    // Agrupa categorias secundárias (como no Trellis Chart) - uma label por grupo
     let secondaryXAxisHtml = '';
     let secondaryXAxisLabelsHtml = '';
     
     if (hasSecondaryDimension) {
+        // Agrupar dados por dimensão secundária para criar grupos
+        const groups: { [key: string]: { startIdx: number; endIdx: number; label: string } } = {};
+        let currentGroupKey: string | null = null;
+        
+        chartData.forEach((item, idx) => {
+            const secondaryLabelRaw = item.secondaryLabels[0] || '';
+            const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
+            
+            if (currentGroupKey !== secondaryLabel) {
+                // Finalizar grupo anterior
+                if (currentGroupKey !== null && groups[currentGroupKey]) {
+                    groups[currentGroupKey].endIdx = idx - 1;
+                }
+                // Iniciar novo grupo
+                currentGroupKey = secondaryLabel;
+                groups[secondaryLabel] = {
+                    startIdx: idx,
+                    endIdx: idx,
+                    label: secondaryLabel
+                };
+            } else {
+                // Continuar grupo atual
+                groups[secondaryLabel].endIdx = idx;
+            }
+        });
+        
+        // Garantir que o último grupo tenha seu endIdx configurado
+        if (currentGroupKey !== null && groups[currentGroupKey]) {
+            groups[currentGroupKey].endIdx = chartData.length - 1;
+        }
+        
         // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
         const firstMeasureRowTop = topMargin;
         const secondaryAxisLineY = firstMeasureRowTop; // Linha do eixo X secundário na primeira linha de medida
+        const labelY = secondaryAxisLineY - 15; // Labels acima da linha
         
-        // Linha completa do eixo X secundário (como o primeiro eixo X)
+        // Linha completa do eixo X secundário
         secondaryXAxisHtml = `
             <line 
                 x1="${leftMargin}" 
@@ -880,23 +912,25 @@ const renderChart = async (ctx: CustomChartContext) => {
             />
         `;
         
-        // Labels individuais do segundo eixo X (acima da linha, como o eixo X primário embaixo)
-        secondaryXAxisLabelsHtml = chartData.map((item, idx) => {
-            const labelX = leftMargin + idx * (barWidth + barSpacing) + barWidth / 2;
-            const secondaryLabelRaw = item.secondaryLabels[0] || '';
-            const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
+        // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
+        const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
+        groupEntries.forEach((group) => {
+            const startX = leftMargin + group.startIdx * (barWidth + barSpacing);
+            const endX = leftMargin + group.endIdx * (barWidth + barSpacing) + barWidth;
+            const centerX = (startX + endX) / 2;
             
-            return `
+            // Label centralizada no grupo
+            secondaryXAxisLabelsHtml += `
                 <text 
-                    x="${labelX}" 
-                    y="${secondaryAxisLineY - 10}" 
+                    x="${centerX}" 
+                    y="${labelY}" 
                     text-anchor="middle"
                     font-size="${labelFontSize}"
-                    fill="#6b7280"
-                    transform="rotate(-45 ${labelX} ${secondaryAxisLineY - 10})"
-                >${secondaryLabel}</text>
+                    fill="#374151"
+                    font-weight="500"
+                >${group.label}</text>
             `;
-        }).join('');
+        });
     }
     
     // Labels do eixo X - apenas primeira dimensão (embaixo)
@@ -1247,11 +1281,39 @@ const renderChart = async (ctx: CustomChartContext) => {
                       
                       // Se houver duas dimensões, renderizar segundo eixo X na parte superior
                       if (secondaryDimensions.length >= 1) {
+                          // Agrupar dados por dimensão secundária para criar grupos
+                          const groups: { [key: string]: { startIdx: number; endIdx: number; label: string } } = {};
+                          let currentGroupKey: string | null = null;
+                          
+                          chartData.forEach((item, idx) => {
+                              const secondaryLabelRaw = item.secondaryLabels[0] || '';
+                              const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
+                              
+                              if (currentGroupKey !== secondaryLabel) {
+                                  if (currentGroupKey !== null && groups[currentGroupKey]) {
+                                      groups[currentGroupKey].endIdx = idx - 1;
+                                  }
+                                  currentGroupKey = secondaryLabel;
+                                  groups[secondaryLabel] = {
+                                      startIdx: idx,
+                                      endIdx: idx,
+                                      label: secondaryLabel
+                                  };
+                              } else {
+                                  groups[secondaryLabel].endIdx = idx;
+                              }
+                          });
+                          
+                          if (currentGroupKey !== null && groups[currentGroupKey]) {
+                              groups[currentGroupKey].endIdx = chartData.length - 1;
+                          }
+                          
                           // Posição do eixo X secundário (na parte superior) - integrado ao gráfico
                           const firstMeasureRowTop = topMargin;
-                          const secondaryAxisLineY = firstMeasureRowTop; // Linha do eixo X secundário na primeira linha de medida
+                          const secondaryAxisLineY = firstMeasureRowTop;
+                          const labelY = secondaryAxisLineY - 15;
                           
-                          // Linha completa do eixo X secundário (como o primeiro eixo X)
+                          // Linha completa do eixo X secundário
                           newSecondaryXAxisHtml = `
                               <line 
                                   x1="${leftMargin}" 
@@ -1263,21 +1325,22 @@ const renderChart = async (ctx: CustomChartContext) => {
                               />
                           `;
                           
-                          // Labels individuais do segundo eixo X (acima da linha, como o eixo X primário embaixo)
-                          newSecondaryXAxisLabelsHtml = chartData.map((item, idx) => {
-                              const labelX = leftMargin + idx * (newBarWidth + newBarSpacing) + newBarWidth / 2;
-                              const secondaryLabelRaw = item.secondaryLabels[0] || '';
-                              const secondaryLabel = formatDimension(secondaryLabelRaw, secondaryDateFormat);
+                          // Renderizar labels agrupadas (uma por grupo, centralizada no grupo)
+                          const groupEntries = Object.values(groups).sort((a, b) => a.startIdx - b.startIdx);
+                          newSecondaryXAxisLabelsHtml = groupEntries.map((group) => {
+                              const startX = leftMargin + group.startIdx * (newBarWidth + newBarSpacing);
+                              const endX = leftMargin + group.endIdx * (newBarWidth + newBarSpacing) + newBarWidth;
+                              const centerX = (startX + endX) / 2;
                               
                               return `
                                   <text 
-                                      x="${labelX}" 
-                                      y="${secondaryAxisLineY - 10}" 
+                                      x="${centerX}" 
+                                      y="${labelY}" 
                                       text-anchor="middle"
                                       font-size="${labelFontSize}"
-                                      fill="#6b7280"
-                                      transform="rotate(-45 ${labelX} ${secondaryAxisLineY - 10})"
-                                  >${secondaryLabel}</text>
+                                      fill="#374151"
+                                      font-weight="500"
+                                  >${group.label}</text>
                               `;
                           }).join('');
                           
