@@ -366,49 +366,53 @@ const renderChart = async (ctx: CustomChartContext) => {
     
     // IMPORTANTE: SEMPRE priorizar seções individuais sobre chart_options consolidado
     // Isso garante que mudanças recentes sejam aplicadas imediatamente
+    // Hierarquia: seção individual (chart_visual, chart_dimensions, chart_divider_lines) > chart_options consolidado > default
     const chartVisual = allVisualProps?.chart_visual || {};
     const chartDimensions = allVisualProps?.chart_dimensions || {};
+    const chartDividerLines = allVisualProps?.chart_divider_lines || {};
     const chartOptionsConsolidated = allVisualProps?.chart_options || allVisualProps?.chartOptions || {};
+    
+    // Função auxiliar para ler valor com hierarquia correta
+    const getValue = (sectionValue: any, consolidatedValue: any, defaultValue: any, useHasOwnProperty = true) => {
+        if (useHasOwnProperty) {
+            if (sectionValue !== undefined && sectionValue !== null) {
+                return sectionValue;
+            }
+            if (consolidatedValue !== undefined && consolidatedValue !== null) {
+                return consolidatedValue;
+            }
+        } else {
+            // Para valores que podem ser falsy (como false ou 0)
+            if (sectionValue !== undefined) {
+                return sectionValue;
+            }
+            if (consolidatedValue !== undefined) {
+                return consolidatedValue;
+            }
+        }
+        return defaultValue;
+    };
     
     // Construir chartOptions SEMPRE mesclando: seções individuais têm prioridade máxima
     const chartOptions: any = {
         // Valores de chart_visual (prioridade máxima)
-        showYAxis: chartVisual.hasOwnProperty('showYAxis') 
-            ? chartVisual.showYAxis !== false 
-            : (chartOptionsConsolidated.hasOwnProperty('showYAxis') ? chartOptionsConsolidated.showYAxis !== false : true),
-        showGridLines: chartVisual.hasOwnProperty('showGridLines')
-            ? chartVisual.showGridLines !== false
-            : (chartOptionsConsolidated.hasOwnProperty('showGridLines') ? chartOptionsConsolidated.showGridLines !== false : true),
-        dividerLinesBetweenMeasures: chartVisual.hasOwnProperty('dividerLinesBetweenMeasures')
-            ? chartVisual.dividerLinesBetweenMeasures !== false
-            : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenMeasures') ? chartOptionsConsolidated.dividerLinesBetweenMeasures !== false : true),
-        dividerLinesBetweenGroups: chartVisual.hasOwnProperty('dividerLinesBetweenGroups')
-            ? chartVisual.dividerLinesBetweenGroups !== false
-            : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenGroups') ? chartOptionsConsolidated.dividerLinesBetweenGroups !== false : true),
-        dividerLinesBetweenBars: chartVisual.hasOwnProperty('dividerLinesBetweenBars')
-            ? chartVisual.dividerLinesBetweenBars !== false
-            : (chartOptionsConsolidated.hasOwnProperty('dividerLinesBetweenBars') ? chartOptionsConsolidated.dividerLinesBetweenBars !== false : false),
-        dividerLinesColor: chartVisual.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db',
-        measureNameRotation: chartVisual.measureNameRotation || chartOptionsConsolidated.measureNameRotation || '0',
-        forceLabels: chartVisual.hasOwnProperty('forceLabels')
-            ? chartVisual.forceLabels
-            : (chartOptionsConsolidated.hasOwnProperty('forceLabels') ? chartOptionsConsolidated.forceLabels : false),
+        showYAxis: getValue(chartVisual.showYAxis, chartOptionsConsolidated.showYAxis, true, true) !== false,
+        showGridLines: getValue(chartVisual.showGridLines, chartOptionsConsolidated.showGridLines, true, true) !== false,
+        measureNameRotation: getValue(chartVisual.measureNameRotation, chartOptionsConsolidated.measureNameRotation, '-90', false),
+        forceLabels: getValue(chartVisual.forceLabels, chartOptionsConsolidated.forceLabels, false, true) === true,
+        
+        // Valores de chart_divider_lines (prioridade máxima) - opções de linhas divisórias
+        dividerLinesBetweenMeasures: getValue(chartDividerLines.dividerLinesBetweenMeasures, chartOptionsConsolidated.dividerLinesBetweenMeasures, true, true) !== false,
+        dividerLinesBetweenGroups: getValue(chartDividerLines.dividerLinesBetweenGroups, chartOptionsConsolidated.dividerLinesBetweenGroups, true, true) !== false,
+        dividerLinesBetweenBars: getValue(chartDividerLines.dividerLinesBetweenBars, chartOptionsConsolidated.dividerLinesBetweenBars, false, true) === true,
+        dividerLinesColor: getValue(chartDividerLines.dividerLinesColor, chartOptionsConsolidated.dividerLinesColor, '#d1d5db', false),
+        
         // Valores de chart_dimensions (prioridade máxima)
-        fitWidth: chartDimensions.hasOwnProperty('fitWidth')
-            ? chartDimensions.fitWidth
-            : (chartOptionsConsolidated.hasOwnProperty('fitWidth') ? chartOptionsConsolidated.fitWidth : false),
-        fitHeight: chartDimensions.hasOwnProperty('fitHeight')
-            ? chartDimensions.fitHeight
-            : (chartOptionsConsolidated.hasOwnProperty('fitHeight') ? chartOptionsConsolidated.fitHeight : false),
-        measureLabelSpace: chartDimensions.hasOwnProperty('measureLabelSpace')
-            ? chartDimensions.measureLabelSpace
-            : (chartOptionsConsolidated.hasOwnProperty('measureLabelSpace') ? chartOptionsConsolidated.measureLabelSpace : 150),
-        measureRowHeight: chartDimensions.hasOwnProperty('measureRowHeight')
-            ? chartDimensions.measureRowHeight
-            : (chartOptionsConsolidated.hasOwnProperty('measureRowHeight') ? chartOptionsConsolidated.measureRowHeight : 100),
-        barWidth: chartDimensions.hasOwnProperty('barWidth')
-            ? chartDimensions.barWidth
-            : (chartOptionsConsolidated.hasOwnProperty('barWidth') ? chartOptionsConsolidated.barWidth : 50),
+        fitWidth: getValue(chartDimensions.fitWidth, chartOptionsConsolidated.fitWidth, false, true) === true,
+        fitHeight: getValue(chartDimensions.fitHeight, chartOptionsConsolidated.fitHeight, false, true) === true,
+        measureLabelSpace: getValue(chartDimensions.measureLabelSpace, chartOptionsConsolidated.measureLabelSpace, null, false), // null = usar default baseado em showYAxis
+        measureRowHeight: getValue(chartDimensions.measureRowHeight, chartOptionsConsolidated.measureRowHeight, 50, false),
+        barWidth: getValue(chartDimensions.barWidth, chartOptionsConsolidated.barWidth, 40, false),
     };
     
     logger.debug('🔍 [DEBUG] chartOptions lido (após consolidação):', JSON.stringify(chartOptions, null, 2));
@@ -1631,8 +1635,24 @@ const init = async () => {
             const defaultColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#06b6d4', '#84cc16'];
             const elements: any[] = [];
             
-            // Seção para opções globais do gráfico
-            const savedChartOptions = (currentVisualProps.visualProps as any)?.chart_options || {};
+            // Ler valores salvos - priorizar seções individuais sobre chart_options consolidado
+            // Isso garante que os valores salvos sejam exibidos corretamente no editor
+            const allSavedProps = (currentVisualProps.visualProps as any) || {};
+            const savedChartVisual = allSavedProps?.chart_visual || {};
+            const savedChartDimensions = allSavedProps?.chart_dimensions || {};
+            const savedChartDividerLines = allSavedProps?.chart_divider_lines || {};
+            const savedChartOptions = allSavedProps?.chart_options || {};
+            
+            // Função auxiliar para ler valor salvo com hierarquia correta
+            const getSavedValue = (sectionValue: any, consolidatedValue: any, defaultValue: any) => {
+                if (sectionValue !== undefined) {
+                    return sectionValue;
+                }
+                if (consolidatedValue !== undefined) {
+                    return consolidatedValue;
+                }
+                return defaultValue;
+            };
             
             // Seção 1: Layout e Visualização
             const chartVisualChildren: any[] = [
@@ -1640,13 +1660,13 @@ const init = async () => {
                     type: 'toggle',
                     key: 'showYAxis',
                     label: 'Mostrar Eixo Y',
-                    defaultValue: savedChartOptions?.showYAxis !== false, // Default: true
+                    defaultValue: getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false,
                 },
                 {
                     type: 'toggle',
                     key: 'showGridLines',
                     label: 'Mostrar Linhas Divisórias',
-                    defaultValue: savedChartOptions?.showGridLines !== false, // Default: true
+                    defaultValue: getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false,
                 },
             ];
             
@@ -1656,7 +1676,7 @@ const init = async () => {
                     type: 'dropdown',
                     key: 'measureNameRotation',
                     label: 'Rotação do Nome da Medida',
-                    defaultValue: savedChartOptions?.measureNameRotation || '-90',
+                    defaultValue: getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
                     values: [
                         '-90',
                         '0',
@@ -1669,7 +1689,7 @@ const init = async () => {
                     type: 'toggle',
                     key: 'forceLabels',
                     label: 'Forçar Labels',
-                    defaultValue: savedChartOptions?.forceLabels || false, // Default: false
+                    defaultValue: getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
                 }
             );
             
@@ -1682,7 +1702,8 @@ const init = async () => {
             });
             
             // Seção de Linhas Divisórias (subgrupo condicional)
-            if (savedChartOptions?.showGridLines !== false) {
+            const showGridLinesValue = getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
+            if (showGridLinesValue) {
                 elements.push({
                     type: 'section',
                     key: 'chart_divider_lines',
@@ -1693,31 +1714,33 @@ const init = async () => {
                             type: 'toggle',
                             key: 'dividerLinesBetweenMeasures',
                             label: 'Linhas entre Medidas',
-                            defaultValue: savedChartOptions?.dividerLinesBetweenMeasures !== false, // Default: true
+                            defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false,
                         },
                         {
                             type: 'toggle',
                             key: 'dividerLinesBetweenGroups',
                             label: 'Linhas entre Grupos',
-                            defaultValue: savedChartOptions?.dividerLinesBetweenGroups !== false, // Default: true
+                            defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false,
                         },
                         {
                             type: 'toggle',
                             key: 'dividerLinesBetweenBars',
                             label: 'Linhas entre Barras',
-                            defaultValue: savedChartOptions?.dividerLinesBetweenBars || false, // Default: false
+                            defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true,
                         },
                         {
                             type: 'text',
                             key: 'dividerLinesColor',
                             label: 'Cor das Linhas Divisórias',
-                            defaultValue: savedChartOptions?.dividerLinesColor || '#d1d5db',
+                            defaultValue: getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db'),
                         },
                     ],
                 });
             }
             
             // Seção 2: Dimensões e Tamanhos
+            const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
+            const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
             elements.push({
                 type: 'section',
                 key: 'chart_dimensions',
@@ -1728,33 +1751,33 @@ const init = async () => {
                         type: 'toggle',
                         key: 'fitWidth',
                         label: 'Ajustar a 100% da Largura',
-                        defaultValue: savedChartOptions?.fitWidth || false, // Default: false
+                        defaultValue: savedFitWidth,
                     },
                     {
                         type: 'toggle',
                         key: 'fitHeight',
                         label: 'Ajustar a 100% da Altura',
-                        defaultValue: savedChartOptions?.fitHeight || false, // Default: false
+                        defaultValue: getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true,
                     },
                     {
                         type: 'number',
                         key: 'measureLabelSpace',
                         label: 'Espaço das Labels das Medidas (px)',
-                        defaultValue: savedChartOptions?.measureLabelSpace ?? (savedChartOptions?.showYAxis !== false ? 120 : 60),
+                        defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60),
                     },
                     // Campo de largura da barra - só aparece se fitWidth não está ativo
-                    ...(savedChartOptions?.fitWidth ? [] : [{
+                    ...(savedFitWidth ? [] : [{
                         type: 'number',
                         key: 'barWidth',
                         label: 'Largura da Barra (px)',
-                        defaultValue: savedChartOptions?.barWidth ?? 40,
+                        defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40),
                     }]),
                     // Campo de altura da linha - só aparece se fitHeight não está ativo
-                    ...(savedChartOptions?.fitHeight ? [] : [{
+                    ...(getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true ? [] : [{
                         type: 'number',
                         key: 'measureRowHeight',
                         label: 'Altura da Linha (px)',
-                        defaultValue: savedChartOptions?.measureRowHeight ?? 50,
+                        defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50),
                     }]),
                 ],
             });
