@@ -72,13 +72,19 @@ function createMeasureColumnSettings(
                     key: 'format',
                     label: 'Formato do Número',
                     defaultValue: savedConfig?.format || 'decimal',
-                    values: ['decimal', 'porcentagem', 'moeda', 'científico', 'inteiro'],
+                    values: ['decimal', 'porcentagem', 'moeda', 'cientifico', 'inteiro'],
                 },
                 {
                     type: 'number',
                     key: 'decimals',
                     label: 'Casas Decimais',
                     defaultValue: savedConfig?.decimals ?? 2,
+                },
+                {
+                    type: 'toggle',
+                    key: 'useThousandsSeparator',
+                    label: 'Usar Separador de Milhares',
+                    defaultValue: savedConfig?.useThousandsSeparator !== false,
                 },
             ],
         };
@@ -187,6 +193,7 @@ function createEditorSections(
     // Seção de Linhas Divisórias (subgrupo condicional)
     const showGridLinesValue = getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
     if (showGridLinesValue) {
+        const defaultDividerColor = getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db');
         elements.push({
             type: 'section',
             key: 'chart_divider_lines',
@@ -200,10 +207,36 @@ function createEditorSections(
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false,
                 },
                 {
+                    type: 'colorpicker',
+                    key: 'dividerLinesBetweenMeasuresColor',
+                    label: 'Cor - Linhas entre Medidas',
+                    selectorType: 'COLOR',
+                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasuresColor, savedChartOptions.dividerLinesBetweenMeasuresColor, defaultDividerColor),
+                },
+                {
+                    type: 'number',
+                    key: 'dividerLinesBetweenMeasuresWidth',
+                    label: 'Espessura - Linhas entre Medidas (px)',
+                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasuresWidth, savedChartOptions.dividerLinesBetweenMeasuresWidth, 1) ?? 1,
+                },
+                {
                     type: 'toggle',
                     key: 'dividerLinesBetweenGroups',
                     label: 'Linhas entre Grupos',
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'dividerLinesBetweenGroupsColor',
+                    label: 'Cor - Linhas entre Grupos',
+                    selectorType: 'COLOR',
+                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenGroupsColor, savedChartOptions.dividerLinesBetweenGroupsColor, defaultDividerColor),
+                },
+                {
+                    type: 'number',
+                    key: 'dividerLinesBetweenGroupsWidth',
+                    label: 'Espessura - Linhas entre Grupos (px)',
+                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenGroupsWidth, savedChartOptions.dividerLinesBetweenGroupsWidth, 1) ?? 1,
                 },
                 {
                     type: 'toggle',
@@ -212,10 +245,17 @@ function createEditorSections(
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true,
                 },
                 {
-                    type: 'text',
-                    key: 'dividerLinesColor',
-                    label: 'Cor das Linhas Divisórias',
-                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db'),
+                    type: 'colorpicker',
+                    key: 'dividerLinesBetweenBarsColor',
+                    label: 'Cor - Linhas entre Barras',
+                    selectorType: 'COLOR',
+                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBarsColor, savedChartOptions.dividerLinesBetweenBarsColor, defaultDividerColor),
+                },
+                {
+                    type: 'number',
+                    key: 'dividerLinesBetweenBarsWidth',
+                    label: 'Espessura - Linhas entre Barras (px)',
+                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBarsWidth, savedChartOptions.dividerLinesBetweenBarsWidth, 1) ?? 1,
                 },
             ],
         });

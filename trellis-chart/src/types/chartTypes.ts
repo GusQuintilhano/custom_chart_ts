@@ -78,6 +78,7 @@ export interface MeasureConfig {
     showLabel?: boolean;
     decimals?: number;
     chartType?: string;
+    useThousandsSeparator?: boolean;
 }
 
 /**

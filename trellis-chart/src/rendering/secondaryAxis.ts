@@ -34,6 +34,7 @@ export function renderSecondaryXAxis(
     spacingBetweenMeasures: number,
     labelFontSize: number,
     dividerLinesColor: string,
+    dividerLinesWidth: number,
     showGridLines: boolean,
     dividerLinesBetweenGroups: boolean,
     dateFormat?: string
@@ -43,7 +44,7 @@ export function renderSecondaryXAxis(
     
     const labelY = 15; // Posição fixa no topo do SVG (dentro do topMargin)
     const lastMeasureRowTop = topMargin + (measureCols.length - 1) * (measureRowHeight + spacingBetweenMeasures);
-    const dividerLineTop = labelY + 20; // Começar abaixo dos labels (aumentado para não sobrepor)
+    const dividerLineTop = 0; // Começar do topo para dividir também a área dos nomes das categorias
     const dividerLineBottom = lastMeasureRowTop + measureRowHeight; // Até o fim do gráfico
     
     let axisHtml = '';
@@ -80,7 +81,7 @@ export function renderSecondaryXAxis(
                     x2="${dividerX}" 
                     y2="${dividerLineBottom}" 
                     stroke="${dividerLinesColor}" 
-                    stroke-width="1"
+                    stroke-width="${dividerLinesWidth}"
                 />
             `;
         }

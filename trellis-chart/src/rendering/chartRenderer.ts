@@ -28,6 +28,12 @@ export interface ChartRenderParams {
     dividerLinesBetweenGroups: boolean;
     dividerLinesBetweenBars: boolean;
     dividerLinesColor: string;
+    dividerLinesBetweenMeasuresColor: string;
+    dividerLinesBetweenMeasuresWidth: number;
+    dividerLinesBetweenGroupsColor: string;
+    dividerLinesBetweenGroupsWidth: number;
+    dividerLinesBetweenBarsColor: string;
+    dividerLinesBetweenBarsWidth: number;
     forceLabels: boolean;
     labelFontSize: number;
     measureTitleFontSize: number;
@@ -47,6 +53,7 @@ export interface ChartRenderParams {
     plotAreaWidth: number;
     barWidth: number;
     barSpacing: number;
+    measureLabelSpace: number;
 }
 
 /**
@@ -68,6 +75,12 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         dividerLinesBetweenGroups,
         dividerLinesBetweenBars,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         labelFontSize,
         measureTitleFontSize,
@@ -84,6 +97,7 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         plotAreaWidth,
         barWidth,
         barSpacing,
+        measureLabelSpace,
     } = params;
 
     // Renderizar todos os elementos do gráfico
@@ -126,7 +140,9 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         spacingBetweenMeasures,
         leftMargin,
         plotAreaWidth,
-        dividerLinesColor,
+        dividerLinesColor: dividerLinesBetweenMeasuresColor,
+        dividerLinesWidth: dividerLinesBetweenMeasuresWidth,
+        measureLabelSpace,
     });
 
     const dividerLinesBetweenBarsHtml = renderDividerLinesBetweenBars({
@@ -140,7 +156,8 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         measureCols,
         measureRowHeight,
         spacingBetweenMeasures,
-        dividerLinesColor,
+        dividerLinesColor: dividerLinesBetweenBarsColor,
+        dividerLinesWidth: dividerLinesBetweenBarsWidth,
     });
 
     // Eixo X secundário (se houver)
@@ -158,7 +175,8 @@ export function renderCompleteChart(params: ChartRenderParams): string {
             measureRowHeight,
             spacingBetweenMeasures,
             labelFontSize,
-            dividerLinesColor,
+            dividerLinesBetweenGroupsColor,
+            dividerLinesBetweenGroupsWidth,
             showGridLines,
             dividerLinesBetweenGroups,
             secondaryDateFormat

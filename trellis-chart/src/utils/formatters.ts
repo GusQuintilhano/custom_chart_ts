@@ -3,29 +3,68 @@
  */
 
 /**
+ * Adiciona separador de milhares a um número
+ * @param numStr String do número a ser formatado
+ * @returns String com separadores de milhares
+ */
+function addThousandsSeparator(numStr: string): string {
+    const parts = numStr.split('.');
+    // Adicionar ponto a cada 3 dígitos da parte inteira
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    // Se houver parte decimal, usar vírgula como separador
+    return parts.length > 1 ? parts.join(',') : parts[0];
+}
+
+/**
  * Formata um valor numérico de acordo com o tipo especificado
  * @param value Valor numérico a ser formatado
- * @param formatType Tipo de formatação (percentage, currency, scientific, integer, decimal)
+ * @param formatType Tipo de formatação (decimal, porcentagem, moeda, cientifico, inteiro)
  * @param decimals Número de casas decimais (padrão: 2)
+ * @param useThousandsSeparator Se deve usar separador de milhares (padrão: false)
  * @returns String formatada
  */
-export function formatValue(value: number, formatType: string, decimals: number = 2): string {
+export function formatValue(
+    value: number, 
+    formatType: string, 
+    decimals: number = 2, 
+    useThousandsSeparator: boolean = false
+): string {
+    let formatted: string;
+    
     switch (formatType) {
         case 'percentage':
         case 'porcentagem':
-            return `${(value * 100).toFixed(decimals)}%`;
+            formatted = (value * 100).toFixed(decimals);
+            // Para porcentagem, aplicar separador apenas na parte numérica
+            if (useThousandsSeparator) {
+                formatted = addThousandsSeparator(formatted);
+            }
+            return `${formatted}%`;
         case 'currency':
         case 'moeda':
-            return `R$ ${value.toFixed(decimals)}`;
+            formatted = value.toFixed(decimals);
+            if (useThousandsSeparator) {
+                formatted = addThousandsSeparator(formatted);
+            }
+            return `R$ ${formatted}`;
         case 'scientific':
-        case 'científico':
+        case 'cientifico':
+            // Formato científico não usa separador de milhares
             return value.toExponential(decimals);
         case 'integer':
         case 'inteiro':
-            return Math.round(value).toString();
+            formatted = Math.round(value).toString();
+            if (useThousandsSeparator) {
+                formatted = addThousandsSeparator(formatted);
+            }
+            return formatted;
         case 'decimal':
         default:
-            return value.toFixed(decimals);
+            formatted = value.toFixed(decimals);
+            if (useThousandsSeparator) {
+                formatted = addThousandsSeparator(formatted);
+            }
+            return formatted;
     }
 }
 

@@ -19,6 +19,8 @@ export interface RenderDividerLinesBetweenMeasuresParams {
     leftMargin: number;
     plotAreaWidth: number;
     dividerLinesColor: string;
+    dividerLinesWidth: number;
+    measureLabelSpace: number;
 }
 
 /**
@@ -37,11 +39,17 @@ export function renderDividerLinesBetweenMeasures(
         leftMargin,
         plotAreaWidth,
         dividerLinesColor,
+        dividerLinesWidth,
+        measureLabelSpace,
     } = params;
     
     if (!showGridLines || !dividerLinesBetweenMeasures || measureCols.length <= 1) {
         return '';
     }
+    
+    // Linha se estende desde o início (área dos nomes das medidas) até o final do gráfico
+    const lineStartX = 0;
+    const lineEndX = leftMargin + plotAreaWidth;
     
     let html = '';
     for (let measureIdx = 0; measureIdx < measureCols.length - 1; measureIdx++) {
@@ -54,12 +62,12 @@ export function renderDividerLinesBetweenMeasures(
         const dividerY = measureRowTop + measureRowHeight + spacingBetweenMeasures / 2;
         html += `
             <line 
-                x1="${leftMargin}" 
+                x1="${lineStartX}" 
                 y1="${dividerY}" 
-                x2="${leftMargin + plotAreaWidth}" 
+                x2="${lineEndX}" 
                 y2="${dividerY}" 
                 stroke="${dividerLinesColor}" 
-                stroke-width="1"
+                stroke-width="${dividerLinesWidth}"
             />
         `;
     }
@@ -81,6 +89,7 @@ export interface RenderDividerLinesBetweenBarsParams {
     measureRowHeight: number;
     spacingBetweenMeasures: number;
     dividerLinesColor: string;
+    dividerLinesWidth: number;
 }
 
 /**
@@ -101,6 +110,7 @@ export function renderDividerLinesBetweenBars(
         measureRowHeight,
         spacingBetweenMeasures,
         dividerLinesColor,
+        dividerLinesWidth,
     } = params;
     
     if (!showGridLines || !dividerLinesBetweenBars || chartData.length <= 1) {
@@ -125,7 +135,7 @@ export function renderDividerLinesBetweenBars(
                 x2="${barX}" 
                 y2="${dividerEndY}" 
                 stroke="${dividerLinesColor}" 
-                stroke-width="1"
+                stroke-width="${dividerLinesWidth}"
             />
         `;
     }

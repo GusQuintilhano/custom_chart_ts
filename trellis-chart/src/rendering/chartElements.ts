@@ -26,6 +26,7 @@ export function renderLineChart(
     const color = measureConfig.color || '#3b82f6';
     const format = measureConfig.format || 'decimal';
     const decimals = measureConfig.decimals ?? 2;
+    const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
     
     const points = chartData.map((item, itemIdx) => {
         const value = item.values[measureIdx] || 0;
@@ -56,7 +57,7 @@ export function renderLineChart(
             font-size="${valueLabelFontSize}"
             fill="#374151"
             font-weight="500"
-        >${formatValue(point.value, format, decimals)}</text>
+        >${formatValue(point.value, format, decimals, useThousandsSeparator)}</text>
     `).join('');
     
     return `

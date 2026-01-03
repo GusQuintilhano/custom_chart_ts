@@ -19,6 +19,12 @@ export interface ChartOptionsSetup {
     dividerLinesBetweenGroups: boolean;
     dividerLinesBetweenBars: boolean;
     dividerLinesColor: string;
+    dividerLinesBetweenMeasuresColor: string;
+    dividerLinesBetweenMeasuresWidth: number;
+    dividerLinesBetweenGroupsColor: string;
+    dividerLinesBetweenGroupsWidth: number;
+    dividerLinesBetweenBarsColor: string;
+    dividerLinesBetweenBarsWidth: number;
     forceLabels: boolean;
     labelFontSize: number;
     measureTitleFontSize: number;
@@ -49,6 +55,12 @@ export function setupChartOptions(
     const dividerLinesBetweenGroups = chartOptions.dividerLinesBetweenGroups !== false;
     const dividerLinesBetweenBars = chartOptions.dividerLinesBetweenBars || false;
     const dividerLinesColor = chartOptions.dividerLinesColor || '#d1d5db';
+    const dividerLinesBetweenMeasuresColor = chartOptions.dividerLinesBetweenMeasuresColor || dividerLinesColor;
+    const dividerLinesBetweenMeasuresWidth = chartOptions.dividerLinesBetweenMeasuresWidth ?? 1;
+    const dividerLinesBetweenGroupsColor = chartOptions.dividerLinesBetweenGroupsColor || dividerLinesColor;
+    const dividerLinesBetweenGroupsWidth = chartOptions.dividerLinesBetweenGroupsWidth ?? 1;
+    const dividerLinesBetweenBarsColor = chartOptions.dividerLinesBetweenBarsColor || dividerLinesColor;
+    const dividerLinesBetweenBarsWidth = chartOptions.dividerLinesBetweenBarsWidth ?? 1;
     const forceLabels = chartOptions.forceLabels || false;
     const labelFontSize = (textSizes?.labelFontSize as number) ?? 10;
     const measureTitleFontSize = (textSizes?.measureTitleFontSize as number) ?? 10;
@@ -75,6 +87,12 @@ export function setupChartOptions(
         dividerLinesBetweenGroups,
         dividerLinesBetweenBars,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         labelFontSize,
         measureTitleFontSize,

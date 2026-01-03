@@ -60,7 +60,14 @@ export interface ChartDividerLinesOptions {
     dividerLinesBetweenMeasures?: boolean;
     dividerLinesBetweenGroups?: boolean;
     dividerLinesBetweenBars?: boolean;
-    dividerLinesColor?: string;
+    dividerLinesColor?: string; // Mantido para compatibilidade
+    // Estilos individuais para cada tipo de linha
+    dividerLinesBetweenMeasuresColor?: string;
+    dividerLinesBetweenMeasuresWidth?: number;
+    dividerLinesBetweenGroupsColor?: string;
+    dividerLinesBetweenGroupsWidth?: number;
+    dividerLinesBetweenBarsColor?: string;
+    dividerLinesBetweenBarsWidth?: number;
 }
 
 /**
@@ -102,7 +109,14 @@ export interface ChartOptions {
     dividerLinesBetweenMeasures: boolean;
     dividerLinesBetweenGroups: boolean;
     dividerLinesBetweenBars: boolean;
-    dividerLinesColor: string;
+    dividerLinesColor: string; // Mantido para compatibilidade
+    // Estilos individuais
+    dividerLinesBetweenMeasuresColor: string;
+    dividerLinesBetweenMeasuresWidth: number;
+    dividerLinesBetweenGroupsColor: string;
+    dividerLinesBetweenGroupsWidth: number;
+    dividerLinesBetweenBarsColor: string;
+    dividerLinesBetweenBarsWidth: number;
     
     // chart_dimensions
     fitWidth: boolean;
@@ -137,6 +151,13 @@ export function readChartOptions(allVisualProps: Record<string, unknown>): Chart
         dividerLinesBetweenGroups: getValue(chartDividerLines.dividerLinesBetweenGroups, chartOptionsConsolidated.dividerLinesBetweenGroups, true, true) !== false,
         dividerLinesBetweenBars: getValue(chartDividerLines.dividerLinesBetweenBars, chartOptionsConsolidated.dividerLinesBetweenBars, false, true) === true,
         dividerLinesColor: getValue(chartDividerLines.dividerLinesColor, chartOptionsConsolidated.dividerLinesColor, '#d1d5db', false) as string,
+        // Estilos individuais - usar cor/tamanho específico ou fallback para cor geral
+        dividerLinesBetweenMeasuresColor: getValue(chartDividerLines.dividerLinesBetweenMeasuresColor, chartOptionsConsolidated.dividerLinesBetweenMeasuresColor, chartDividerLines.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db', false) as string,
+        dividerLinesBetweenMeasuresWidth: (getValue(chartDividerLines.dividerLinesBetweenMeasuresWidth, chartOptionsConsolidated.dividerLinesBetweenMeasuresWidth, 1, false) as number) ?? 1,
+        dividerLinesBetweenGroupsColor: getValue(chartDividerLines.dividerLinesBetweenGroupsColor, chartOptionsConsolidated.dividerLinesBetweenGroupsColor, chartDividerLines.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db', false) as string,
+        dividerLinesBetweenGroupsWidth: (getValue(chartDividerLines.dividerLinesBetweenGroupsWidth, chartOptionsConsolidated.dividerLinesBetweenGroupsWidth, 1, false) as number) ?? 1,
+        dividerLinesBetweenBarsColor: getValue(chartDividerLines.dividerLinesBetweenBarsColor, chartOptionsConsolidated.dividerLinesBetweenBarsColor, chartDividerLines.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db', false) as string,
+        dividerLinesBetweenBarsWidth: (getValue(chartDividerLines.dividerLinesBetweenBarsWidth, chartOptionsConsolidated.dividerLinesBetweenBarsWidth, 1, false) as number) ?? 1,
         
         // Valores de chart_dimensions (prioridade máxima)
         fitWidth: getValue(chartDimensions.fitWidth, chartOptionsConsolidated.fitWidth, false, true) === true,

@@ -52,6 +52,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
         dividerLinesBetweenGroups,
         dividerLinesBetweenBars,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         labelFontSize,
         measureTitleFontSize,
@@ -83,6 +89,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         plotAreaWidth,
         barWidth,
         barSpacing,
+        measureLabelSpace,
     } = chartDimensions;
 
     // Calcular ranges (min/max) para cada medida
@@ -104,6 +111,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
         dividerLinesBetweenGroups,
         dividerLinesBetweenBars,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         labelFontSize,
         measureTitleFontSize,
@@ -122,6 +135,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         plotAreaWidth,
         barWidth,
         barSpacing,
+        measureLabelSpace,
     });
 
     // Configurar resize dinâmico se necessário
@@ -135,6 +149,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
         dividerLinesBetweenBars,
         dividerLinesBetweenGroups,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         chartData,
         measureCols,
@@ -159,6 +179,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         secondaryDateFormat,
         hasSecondaryDimension,
         secondaryDimensions,
+        measureLabelSpace,
     });
 
     emitRenderComplete(ctx);

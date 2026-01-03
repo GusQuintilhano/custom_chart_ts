@@ -21,6 +21,7 @@ export interface ChartDimensions {
     plotAreaWidth: number;
     barWidth: number;
     barSpacing: number;
+    measureLabelSpace: number;
 }
 
 /**
@@ -46,6 +47,8 @@ export function calculateChartDimensions(
     const bottomMargin = 60;
     const rightMargin = 40;
     const spacingBetweenMeasures = 15;
+    
+    // Armazenar measureLabelSpace para uso nas linhas divisórias
     
     // Calcular altura da linha e altura total do gráfico
     let measureRowHeight: number;
@@ -87,6 +90,7 @@ export function calculateChartDimensions(
             plotAreaWidth,
             barWidth,
             barSpacing,
+            measureLabelSpace,
         };
     } else {
         // Quando fitWidth não está ativo, calcular largura baseada nas barras
@@ -108,6 +112,7 @@ export function calculateChartDimensions(
             plotAreaWidth,
             barWidth: fixedBarWidth,
             barSpacing,
+            measureLabelSpace,
         };
     }
 }
@@ -141,6 +146,7 @@ export function readMeasureConfigs(
             format: (measureConfig?.format as string) || 'decimal',
             decimals: (measureConfig?.decimals as number) ?? 2,
             chartType: (measureConfig?.chartType as string) || 'bar',
+            useThousandsSeparator: (measureConfig?.useThousandsSeparator as boolean) ?? true,
         };
     });
 }

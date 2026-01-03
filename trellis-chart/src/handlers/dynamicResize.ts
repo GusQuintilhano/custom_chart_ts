@@ -22,6 +22,12 @@ export interface DynamicResizeParams {
     dividerLinesBetweenBars: boolean;
     dividerLinesBetweenGroups: boolean;
     dividerLinesColor: string;
+    dividerLinesBetweenMeasuresColor: string;
+    dividerLinesBetweenMeasuresWidth: number;
+    dividerLinesBetweenGroupsColor: string;
+    dividerLinesBetweenGroupsWidth: number;
+    dividerLinesBetweenBarsColor: string;
+    dividerLinesBetweenBarsWidth: number;
     forceLabels: boolean;
     chartData: ChartDataPoint[];
     measureCols: ChartColumn[];
@@ -46,6 +52,7 @@ export interface DynamicResizeParams {
     secondaryDateFormat: string;
     hasSecondaryDimension: boolean;
     secondaryDimensions: ChartColumn[];
+    measureLabelSpace: number;
 }
 
 /**
@@ -62,6 +69,12 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         dividerLinesBetweenBars,
         dividerLinesBetweenGroups,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         chartData,
         measureCols,
@@ -86,6 +99,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         secondaryDateFormat,
         hasSecondaryDimension,
         secondaryDimensions,
+        measureLabelSpace,
     } = params;
 
     if (!fitWidth && !fitHeight) {
@@ -179,7 +193,9 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 spacingBetweenMeasures,
                 leftMargin,
                 plotAreaWidth: newPlotAreaWidth,
-                dividerLinesColor,
+                dividerLinesColor: dividerLinesBetweenMeasuresColor,
+                dividerLinesWidth: dividerLinesBetweenMeasuresWidth,
+                measureLabelSpace,
             });
 
             const newDividerLinesBetweenBarsHtml = renderDividerLinesBetweenBars({
@@ -193,7 +209,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 measureCols,
                 measureRowHeight: newMeasureRowHeight,
                 spacingBetweenMeasures,
-                dividerLinesColor,
+                dividerLinesColor: dividerLinesBetweenBarsColor,
+                dividerLinesWidth: dividerLinesBetweenBarsWidth,
             });
 
             const newAllChartElementsHtml = renderAllChartElements({
@@ -225,7 +242,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     newMeasureRowHeight,
                     spacingBetweenMeasures,
                     labelFontSize,
-                    dividerLinesColor,
+                    dividerLinesBetweenGroupsColor,
+                    dividerLinesBetweenGroupsWidth,
                     showGridLines,
                     dividerLinesBetweenGroups,
                     secondaryDateFormat

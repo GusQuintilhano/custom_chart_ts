@@ -23,6 +23,12 @@ interface AdjustDimensionsParams {
     dividerLinesBetweenBars: boolean;
     dividerLinesBetweenGroups: boolean;
     dividerLinesColor: string;
+    dividerLinesBetweenMeasuresColor: string;
+    dividerLinesBetweenMeasuresWidth: number;
+    dividerLinesBetweenGroupsColor: string;
+    dividerLinesBetweenGroupsWidth: number;
+    dividerLinesBetweenBarsColor: string;
+    dividerLinesBetweenBarsWidth: number;
     forceLabels: boolean;
     chartData: ChartDataPoint[];
     measureCols: ChartColumn[];
@@ -66,6 +72,12 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
         dividerLinesBetweenBars,
         dividerLinesBetweenGroups,
         dividerLinesColor,
+        dividerLinesBetweenMeasuresColor,
+        dividerLinesBetweenMeasuresWidth,
+        dividerLinesBetweenGroupsColor,
+        dividerLinesBetweenGroupsWidth,
+        dividerLinesBetweenBarsColor,
+        dividerLinesBetweenBarsWidth,
         forceLabels,
         chartData,
         measureCols,
@@ -170,7 +182,9 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
                 spacingBetweenMeasures,
                 leftMargin,
                 plotAreaWidth: newPlotAreaWidth,
-                dividerLinesColor,
+                dividerLinesColor: dividerLinesBetweenMeasuresColor,
+                dividerLinesWidth: dividerLinesBetweenMeasuresWidth,
+                measureLabelSpace: leftMargin, // measureLabelSpace é igual a leftMargin
             });
             
             const newDividerLinesBetweenBarsHtml = renderDividerLinesBetweenBars({
@@ -184,7 +198,8 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
                 measureCols,
                 measureRowHeight: newMeasureRowHeight,
                 spacingBetweenMeasures,
-                dividerLinesColor,
+                dividerLinesColor: dividerLinesBetweenBarsColor,
+                dividerLinesWidth: dividerLinesBetweenBarsWidth,
             });
             
             // Recalcular elementos do gráfico
@@ -217,7 +232,8 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
                     newMeasureRowHeight,
                     spacingBetweenMeasures,
                     labelFontSize,
-                    dividerLinesColor,
+                    dividerLinesBetweenGroupsColor,
+                    dividerLinesBetweenGroupsWidth,
                     showGridLines,
                     dividerLinesBetweenGroups,
                     secondaryDateFormat
