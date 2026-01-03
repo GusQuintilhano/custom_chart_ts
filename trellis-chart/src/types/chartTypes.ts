@@ -76,6 +76,8 @@ export interface MeasureConfig {
     color?: string;
     format?: string;
     showLabel?: boolean;
+    decimals?: number;
+    chartType?: string;
 }
 
 /**

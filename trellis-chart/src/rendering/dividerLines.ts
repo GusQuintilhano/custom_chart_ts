@@ -3,21 +3,45 @@
  */
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
+import type { ChartDataPoint } from '../types/chartTypes';
 import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarX } from '../utils/calculations';
+
+/**
+ * Interface para parâmetros de renderização de linhas divisórias entre medidas
+ */
+export interface RenderDividerLinesBetweenMeasuresParams {
+    showGridLines: boolean;
+    dividerLinesBetweenMeasures: boolean;
+    measureCols: ChartColumn[];
+    topMargin: number;
+    measureRowHeight: number;
+    spacingBetweenMeasures: number;
+    leftMargin: number;
+    plotAreaWidth: number;
+    dividerLinesColor: string;
+}
 
 /**
  * Renderiza linhas divisórias horizontais entre medidas
  */
 export function renderDividerLinesBetweenMeasures(
-    measureCols: ChartColumn[],
-    topMargin: number,
-    measureRowHeight: number,
-    spacingBetweenMeasures: number,
-    leftMargin: number,
-    plotAreaWidth: number,
-    dividerLinesColor: string
+    params: RenderDividerLinesBetweenMeasuresParams
 ): string {
-    if (measureCols.length <= 1) return '';
+    const {
+        showGridLines,
+        dividerLinesBetweenMeasures,
+        measureCols,
+        topMargin,
+        measureRowHeight,
+        spacingBetweenMeasures,
+        leftMargin,
+        plotAreaWidth,
+        dividerLinesColor,
+    } = params;
+    
+    if (!showGridLines || !dividerLinesBetweenMeasures || measureCols.length <= 1) {
+        return '';
+    }
     
     let html = '';
     for (let measureIdx = 0; measureIdx < measureCols.length - 1; measureIdx++) {
@@ -43,20 +67,45 @@ export function renderDividerLinesBetweenMeasures(
 }
 
 /**
+ * Interface para parâmetros de renderização de linhas divisórias entre barras
+ */
+export interface RenderDividerLinesBetweenBarsParams {
+    showGridLines: boolean;
+    dividerLinesBetweenBars: boolean;
+    chartData: ChartDataPoint[];
+    leftMargin: number;
+    barWidth: number;
+    barSpacing: number;
+    topMargin: number;
+    measureCols: ChartColumn[];
+    measureRowHeight: number;
+    spacingBetweenMeasures: number;
+    dividerLinesColor: string;
+}
+
+/**
  * Renderiza linhas divisórias verticais entre barras
  */
 export function renderDividerLinesBetweenBars(
-    chartDataLength: number,
-    leftMargin: number,
-    barWidth: number,
-    barSpacing: number,
-    topMargin: number,
-    measureCols: ChartColumn[],
-    measureRowHeight: number,
-    spacingBetweenMeasures: number,
-    dividerLinesColor: string
+    params: RenderDividerLinesBetweenBarsParams
 ): string {
-    if (chartDataLength <= 1) return '';
+    const {
+        showGridLines,
+        dividerLinesBetweenBars,
+        chartData,
+        leftMargin,
+        barWidth,
+        barSpacing,
+        topMargin,
+        measureCols,
+        measureRowHeight,
+        spacingBetweenMeasures,
+        dividerLinesColor,
+    } = params;
+    
+    if (!showGridLines || !dividerLinesBetweenBars || chartData.length <= 1) {
+        return '';
+    }
     
     const lastMeasureRowTop = calculateLastMeasureRowTop(
         measureCols.length,
@@ -67,7 +116,7 @@ export function renderDividerLinesBetweenBars(
     const dividerEndY = lastMeasureRowTop + measureRowHeight;
     
     let html = '';
-    for (let barIdx = 0; barIdx < chartDataLength - 1; barIdx++) {
+    for (let barIdx = 0; barIdx < chartData.length - 1; barIdx++) {
         const barX = calculateBarX(barIdx, leftMargin, barWidth, barSpacing) + barWidth + barSpacing / 2;
         html += `
             <line 

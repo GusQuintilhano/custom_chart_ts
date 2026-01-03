@@ -3,9 +3,8 @@
  */
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
-import type { ChartDataPoint } from '../types/chartTypes';
+import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 import type { ChartOptions } from './options';
-import type { MeasureConfig } from '../rendering/chartElements';
 
 /**
  * Interface para dimensões calculadas do gráfico
@@ -137,6 +136,7 @@ export function readMeasureConfigs(
         };
         
         return {
+            measure,
             color: (measureConfig?.color as string) || defaultColors[measureIdx % defaultColors.length],
             format: (measureConfig?.format as string) || 'decimal',
             decimals: (measureConfig?.decimals as number) ?? 2,

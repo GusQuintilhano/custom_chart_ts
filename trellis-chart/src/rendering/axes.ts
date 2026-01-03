@@ -72,21 +72,42 @@ export function renderYAxes(
 }
 
 /**
- * Renderiza labels do eixo X (dimensão primária)
+ * Interface para parâmetros de renderização do eixo X
  */
-export function renderXAxisLabels(
-    chartData: ChartDataPoint[],
-    leftMargin: number,
-    barWidth: number,
-    barSpacing: number,
-    lastMeasureRowTop: number,
-    measureRowHeight: number,
-    labelFontSize: number,
-    dateFormat?: string
-): string {
-    return chartData.map((item, idx) => {
+export interface RenderXAxisParams {
+    chartData: ChartDataPoint[];
+    primaryDateFormat: string;
+    formatDimension: (value: unknown, formatType?: string) => string;
+    leftMargin: number;
+    barWidth: number;
+    barSpacing: number;
+    lastMeasureRowTop: number;
+    measureRowHeight: number;
+    labelFontSize: number;
+    plotAreaWidth: number;
+}
+
+/**
+ * Renderiza eixo X completo (labels e linha)
+ */
+export function renderXAxis(params: RenderXAxisParams): { xAxisLabels: string; xAxis: string } {
+    const {
+        chartData,
+        primaryDateFormat,
+        formatDimension,
+        leftMargin,
+        barWidth,
+        barSpacing,
+        lastMeasureRowTop,
+        measureRowHeight,
+        labelFontSize,
+        plotAreaWidth,
+    } = params;
+    
+    // Renderizar labels do eixo X
+    const xAxisLabels = chartData.map((item, idx) => {
         const labelX = calculateBarCenterX(idx, leftMargin, barWidth, barSpacing);
-        const primaryLabel = formatDimension(item.primaryLabel, dateFormat || 'auto');
+        const primaryLabel = formatDimension(item.primaryLabel, primaryDateFormat);
         const labelY = lastMeasureRowTop + measureRowHeight + 30;
         
         return `
@@ -100,18 +121,9 @@ export function renderXAxisLabels(
             >${primaryLabel}</text>
         `;
     }).join('');
-}
-
-/**
- * Renderiza linha do eixo X
- */
-export function renderXAxis(
-    leftMargin: number,
-    plotAreaWidth: number,
-    lastMeasureRowTop: number,
-    measureRowHeight: number
-): string {
-    return `
+    
+    // Renderizar linha do eixo X
+    const xAxis = `
         <line 
             x1="${leftMargin}" 
             y1="${lastMeasureRowTop + measureRowHeight}" 
@@ -121,5 +133,7 @@ export function renderXAxis(
             stroke-width="1.5"
         />
     `;
+    
+    return { xAxisLabels, xAxis };
 }
 

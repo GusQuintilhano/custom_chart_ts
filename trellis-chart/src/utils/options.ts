@@ -75,6 +75,15 @@ export interface ChartDimensionsOptions {
 }
 
 /**
+ * Interface para opções de text_sizes
+ */
+export interface ChartTextSizesOptions {
+    labelFontSize?: number;
+    measureTitleFontSize?: number;
+    valueLabelFontSize?: number;
+}
+
+/**
  * Interface para opções consolidadas (chart_options)
  */
 export interface ChartOptionsConsolidated extends ChartVisualOptions, ChartDividerLinesOptions, ChartDimensionsOptions {}
@@ -151,17 +160,20 @@ export function readSavedValues(allSavedProps: Record<string, unknown>): {
     chartDimensions: ChartDimensionsOptions;
     chartDividerLines: ChartDividerLinesOptions;
     chartOptions: ChartOptionsConsolidated;
+    textSizes: ChartTextSizesOptions;
 } {
     const savedChartVisual = (allSavedProps?.chart_visual || {}) as ChartVisualOptions;
     const savedChartDimensions = (allSavedProps?.chart_dimensions || {}) as ChartDimensionsOptions;
     const savedChartDividerLines = (allSavedProps?.chart_divider_lines || {}) as ChartDividerLinesOptions;
     const savedChartOptions = (allSavedProps?.chart_options || {}) as ChartOptionsConsolidated;
+    const savedTextSizes = (allSavedProps?.text_sizes || {}) as ChartTextSizesOptions;
     
     return {
         chartVisual: savedChartVisual,
         chartDimensions: savedChartDimensions,
         chartDividerLines: savedChartDividerLines,
         chartOptions: savedChartOptions,
+        textSizes: savedTextSizes,
     };
 }
 
