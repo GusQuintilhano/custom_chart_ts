@@ -620,7 +620,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
                       // Quando fitWidth não está ativo, recalcular largura baseada na largura fixa das barras
                       // Isso garante que se o usuário mudar a largura da barra, o chartWidth seja atualizado
                       const numBars = chartData.length;
-                      const totalBarWidth = fixedBarWidth * numBars;
+                      const totalBarWidth = barWidth * numBars;
                       const totalBarSpacing = (showYAxis ? 20 : 15) * (numBars - 1);
                       const plotAreaWidth = totalBarWidth + totalBarSpacing;
                       newChartWidth = plotAreaWidth + leftMargin + rightMargin;
