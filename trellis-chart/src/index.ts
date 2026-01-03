@@ -417,7 +417,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
     }).join('');
 
     // Renderizar eixos Y individuais para cada medida
-    const yAxesHtml = renderYAxes(
+    const yAxesHtml = renderYAxes({
         measureRanges,
         measureCols,
         topMargin,
@@ -428,7 +428,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureTitleFontSize,
         measureNameRotation,
         showYAxis
-    );
+    });
 
     // Linhas divisórias horizontais entre medidas (se habilitado)
     const dividerLinesBetweenMeasuresHtml = (showGridLines && dividerLinesBetweenMeasures)
