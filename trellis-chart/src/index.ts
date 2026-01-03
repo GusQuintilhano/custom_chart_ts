@@ -135,7 +135,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
     logger.debug('Medidas visualizadas (ordenadas pela ordem do Configure):', 
         measureCols.map(m => ({ id: m.id, name: m.name })));
     
-    if (dimensions.length === 0 || measureCols.length === 0) {
+    if (sortedDimensions.length === 0 || measureCols.length === 0) {
           chartElement.innerHTML = `
             <div style="padding: 20px; color: #f59e0b; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px;">
               <h4 style="margin: 0 0 10px 0;">⚠️ Dados insuficientes</h4>
@@ -424,7 +424,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureRowHeight,
         spacingBetweenMeasures,
         leftMargin,
-        measureLabelSpace,
+        measureLabelSpace: leftMargin,
         measureTitleFontSize,
         measureNameRotation,
         showYAxis
