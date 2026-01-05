@@ -154,6 +154,14 @@ export function readMeasureConfigs(
             showLabel: ((measureConfig as any)?.referenceLine_showLabel as boolean) !== false,
         } : undefined;
         
+        // Processar tooltip
+        const tooltipEnabled = (measureConfig as any)?.tooltip_enabled !== false;
+        const tooltip: MeasureConfig['tooltip'] = tooltipEnabled ? {
+            enabled: true,
+            format: (((measureConfig as any)?.tooltip_format as string) || 'simple') as 'simple' | 'detailed',
+            backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
+        } : undefined;
+        
         return {
             measure,
             color: (measureConfig?.color as string) || defaultColors[measureIdx % defaultColors.length],
@@ -172,6 +180,7 @@ export function readMeasureConfigs(
             showZeroValues: (measureConfig?.showZeroValues as boolean) ?? true,
             valueFormat: ((measureConfig as any)?.valueFormat as 'normal' | 'compact') || 'normal',
             referenceLine,
+            tooltip,
         };
     });
 }

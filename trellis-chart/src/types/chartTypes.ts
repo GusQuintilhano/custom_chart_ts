@@ -96,6 +96,11 @@ export interface MeasureConfig {
         style?: 'solid' | 'dashed' | 'dotted';
         showLabel?: boolean;
     };
+    tooltip?: {
+        enabled: boolean;
+        format?: 'simple' | 'detailed';
+        backgroundColor?: string;
+    };
 }
 
 /**

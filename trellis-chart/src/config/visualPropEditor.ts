@@ -117,6 +117,12 @@ function createMeasureColumnSettings(
                 label: 'Habilitar Linha de Referência',
                 defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
             },
+            {
+                type: 'toggle',
+                key: 'tooltip_enabled',
+                label: 'Habilitar Tooltip',
+                defaultValue: (savedConfig as any)?.tooltip_enabled !== false,
+            },
         ];
         
         // Adicionar elementos de linha de referência condicionalmente
@@ -147,6 +153,26 @@ function createMeasureColumnSettings(
                     key: 'referenceLine_showLabel',
                     label: 'Mostrar Label na Linha',
                     defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+                }
+            );
+        }
+        
+        // Adicionar elementos de tooltip condicionalmente
+        if ((savedConfig as any)?.tooltip_enabled !== false) {
+            measureElements.push(
+                {
+                    type: 'dropdown',
+                    key: 'tooltip_format',
+                    label: 'Formato do Tooltip',
+                    defaultValue: (savedConfig as any)?.tooltip_format || 'simple',
+                    values: ['simple', 'detailed'],
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'tooltip_backgroundColor',
+                    label: 'Cor de Fundo do Tooltip',
+                    selectorType: 'COLOR',
+                    defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
                 }
             );
         }

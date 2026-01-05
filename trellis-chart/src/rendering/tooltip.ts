@@ -198,20 +198,22 @@ function hideTooltip(tooltip: HTMLElement): void {
  */
 export function setupTooltips(
     chartElement: HTMLElement,
-    tooltipConfig: TooltipConfig,
+    tooltipConfig: TooltipConfig | null,
     tooltipData: TooltipData
 ): void {
-    if (!tooltipConfig.enabled) {
-        return;
-    }
-
-    const tooltip = createTooltipElement(tooltipConfig.backgroundColor);
     const { chartData, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat } = tooltipData;
 
     // Encontrar todos os elementos clicáveis (barras, pontos de linha, etc)
     const svg = chartElement.querySelector('svg');
     if (!svg) {
         return;
+    }
+
+    // Criar tooltip único (será reutilizado para todos os elementos)
+    const defaultBackgroundColor = tooltipConfig?.backgroundColor || '#ffffff';
+    let tooltip = document.getElementById('chart-tooltip');
+    if (!tooltip) {
+        tooltip = createTooltipElement(defaultBackgroundColor);
     }
 
     // Adicionar listeners aos retângulos (barras)
@@ -227,19 +229,39 @@ export function setupTooltips(
             return;
         }
 
+        // Usar configuração da medida se disponível, senão usar configuração global
+        const measureTooltipConfig = measureConfig.tooltip;
+        const enabled = measureTooltipConfig?.enabled !== false && (tooltipConfig?.enabled !== false);
+        
+        if (!enabled) {
+            return;
+        }
+
+        const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
+
         rect.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
             const bbox = target.getBoundingClientRect();
             
-            const content = tooltipConfig.format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, tooltipConfig.showAllMeasures, primaryDateFormat, secondaryDateFormat)
+            // Atualizar cor de fundo do tooltip para esta medida específica
+            if (tooltip) {
+                (tooltip as HTMLElement).style.background = backgroundColor;
+            }
+            
+            const content = format === 'detailed'
+                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
                 : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
             
-            showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
+            if (tooltip) {
+                showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
+            }
         });
 
         rect.addEventListener('mouseleave', () => {
-            hideTooltip(tooltip);
+            if (tooltip) {
+                hideTooltip(tooltip);
+            }
         });
     });
 
@@ -256,19 +278,39 @@ export function setupTooltips(
             return;
         }
 
+        // Usar configuração da medida se disponível, senão usar configuração global
+        const measureTooltipConfig = measureConfig.tooltip;
+        const enabled = measureTooltipConfig?.enabled !== false && (tooltipConfig?.enabled !== false);
+        
+        if (!enabled) {
+            return;
+        }
+
+        const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
+
         circle.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
             const bbox = target.getBoundingClientRect();
             
-            const content = tooltipConfig.format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, tooltipConfig.showAllMeasures, primaryDateFormat, secondaryDateFormat)
+            // Atualizar cor de fundo do tooltip para esta medida específica
+            if (tooltip) {
+                (tooltip as HTMLElement).style.background = backgroundColor;
+            }
+            
+            const content = format === 'detailed'
+                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
                 : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
             
-            showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
+            if (tooltip) {
+                showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
+            }
         });
 
         circle.addEventListener('mouseleave', () => {
-            hideTooltip(tooltip);
+            if (tooltip) {
+                hideTooltip(tooltip);
+            }
         });
     });
 }

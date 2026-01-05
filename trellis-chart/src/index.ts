@@ -149,25 +149,23 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureLabelSpace,
     });
 
-    // Configurar tooltips se habilitado
-    if (tooltipEnabled) {
-        setupTooltips(
-            chartElement,
-            {
-                enabled: tooltipEnabled,
-                format: tooltipFormat,
-                showAllMeasures: tooltipShowAllMeasures,
-                backgroundColor: tooltipBackgroundColor,
-            },
-            {
-                chartData,
-                measureCols,
-                measureConfigs,
-                primaryDateFormat,
-                secondaryDateFormat,
-            }
-        );
-    }
+    // Configurar tooltips (configuração global como fallback, individual por medida tem prioridade)
+    setupTooltips(
+        chartElement,
+        tooltipEnabled ? {
+            enabled: tooltipEnabled,
+            format: tooltipFormat,
+            showAllMeasures: tooltipShowAllMeasures,
+            backgroundColor: tooltipBackgroundColor,
+        } : null,
+        {
+            chartData,
+            measureCols,
+            measureConfigs,
+            primaryDateFormat,
+            secondaryDateFormat,
+        }
+    );
 
     // Configurar resize dinâmico se necessário
     setupDynamicResize({
