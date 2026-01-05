@@ -128,18 +128,18 @@ function createMeasureColumnSettings(
                 label: 'Mostrar Valores Zero',
                 defaultValue: savedConfig?.showZeroValues !== false,
             },
-            {
+            ...(savedConfig?.minY !== undefined && savedConfig?.minY !== 'auto' ? [{
                 type: 'number',
                 key: 'minY',
-                label: 'Valor Mínimo do Eixo Y (auto para automático)',
-                defaultValue: savedConfig?.minY === 'auto' || savedConfig?.minY === undefined ? undefined : savedConfig?.minY,
-            },
-            {
+                label: 'Valor Mínimo do Eixo Y',
+                defaultValue: savedConfig.minY,
+            }] : []),
+            ...(savedConfig?.maxY !== undefined && savedConfig?.maxY !== 'auto' ? [{
                 type: 'number',
                 key: 'maxY',
-                label: 'Valor Máximo do Eixo Y (auto para automático)',
-                defaultValue: savedConfig?.maxY === 'auto' || savedConfig?.maxY === undefined ? undefined : savedConfig?.maxY,
-            },
+                label: 'Valor Máximo do Eixo Y',
+                defaultValue: savedConfig.maxY,
+            }] : []),
             {
                 type: 'number',
                 key: 'yAxisTicks',
@@ -160,6 +160,24 @@ function createMeasureColumnSettings(
                 defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
             },
         ];
+        
+        // Adicionar minY e maxY apenas se tiverem valores definidos
+        if (savedConfig?.minY !== undefined && savedConfig?.minY !== 'auto') {
+            measureElements.push({
+                type: 'number',
+                key: 'minY',
+                label: 'Valor Mínimo do Eixo Y',
+                defaultValue: savedConfig.minY,
+            });
+        }
+        if (savedConfig?.maxY !== undefined && savedConfig?.maxY !== 'auto') {
+            measureElements.push({
+                type: 'number',
+                key: 'maxY',
+                label: 'Valor Máximo do Eixo Y',
+                defaultValue: savedConfig.maxY,
+            });
+        }
         
         // Adicionar elementos de linha de referência condicionalmente
         if ((savedConfig as any)?.referenceLine_enabled === true) {
