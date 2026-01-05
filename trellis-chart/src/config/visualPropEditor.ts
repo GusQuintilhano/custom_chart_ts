@@ -105,6 +105,12 @@ function createMeasureColumnSettings(
                 label: 'Mostrar Valores Zero',
                 defaultValue: savedConfig?.showZeroValues !== false,
             },
+            {
+                type: 'toggle',
+                key: 'showYAxisValues',
+                label: 'Mostrar Valores no Eixo Y',
+                defaultValue: savedConfig?.showYAxisValues !== false,
+            },
         ];
         
         measureColumnSettings[measure.id] = {
