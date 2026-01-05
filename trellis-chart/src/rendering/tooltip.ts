@@ -14,6 +14,7 @@ export interface TooltipConfig {
     format: 'simple' | 'detailed';
     showAllMeasures: boolean;
     backgroundColor: string;
+    customTemplate?: string;
 }
 
 export interface TooltipData {
