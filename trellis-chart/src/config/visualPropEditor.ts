@@ -100,7 +100,6 @@ function createMeasureColumnSettings(
                 label: 'Posição do Label de Valor',
                 defaultValue: savedConfig?.valueLabelPosition || 'auto',
                 values: ['auto', 'above', 'inside-top', 'inside-center', 'below'],
-                labels: ['Automático', 'Acima', 'Dentro (Topo)', 'Dentro (Centro)', 'Abaixo'],
             },
             {
                 type: 'dropdown',
@@ -108,7 +107,6 @@ function createMeasureColumnSettings(
                 label: 'Formato de Valor',
                 defaultValue: savedConfig?.valueFormat || 'normal',
                 values: ['normal', 'compact'],
-                labels: ['Normal', 'Compacto (1.5K, 1.2M)'],
             },
             {
                 type: 'text',
@@ -189,7 +187,6 @@ function createMeasureColumnSettings(
                     label: 'Estilo da Linha',
                     defaultValue: (savedConfig as any)?.referenceLine_style || 'solid',
                     values: ['solid', 'dashed', 'dotted'],
-                    labels: ['Sólida', 'Tracejada', 'Pontilhada'],
                 },
                 {
                     type: 'toggle',
