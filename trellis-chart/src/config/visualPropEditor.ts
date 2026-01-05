@@ -66,6 +66,15 @@ function createMeasureColumnSettings(
                 selectorType: 'COLOR',
                 defaultValue: savedConfig?.color || defaultColor,
             },
+            {
+                type: 'number',
+                key: 'opacity',
+                label: 'Opacidade (0-1)',
+                defaultValue: savedConfig?.opacity ?? 0.9,
+                min: 0,
+                max: 1,
+                step: 0.1,
+            },
         ];
         
         measureColumnSettings[measure.id] = {
