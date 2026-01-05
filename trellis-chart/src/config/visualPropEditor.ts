@@ -173,6 +173,26 @@ function createMeasureColumnSettings(
                     label: 'Cor de Fundo do Tooltip',
                     selectorType: 'COLOR',
                     defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
+                },
+                {
+                    type: 'dropdown',
+                    key: 'tooltip_layout',
+                    label: 'Layout do Tooltip',
+                    defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
+                    values: ['vertical', 'horizontal', 'grid'],
+                },
+                {
+                    type: 'text',
+                    key: 'tooltip_imageUrl',
+                    label: 'URL da Imagem',
+                    defaultValue: (savedConfig as any)?.tooltip_imageUrl || '',
+                },
+                {
+                    type: 'dropdown',
+                    key: 'tooltip_imagePosition',
+                    label: 'Posição da Imagem',
+                    defaultValue: (savedConfig as any)?.tooltip_imagePosition || 'none',
+                    values: ['none', 'top', 'bottom', 'left', 'right'],
                 }
             );
         }

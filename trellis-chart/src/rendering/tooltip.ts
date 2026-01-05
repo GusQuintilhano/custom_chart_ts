@@ -6,6 +6,7 @@ import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import { formatValue } from '../utils/formatters';
 import { formatDimension } from '../utils/formatters';
+import { formatCustomSimpleTooltip, formatCustomDetailedTooltip } from './tooltipFormatter';
 
 export interface TooltipConfig {
     enabled: boolean;
@@ -249,9 +250,15 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            const content = format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+            // Usar formatação customizada se houver configuração de imagem/layout
+            const hasCustomConfig = measureTooltipConfig?.imageUrl && measureTooltipConfig?.imagePosition !== 'none';
+            const content = hasCustomConfig
+                ? (format === 'detailed'
+                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
+                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat))
+                : (format === 'detailed'
+                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat));
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
@@ -298,9 +305,15 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            const content = format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+            // Usar formatação customizada se houver configuração de imagem/layout
+            const hasCustomConfig = measureTooltipConfig?.imageUrl && measureTooltipConfig?.imagePosition !== 'none';
+            const content = hasCustomConfig
+                ? (format === 'detailed'
+                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
+                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat))
+                : (format === 'detailed'
+                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat));
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);

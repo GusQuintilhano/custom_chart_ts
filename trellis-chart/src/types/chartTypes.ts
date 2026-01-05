@@ -100,6 +100,9 @@ export interface MeasureConfig {
         enabled: boolean;
         format?: 'simple' | 'detailed';
         backgroundColor?: string;
+        imageUrl?: string;
+        imagePosition?: 'none' | 'top' | 'bottom' | 'left' | 'right';
+        layout?: 'vertical' | 'horizontal' | 'grid';
     };
 }
 
