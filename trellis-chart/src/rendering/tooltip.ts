@@ -251,7 +251,7 @@ export function setupTooltips(
             }
             
             // Usar formatação customizada se houver configuração de layout
-            const hasCustomConfig = measureTooltipConfig?.imagePosition && measureTooltipConfig?.imagePosition !== 'none';
+            const hasCustomConfig = measureTooltipConfig?.layout && measureTooltipConfig?.layout !== 'vertical';
             const content = hasCustomConfig
                 ? (format === 'detailed'
                     ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
@@ -306,7 +306,7 @@ export function setupTooltips(
             }
             
             // Usar formatação customizada se houver configuração de layout
-            const hasCustomConfig = measureTooltipConfig?.imagePosition && measureTooltipConfig?.imagePosition !== 'none';
+            const hasCustomConfig = measureTooltipConfig?.layout && measureTooltipConfig?.layout !== 'vertical';
             const content = hasCustomConfig
                 ? (format === 'detailed'
                     ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)

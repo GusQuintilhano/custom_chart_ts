@@ -1,5 +1,5 @@
 /**
- * Módulo para formatação customizada de tooltips com suporte a imagem e layout
+ * Módulo para formatação customizada de tooltips com suporte a layout customizável
  */
 
 import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
@@ -8,7 +8,7 @@ import { formatValue } from '../utils/formatters';
 import { formatDimension } from '../utils/formatters';
 
 /**
- * Formata o conteúdo do tooltip no formato simples com customização
+ * Formata o conteúdo do tooltip no formato simples com layout customizado
  */
 export function formatCustomSimpleTooltip(
     dataPoint: ChartDataPoint,
@@ -40,23 +40,17 @@ export function formatCustomSimpleTooltip(
     const measureName = measureCol.name;
 
     const tooltipConfig = measureConfig.tooltip;
-    const imagePosition = tooltipConfig?.imagePosition || 'none';
     const layout = tooltipConfig?.layout || 'vertical';
 
     // Conteúdo de dados
     const dataContent = `<strong>${measureName}</strong><br/>${primaryLabel}: ${formattedValue}`;
 
-    // Se não tem posição de imagem configurada, retorna conteúdo simples
-    if (imagePosition === 'none') {
-        return dataContent;
-    }
-
-    // Montar HTML com layout customizado (sem imagem por enquanto, pois tipo text não é suportado)
-    return dataContent;
+    // Aplicar layout customizado
+    return applyLayout(dataContent, layout);
 }
 
 /**
- * Formata o conteúdo do tooltip no formato detalhado com customização
+ * Formata o conteúdo do tooltip no formato detalhado com layout customizado
  */
 export function formatCustomDetailedTooltip(
     dataPoint: ChartDataPoint,
@@ -109,116 +103,33 @@ export function formatCustomDetailedTooltip(
 
     // Usar configuração da primeira medida para layout
     const tooltipConfig = measureConfigs[0]?.tooltip;
-    const imagePosition = tooltipConfig?.imagePosition || 'none';
     const layout = tooltipConfig?.layout || 'vertical';
 
-    // Se não tem posição de imagem configurada, retorna conteúdo simples
-    if (imagePosition === 'none') {
-        return html;
-    }
-
-    // Montar HTML com layout customizado (sem imagem por enquanto, pois tipo text não é suportado)
-    return html;
+    // Aplicar layout customizado
+    return applyLayout(html, layout);
 }
 
 /**
- * Constrói HTML do tooltip com imagem e layout customizado
+ * Aplica layout customizado ao conteúdo do tooltip
  */
-function buildTooltipHTML(
-    dataContent: string,
-    imageUrl: string | undefined,
-    imagePosition: 'none' | 'top' | 'bottom' | 'left' | 'right',
+function applyLayout(
+    content: string,
     layout: 'vertical' | 'horizontal' | 'grid'
 ): string {
-    if (!imageUrl || imagePosition === 'none') {
-        return dataContent;
-    }
-    
-    const imageHTML = `<img src="${imageUrl}" style="max-width: 150px; max-height: 150px; object-fit: contain; border-radius: 4px;" alt="" />`;
-
     switch (layout) {
         case 'vertical':
-            // Layout vertical: elementos empilhados
-            switch (imagePosition) {
-                case 'top':
-                    return `${imageHTML}<br/>${dataContent}`;
-                case 'bottom':
-                    return `${dataContent}<br/>${imageHTML}`;
-                case 'left':
-                case 'right':
-                    // Em layout vertical, left/right vira top/bottom
-                    return `${imageHTML}<br/>${dataContent}`;
-                default:
-                    return dataContent;
-            }
+            // Layout vertical: conteúdo empilhado (padrão)
+            return content;
 
         case 'horizontal':
-            // Layout horizontal: elementos lado a lado
-            switch (imagePosition) {
-                case 'left':
-                    return `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div>${imageHTML}</div>
-                            <div>${dataContent}</div>
-                        </div>
-                    `;
-                case 'right':
-                    return `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div>${dataContent}</div>
-                            <div>${imageHTML}</div>
-                        </div>
-                    `;
-                case 'top':
-                case 'bottom':
-                    // Em layout horizontal, top/bottom vira left/right
-                    return `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div>${imageHTML}</div>
-                            <div>${dataContent}</div>
-                        </div>
-                    `;
-                default:
-                    return dataContent;
-            }
+            // Layout horizontal: conteúdo lado a lado (usando flex)
+            return `<div style="display: flex; flex-direction: column; gap: 8px;">${content}</div>`;
 
         case 'grid':
-            // Layout grid: imagem e conteúdo em grid 2x2
-            switch (imagePosition) {
-                case 'top':
-                    return `
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                            <div style="text-align: center;">${imageHTML}</div>
-                            <div>${dataContent}</div>
-                        </div>
-                    `;
-                case 'bottom':
-                    return `
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                            <div>${dataContent}</div>
-                            <div style="text-align: center;">${imageHTML}</div>
-                        </div>
-                    `;
-                case 'left':
-                    return `
-                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;">
-                            <div>${imageHTML}</div>
-                            <div>${dataContent}</div>
-                        </div>
-                    `;
-                case 'right':
-                    return `
-                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start;">
-                            <div>${dataContent}</div>
-                            <div>${imageHTML}</div>
-                        </div>
-                    `;
-                default:
-                    return dataContent;
-            }
+            // Layout grid: conteúdo em grid
+            return `<div style="display: grid; grid-template-columns: 1fr; gap: 8px;">${content}</div>`;
 
         default:
-            return dataContent;
+            return content;
     }
 }
-
