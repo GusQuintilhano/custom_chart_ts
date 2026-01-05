@@ -563,15 +563,16 @@ function createEditorSections(
         },
     ];
     
-    // Sempre mostrar todas as opções (não usar condicional - limitação do SDK)
-    tooltipChildren.push(
-        {
-            type: 'dropdown',
-            key: 'format',
-            label: 'Formato do Tooltip',
-            defaultValue: savedChartTooltip?.format || 'simple',
-            values: ['simple', 'detailed'],
-        },
+    // Mostrar opções somente se tooltip estiver habilitado
+    if (tooltipEnabled) {
+        tooltipChildren.push(
+            {
+                type: 'dropdown',
+                key: 'format',
+                label: 'Formato do Tooltip',
+                defaultValue: savedChartTooltip?.format || 'simple',
+                values: ['simple', 'detailed'],
+            },
             {
                 type: 'toggle',
                 key: 'showAllMeasures',
@@ -585,22 +586,23 @@ function createEditorSections(
                 selectorType: 'COLOR',
                 defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
             },
-        {
-            type: 'dropdown',
-            key: 'customTemplate',
-            label: 'Template Personalizado',
-            defaultValue: savedChartTooltip?.customTemplate || 'default',
-            values: [
-                'default',
-                'valor_medida_dimensao1_dimensao2',
-                'medida_valor_dimensao1',
-                'dimensao1_medida_valor',
-                'dimensao2_dimensao1_medida_valor',
-                'valor_medida',
-                'medida_valor',
-            ],
-        }
-    );
+            {
+                type: 'dropdown',
+                key: 'customTemplate',
+                label: 'Template Personalizado',
+                defaultValue: savedChartTooltip?.customTemplate || 'default',
+                values: [
+                    'default',
+                    'valor_medida_dimensao1_dimensao2',
+                    'medida_valor_dimensao1',
+                    'dimensao1_medida_valor',
+                    'dimensao2_dimensao1_medida_valor',
+                    'valor_medida',
+                    'medida_valor',
+                ],
+            }
+        );
+    }
     
     // Seção 5: Dicas de Contexto (Tooltip)
     elements.push({
