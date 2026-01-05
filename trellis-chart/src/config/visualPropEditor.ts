@@ -66,7 +66,109 @@ function createMeasureColumnSettings(
                 selectorType: 'COLOR',
                 defaultValue: savedConfig?.color || defaultColor,
             },
+            {
+                type: 'dropdown',
+                key: 'format',
+                label: 'Formato do Número',
+                defaultValue: savedConfig?.format || 'decimal',
+                values: ['decimal', 'porcentagem', 'moeda', 'cientifico', 'inteiro'],
+            },
+            {
+                type: 'number',
+                key: 'decimals',
+                label: 'Casas Decimais',
+                defaultValue: savedConfig?.decimals ?? 2,
+            },
+            {
+                type: 'toggle',
+                key: 'useThousandsSeparator',
+                label: 'Usar Separador de Milhares',
+                defaultValue: savedConfig?.useThousandsSeparator !== false,
+            },
+            {
+                type: 'dropdown',
+                key: 'valueLabelPosition',
+                label: 'Posição do Label de Valor',
+                defaultValue: savedConfig?.valueLabelPosition || 'auto',
+                values: ['auto', 'above', 'inside-top', 'inside-center', 'below'],
+            },
+            {
+                type: 'dropdown',
+                key: 'valueFormat',
+                label: 'Formato de Valor',
+                defaultValue: savedConfig?.valueFormat || 'normal',
+                values: ['normal', 'compact'],
+            },
+            {
+                type: 'text',
+                key: 'valuePrefix',
+                label: 'Prefix do Valor',
+                defaultValue: savedConfig?.valuePrefix || '',
+            },
+            {
+                type: 'text',
+                key: 'valueSuffix',
+                label: 'Sufixo do Valor',
+                defaultValue: savedConfig?.valueSuffix || '',
+            },
+            {
+                type: 'toggle',
+                key: 'showZeroValues',
+                label: 'Mostrar Valores Zero',
+                defaultValue: savedConfig?.showZeroValues !== false,
+            },
+            {
+                type: 'number',
+                key: 'yAxisTicks',
+                label: 'Número de Ticks no Eixo Y (0 para automático)',
+                defaultValue: savedConfig?.yAxisTicks === 'auto' || savedConfig?.yAxisTicks === undefined ? 0 : savedConfig?.yAxisTicks,
+                min: 0,
+            },
+            {
+                type: 'toggle',
+                key: 'showYAxisValues',
+                label: 'Mostrar Valores no Eixo Y',
+                defaultValue: savedConfig?.showYAxisValues !== false,
+            },
+            {
+                type: 'toggle',
+                key: 'referenceLine_enabled',
+                label: 'Habilitar Linha de Referência',
+                defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
+            },
         ];
+        
+        // Adicionar elementos de linha de referência condicionalmente
+        if ((savedConfig as any)?.referenceLine_enabled === true) {
+            measureElements.push(
+                {
+                    type: 'number',
+                    key: 'referenceLine_value',
+                    label: 'Valor da Linha de Referência',
+                    defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'referenceLine_color',
+                    label: 'Cor da Linha de Referência',
+                    selectorType: 'COLOR',
+                    defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+                },
+                {
+                    type: 'dropdown',
+                    key: 'referenceLine_style',
+                    label: 'Estilo da Linha',
+                    defaultValue: (savedConfig as any)?.referenceLine_style || 'solid',
+                    values: ['solid', 'dashed', 'dotted'],
+                },
+                {
+                    type: 'toggle',
+                    key: 'referenceLine_showLabel',
+                    label: 'Mostrar Label na Linha',
+                    defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+                }
+            );
+        }
         
         measureColumnSettings[measure.id] = {
             elements: measureElements,
