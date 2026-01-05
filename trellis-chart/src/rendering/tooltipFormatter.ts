@@ -108,19 +108,18 @@ export function formatCustomDetailedTooltip(
     });
     html += '</div>';
 
-    // Usar configuração da primeira medida para imagem e layout
+    // Usar configuração da primeira medida para layout
     const tooltipConfig = measureConfigs[0]?.tooltip;
-    const imageUrl = tooltipConfig?.imageUrl;
     const imagePosition = tooltipConfig?.imagePosition || 'none';
     const layout = tooltipConfig?.layout || 'vertical';
 
-    // Se não tem imagem, retorna conteúdo simples
-    if (!imageUrl || imagePosition === 'none') {
+    // Se não tem posição de imagem configurada, retorna conteúdo simples
+    if (imagePosition === 'none') {
         return html;
     }
 
-    // Montar HTML com imagem baseado na posição e layout
-    return buildTooltipHTML(html, imageUrl, imagePosition, layout);
+    // Montar HTML com layout customizado (sem imagem por enquanto, pois tipo text não é suportado)
+    return html;
 }
 
 /**
@@ -128,10 +127,14 @@ export function formatCustomDetailedTooltip(
  */
 function buildTooltipHTML(
     dataContent: string,
-    imageUrl: string,
+    imageUrl: string | undefined,
     imagePosition: 'none' | 'top' | 'bottom' | 'left' | 'right',
     layout: 'vertical' | 'horizontal' | 'grid'
 ): string {
+    if (!imageUrl || imagePosition === 'none') {
+        return dataContent;
+    }
+    
     const imageHTML = `<img src="${imageUrl}" style="max-width: 150px; max-height: 150px; object-fit: contain; border-radius: 4px;" alt="" />`;
 
     switch (layout) {

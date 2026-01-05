@@ -182,12 +182,6 @@ function createMeasureColumnSettings(
                     values: ['vertical', 'horizontal', 'grid'],
                 },
                 {
-                    type: 'text',
-                    key: 'tooltip_imageUrl',
-                    label: 'URL da Imagem',
-                    defaultValue: (savedConfig as any)?.tooltip_imageUrl || '',
-                },
-                {
                     type: 'dropdown',
                     key: 'tooltip_imagePosition',
                     label: 'Posição da Imagem',
@@ -537,6 +531,12 @@ function createEditorSections(
                 label: 'Cor de Fundo do Tooltip',
                 selectorType: 'COLOR',
                 defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
+            },
+            {
+                type: 'text',
+                key: 'imageUrl',
+                label: 'URL da Imagem (Global)',
+                defaultValue: savedChartTooltip?.imageUrl || '',
             }
         );
     }
