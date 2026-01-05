@@ -55,11 +55,11 @@ export function renderLineChart(
         
         // Calcular posição do label baseado em valueLabelPosition
         let labelY = point.y - 8;
-        if (valueLabelPosition === 'inside-top') {
+        if (valueLabelPosition === 'dentro-superior') {
             labelY = point.y + 12;
-        } else if (valueLabelPosition === 'inside-center') {
+        } else if (valueLabelPosition === 'dentro-centro') {
             labelY = point.y + 4;
-        } else if (valueLabelPosition === 'below') {
+        } else if (valueLabelPosition === 'abaixo') {
             labelY = point.y + 20;
         }
         
@@ -164,15 +164,15 @@ export function renderBars(
         let labelY = barY - 5; // Padrão: acima
         let labelAnchor = 'middle';
         
-        if (shouldShowLabel && valueLabelPosition !== 'auto') {
-            if (valueLabelPosition === 'inside-top') {
+        if (shouldShowLabel && valueLabelPosition !== 'automático') {
+            if (valueLabelPosition === 'dentro-superior') {
                 labelY = barY + valueLabelFontSize + 2;
-            } else if (valueLabelPosition === 'inside-center') {
+            } else if (valueLabelPosition === 'dentro-centro') {
                 labelY = barY + barHeight / 2 + valueLabelFontSize / 3;
-            } else if (valueLabelPosition === 'below') {
+            } else if (valueLabelPosition === 'abaixo') {
                 labelY = barY + barHeight + valueLabelFontSize + 5;
             }
-            // 'above' mantém o padrão (barY - 5)
+            // 'acima' mantém o padrão (barY - 5)
         }
         
         const formattedValue = shouldShowLabel ? formatValue(
@@ -257,12 +257,12 @@ export function renderAllChartElements(params: RenderChartElementsParams): strin
         const measureRowTop = topMargin + measureIdx * (measureRowHeight + spacingBetweenMeasures);
         const { min: minValue, max: maxValue } = measureRanges[measureIdx];
         const measureConfig = measureConfigs[measureIdx];
-        const chartType = (measureConfig as any).chartType || 'bar';
+        const chartType = (measureConfig as any).chartType || 'barras';
         const color = measureConfig.color || '#3b82f6';
         const format = measureConfig.format || 'decimal';
         const decimals = (measureConfig as any).decimals ?? 2;
         
-        if (chartType === 'line') {
+        if (chartType === 'linha') {
             return renderLineChart(
                 chartData,
                 measureIdx,

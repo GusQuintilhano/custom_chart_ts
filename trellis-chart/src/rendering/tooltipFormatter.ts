@@ -114,7 +114,7 @@ export function formatCustomDetailedTooltip(
  */
 function applyLayout(
     content: string,
-    layout: 'vertical' | 'horizontal' | 'grid'
+    layout: 'vertical' | 'horizontal' | 'grade'
 ): string {
     switch (layout) {
         case 'vertical':
@@ -125,8 +125,8 @@ function applyLayout(
             // Layout horizontal: conteúdo lado a lado (usando flex)
             return `<div style="display: flex; flex-direction: column; gap: 8px;">${content}</div>`;
 
-        case 'grid':
-            // Layout grid: conteúdo em grid
+        case 'grade':
+            // Layout grade: conteúdo em grid
             return `<div style="display: grid; grid-template-columns: 1fr; gap: 8px;">${content}</div>`;
 
         default:

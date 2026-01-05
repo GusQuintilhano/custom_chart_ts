@@ -40,7 +40,7 @@ function formatCompact(value: number, decimals: number = 1): string {
  * @param formatType Tipo de formatação (decimal, porcentagem, moeda, cientifico, inteiro)
  * @param decimals Número de casas decimais (padrão: 2)
  * @param useThousandsSeparator Se deve usar separador de milhares (padrão: false)
- * @param valueFormat Formato do valor ('normal' | 'compact')
+ * @param valueFormat Formato do valor ('normal' | 'compacto')
  * @param prefix Prefixo antes do valor
  * @param suffix Sufixo depois do valor
  * @param showZero Se deve mostrar valores zero (se false e value === 0, retorna string vazia)
@@ -51,7 +51,7 @@ export function formatValue(
     formatType: string, 
     decimals: number = 2, 
     useThousandsSeparator: boolean = false,
-    valueFormat: 'normal' | 'compact' = 'normal',
+    valueFormat: 'normal' | 'compacto' = 'normal',
     prefix: string = '',
     suffix: string = '',
     showZero: boolean = true
@@ -64,7 +64,7 @@ export function formatValue(
     let formatted: string;
     
     // Se formato compacto, aplicar antes do tipo
-    if (valueFormat === 'compact' && formatType !== 'percentage' && formatType !== 'porcentagem') {
+    if (valueFormat === 'compacto' && formatType !== 'percentage' && formatType !== 'porcentagem') {
         formatted = formatCompact(value, decimals);
         return `${prefix}${formatted}${suffix}`;
     }

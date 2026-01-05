@@ -141,8 +141,8 @@ export function readMeasureConfigs(
             ...configFromColumnVisualProps,
         };
         
-        const chartType = (measureConfig?.chartType as string) || 'bar';
-        const defaultOpacity = chartType === 'line' ? 0.8 : 0.9;
+        const chartType = (measureConfig?.chartType as string) || 'barras';
+        const defaultOpacity = chartType === 'linha' ? 0.8 : 0.9;
         
         // Processar linha de referência
         const referenceLineEnabled = (measureConfig as any)?.referenceLine_enabled === true;
@@ -150,7 +150,7 @@ export function readMeasureConfigs(
             enabled: true,
             value: ((measureConfig as any)?.referenceLine_value as number) ?? 0,
             color: ((measureConfig as any)?.referenceLine_color as string) || '#ef4444',
-            style: (((measureConfig as any)?.referenceLine_style as string) || 'solid') as 'solid' | 'dashed' | 'dotted',
+            style: (((measureConfig as any)?.referenceLine_style as string) || 'sólida') as 'sólida' | 'tracejada' | 'pontilhada',
             showLabel: ((measureConfig as any)?.referenceLine_showLabel as boolean) !== false,
         } : undefined;
         
@@ -158,9 +158,9 @@ export function readMeasureConfigs(
         const tooltipEnabled = (measureConfig as any)?.tooltip_enabled !== false;
         const tooltip: MeasureConfig['tooltip'] = tooltipEnabled ? {
             enabled: true,
-            format: (((measureConfig as any)?.tooltip_format as string) || 'simple') as 'simple' | 'detailed',
+            format: (((measureConfig as any)?.tooltip_format as string) || 'simples') as 'simples' | 'detalhado',
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
-            layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grid',
+            layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
         } : undefined;
         
         return {
@@ -179,7 +179,7 @@ export function readMeasureConfigs(
             valuePrefix: ((measureConfig as any)?.valuePrefix as string) || '',
             valueSuffix: ((measureConfig as any)?.valueSuffix as string) || '',
             showZeroValues: (measureConfig?.showZeroValues as boolean) ?? true,
-            valueFormat: ((measureConfig as any)?.valueFormat as 'normal' | 'compact') || 'normal',
+            valueFormat: ((measureConfig as any)?.valueFormat as 'normal' | 'compacto') || 'normal',
             referenceLine,
             tooltip,
         };

@@ -22,13 +22,13 @@ export interface RenderReferenceLinesParams {
 /**
  * Converte estilo de linha para stroke-dasharray do SVG
  */
-function getStrokeDashArray(style: 'solid' | 'dashed' | 'dotted'): string {
+function getStrokeDashArray(style: 'sólida' | 'tracejada' | 'pontilhada'): string {
     switch (style) {
-        case 'dashed':
+        case 'tracejada':
             return '5,5';
-        case 'dotted':
+        case 'pontilhada':
             return '2,2';
-        case 'solid':
+        case 'sólida':
         default:
             return 'none';
     }
@@ -81,7 +81,7 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
         const lineX1 = leftMargin;
         const lineX2 = leftMargin + plotAreaWidth;
         const color = referenceLine.color || '#ef4444';
-        const strokeDashArray = getStrokeDashArray(referenceLine.style || 'solid');
+        const strokeDashArray = getStrokeDashArray(referenceLine.style || 'sólida');
 
         // Renderizar linha
         html += `

@@ -58,8 +58,8 @@ function createMeasureColumnSettings(
                 type: 'dropdown',
                 key: 'chartType',
                 label: 'Tipo de Gráfico',
-                defaultValue: savedConfig?.chartType || 'bar',
-                values: ['bar', 'line'],
+                defaultValue: savedConfig?.chartType || 'barras',
+                values: ['barras', 'linha'],
             },
             {
                 type: 'colorpicker',
@@ -95,15 +95,15 @@ function createMeasureColumnSettings(
                 type: 'dropdown',
                 key: 'valueLabelPosition',
                 label: 'Posição do Label de Valor',
-                defaultValue: savedConfig?.valueLabelPosition || 'auto',
-                values: ['auto', 'above', 'inside-top', 'inside-center', 'below'],
+                defaultValue: savedConfig?.valueLabelPosition || 'automático',
+                values: ['automático', 'acima', 'dentro-superior', 'dentro-centro', 'abaixo'],
             },
             {
                 type: 'dropdown',
                 key: 'valueFormat',
                 label: 'Formato de Valor',
                 defaultValue: savedConfig?.valueFormat || 'normal',
-                values: ['normal', 'compact'],
+                values: ['normal', 'compacto'],
             },
             {
                 type: 'toggle',
@@ -155,8 +155,8 @@ function createMeasureColumnSettings(
                     type: 'dropdown',
                     key: 'referenceLine_style',
                     label: 'Estilo da Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_style || 'solid',
-                    values: ['solid', 'dashed', 'dotted'],
+                    defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
+                    values: ['sólida', 'tracejada', 'pontilhada'],
                 },
                 {
                     type: 'toggle',
@@ -174,8 +174,8 @@ function createMeasureColumnSettings(
                     type: 'dropdown',
                     key: 'tooltip_format',
                     label: 'Formato da Dica',
-                    defaultValue: (savedConfig as any)?.tooltip_format || 'simple',
-                    values: ['simple', 'detailed'],
+                    defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
+                    values: ['simples', 'detalhado'],
                 },
                 {
                     type: 'colorpicker',
@@ -189,7 +189,7 @@ function createMeasureColumnSettings(
                     key: 'tooltip_layout',
                     label: 'Layout da Dica de Contexto',
                     defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
-                    values: ['vertical', 'horizontal', 'grid'],
+                    values: ['vertical', 'horizontal', 'grade'],
                 }
             );
         }

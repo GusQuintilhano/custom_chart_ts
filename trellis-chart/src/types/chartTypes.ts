@@ -80,7 +80,7 @@ export interface MeasureConfig {
     chartType?: string;
     useThousandsSeparator?: boolean;
     opacity?: number; // Opacidade da barra/linha (0-1)
-    valueLabelPosition?: 'above' | 'inside-top' | 'inside-center' | 'below' | 'auto'; // Posição do label de valor
+    valueLabelPosition?: 'acima' | 'dentro-superior' | 'dentro-centro' | 'abaixo' | 'automático'; // Posição do label de valor
     minY?: number | 'auto'; // Valor mínimo do eixo Y
     maxY?: number | 'auto'; // Valor máximo do eixo Y
     yAxisTicks?: number | 'auto'; // Número de ticks no eixo Y
@@ -88,19 +88,19 @@ export interface MeasureConfig {
     valuePrefix?: string; // Prefixo antes do valor (ex: "R$", "Total:")
     valueSuffix?: string; // Sufixo depois do valor (ex: "%", "un")
     showZeroValues?: boolean; // Mostrar valores zero
-    valueFormat?: 'normal' | 'compact'; // Formato: normal ou compacto (1.5K, 1.2M)
+    valueFormat?: 'normal' | 'compacto'; // Formato: normal ou compacto (1.5K, 1.2M)
     referenceLine?: {
         enabled: boolean;
         value: number;
         color?: string;
-        style?: 'solid' | 'dashed' | 'dotted';
+        style?: 'sólida' | 'tracejada' | 'pontilhada';
         showLabel?: boolean;
     };
     tooltip?: {
         enabled: boolean;
-        format?: 'simple' | 'detailed';
+        format?: 'simples' | 'detalhado';
         backgroundColor?: string;
-        layout?: 'vertical' | 'horizontal' | 'grid';
+        layout?: 'vertical' | 'horizontal' | 'grade';
     };
 }
 
