@@ -524,12 +524,6 @@ function createEditorSections(
                 label: 'Cor de Fundo do Tooltip',
                 selectorType: 'COLOR',
                 defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
-            },
-            {
-                type: 'text',
-                key: 'customTemplate',
-                label: 'Template Personalizado (use {valor}, {medida}, {dimensao1}, {dimensao2})',
-                defaultValue: savedChartTooltip?.customTemplate || '',
             }
         );
     }
