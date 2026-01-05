@@ -136,11 +136,17 @@ export function readMeasureConfigs(
         const configOld = (allVisualProps[measureKeyOld] || {}) as Record<string, unknown>;
         const configNew = (allVisualProps[measure.id] || {}) as Record<string, unknown>;
         
+        // O ThoughtSpot pode salvar valores em estruturas aninhadas (seções)
+        // Se chartType está em uma seção 'visualization', pode estar em configFromColumnVisualProps.visualization.chartType
+        const visualizationSection = (configFromColumnVisualProps.visualization || {}) as Record<string, unknown>;
+        
         // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
+        // Também mesclar valores de seções aninhadas (ex: visualization.chartType -> chartType)
         const measureConfig = {
             ...configNew,
             ...configOld,
             ...configFromColumnVisualProps, // Prioridade mais alta - configurações de columnSettingsDefinition
+            ...(visualizationSection.chartType ? { chartType: visualizationSection.chartType } : {}), // Extrair chartType da seção visualization se existir
         };
         
         // Debug: verificar valores
@@ -148,6 +154,7 @@ export function readMeasureConfigs(
             configNew: (configNew as any).chartType,
             configOld: (configOld as any).chartType,
             configFromColumnVisualProps: (configFromColumnVisualProps as any).chartType,
+            visualizationSection: (visualizationSection as any).chartType,
             final: (measureConfig as any).chartType
         });
         
