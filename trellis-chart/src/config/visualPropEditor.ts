@@ -70,7 +70,7 @@ function createMeasureColumnSettings(
                 type: 'number',
                 key: 'opacity',
                 label: 'Opacidade (0-1)',
-                defaultValue: savedConfig?.opacity ?? (savedConfig?.chartType === 'line' ? 0.8 : 0.9),
+                defaultValue: savedConfig?.opacity ?? 0.9,
                 min: 0,
                 max: 1,
                 step: 0.1,
