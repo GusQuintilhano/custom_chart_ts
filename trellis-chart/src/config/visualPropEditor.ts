@@ -298,44 +298,23 @@ function createEditorSections(
 ): any[] {
     const elements: any[] = [];
     
-    // Seção 1: Aparência e Visualização
-    const chartVisualChildren: any[] = [
-        {
-            type: 'toggle',
-            key: 'showYAxis',
-            label: 'Exibir Eixo Y',
-            defaultValue: getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false,
-        },
-        {
-            type: 'toggle',
-            key: 'showGridLines',
-            label: 'Exibir Linhas Divisórias',
-            defaultValue: getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false,
-        },
-        {
-            type: 'dropdown',
-            key: 'measureNameRotation',
-            label: 'Rotação do Nome da Medida',
-            defaultValue: getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
-            values: ['-90', '0', '45', '-45', '90'],
-        },
-        {
-            type: 'toggle',
-            key: 'forceLabels',
-            label: 'Forçar Exibição de Labels',
-            defaultValue: getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
-        },
-    ];
-    
+    // Seção 1: Eixos
     elements.push({
         type: 'section',
-        key: 'chart_visual',
-        label: 'Aparência e Visualização',
-        isAccordianExpanded: true,
-        children: chartVisualChildren,
+        key: 'axes',
+        label: 'Eixos',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'showYAxis',
+                label: 'Exibir Eixo Y',
+                defaultValue: getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false,
+            },
+        ],
     });
     
-    // Seção de Linhas Divisórias (subgrupo condicional)
+    // Seção 2: Linhas Divisórias
     const showGridLinesValue = getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
     if (showGridLinesValue) {
         const defaultDividerColor = getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db');
@@ -344,6 +323,12 @@ function createEditorSections(
         const dividerLinesBetweenBarsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true;
         
         const dividerLinesChildren: any[] = [
+            {
+                type: 'toggle',
+                key: 'showGridLines',
+                label: 'Exibir Linhas Divisórias',
+                defaultValue: showGridLinesValue,
+            },
             {
                 type: 'toggle',
                 key: 'dividerLinesBetweenMeasures',
@@ -412,13 +397,54 @@ function createEditorSections(
         elements.push({
             type: 'section',
             key: 'chart_divider_lines',
-            label: 'Estilo das Linhas Divisórias',
+            label: 'Linhas Divisórias',
             isAccordianExpanded: false,
             children: dividerLinesChildren,
         });
     }
     
-    // Seção 3: Dimensões e Espaçamento
+    // Seção 3: Tipografia e Textos
+    elements.push({
+        type: 'section',
+        key: 'text_sizes',
+        label: 'Tipografia e Textos',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'number',
+                key: 'labelFontSize',
+                label: 'Tamanho da Dimensão (px)',
+                defaultValue: savedTextSizes?.labelFontSize ?? 10,
+            },
+            {
+                type: 'number',
+                key: 'measureTitleFontSize',
+                label: 'Tamanho das Medidas (px)',
+                defaultValue: savedTextSizes?.measureTitleFontSize ?? 10,
+            },
+            {
+                type: 'number',
+                key: 'valueLabelFontSize',
+                label: 'Tamanho dos Valores (px)',
+                defaultValue: savedTextSizes?.valueLabelFontSize ?? 9,
+            },
+            {
+                type: 'dropdown',
+                key: 'measureNameRotation',
+                label: 'Rotação do Nome da Medida',
+                defaultValue: getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
+                values: ['-90', '0', '45', '-45', '90'],
+            },
+            {
+                type: 'toggle',
+                key: 'forceLabels',
+                label: 'Forçar Exibição de Labels',
+                defaultValue: getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
+            },
+        ],
+    });
+    
+    // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
     const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
     elements.push({
@@ -468,33 +494,6 @@ function createEditorSections(
         ],
     });
     
-    // Seção 4: Tipografia e Textos
-    elements.push({
-        type: 'section',
-        key: 'text_sizes',
-        label: 'Tipografia e Textos',
-        isAccordianExpanded: false,
-        children: [
-            {
-                type: 'number',
-                key: 'labelFontSize',
-                label: 'Tamanho da Dimensão (px)',
-                defaultValue: savedTextSizes?.labelFontSize ?? 10,
-            },
-            {
-                type: 'number',
-                key: 'measureTitleFontSize',
-                label: 'Tamanho das Medidas (px)',
-                defaultValue: savedTextSizes?.measureTitleFontSize ?? 10,
-            },
-            {
-                type: 'number',
-                key: 'valueLabelFontSize',
-                label: 'Tamanho dos Valores (px)',
-                defaultValue: savedTextSizes?.valueLabelFontSize ?? 9,
-            },
-        ],
-    });
     
     // Seção para cores e estilo - TEMPORARIAMENTE REMOVIDA PARA DEBUG DO ERRO elements[4]
     // TODO: Investigar por que o ThoughtSpot SDK está rejeitando esta seção no índice 4
