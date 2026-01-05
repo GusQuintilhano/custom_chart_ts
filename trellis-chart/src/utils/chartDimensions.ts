@@ -150,7 +150,7 @@ export function readMeasureConfigs(
         
         // Se chartType está em visualization.chartType, extrair para o nível superior
         const chartTypeFromVisualization = visualizationSection.chartType;
-        const measureConfig = {
+        const measureConfig: Record<string, unknown> = {
             ...measureConfigFlat,
             ...(chartTypeFromVisualization ? { chartType: chartTypeFromVisualization } : {}), // Extrair chartType da seção visualization se existir
         };
