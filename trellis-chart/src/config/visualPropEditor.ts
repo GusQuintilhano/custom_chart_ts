@@ -309,14 +309,16 @@ function createEditorSections(
     });
     
     // Seção 2: Linhas Divisórias
-    const showGridLinesValue = getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
-    if (showGridLinesValue) {
-        const defaultDividerColor = getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db');
-        const dividerLinesBetweenMeasuresEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false;
-        const dividerLinesBetweenGroupsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false;
-        const dividerLinesBetweenBarsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true;
-        
-        const dividerLinesChildren: any[] = [
+    const showGridLinesValue = (savedChartDividerLines as any).showGridLines !== undefined
+        ? (savedChartDividerLines as any).showGridLines !== false
+        : getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
+    const defaultDividerColor = getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db');
+    const dividerLinesBetweenMeasuresEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false;
+    const dividerLinesBetweenGroupsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false;
+    const dividerLinesBetweenBarsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true;
+    
+    // Sempre mostrar a seção (não usar condicional - limitação do SDK)
+    const dividerLinesChildren: any[] = [
             {
                 type: 'toggle',
                 key: 'showGridLines',
@@ -386,16 +388,15 @@ function createEditorSections(
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBarsWidth, savedChartOptions.dividerLinesBetweenBarsWidth, 1) ?? 1,
                 },
             ] : []),
-        ];
-        
-        elements.push({
-            type: 'section',
-            key: 'chart_divider_lines',
-            label: 'Linhas Divisórias',
-            isAccordianExpanded: false,
-            children: dividerLinesChildren,
-        });
-    }
+    ];
+    
+    elements.push({
+        type: 'section',
+        key: 'chart_divider_lines',
+        label: 'Linhas Divisórias',
+        isAccordianExpanded: false,
+        children: dividerLinesChildren,
+    });
     
     // Seção 3: Tipografia e Textos
     elements.push({
@@ -426,14 +427,18 @@ function createEditorSections(
                 type: 'dropdown',
                 key: 'measureNameRotation',
                 label: 'Rotação do Nome da Medida',
-                defaultValue: getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
+                defaultValue: (savedTextSizes as any).measureNameRotation !== undefined
+                    ? (savedTextSizes as any).measureNameRotation
+                    : getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
                 values: ['-90', '0', '45', '-45', '90'],
             },
             {
                 type: 'toggle',
                 key: 'forceLabels',
                 label: 'Forçar Exibição de Labels',
-                defaultValue: getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
+                defaultValue: (savedTextSizes as any).forceLabels !== undefined
+                    ? (savedTextSizes as any).forceLabels === true
+                    : getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
             },
         ],
     });
@@ -541,18 +546,15 @@ function createEditorSections(
         },
     ];
     
-    if (tooltipEnabled) {
-        tooltipChildren.push(
-            {
-                type: 'dropdown',
-                key: 'format',
-                label: 'Formato do Tooltip',
-                defaultValue: savedChartTooltip?.format || 'simples',
-                values: [
-                    { label: 'Simples', value: 'simple' },
-                    { label: 'Detalhado', value: 'detailed' }
-                ],
-            },
+    // Sempre mostrar todas as opções (não usar condicional - limitação do SDK)
+    tooltipChildren.push(
+        {
+            type: 'dropdown',
+            key: 'format',
+            label: 'Formato do Tooltip',
+            defaultValue: savedChartTooltip?.format || 'simple',
+            values: ['simple', 'detailed'],
+        },
             {
                 type: 'toggle',
                 key: 'showAllMeasures',
@@ -566,23 +568,22 @@ function createEditorSections(
                 selectorType: 'COLOR',
                 defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
             },
-            {
-                type: 'dropdown',
-                key: 'customTemplate',
-                label: 'Template Personalizado',
-                defaultValue: savedChartTooltip?.customTemplate || 'default',
-                values: [
-                    'default',
-                    'valor_medida_dimensao1_dimensao2',
-                    'medida_valor_dimensao1',
-                    'dimensao1_medida_valor',
-                    'dimensao2_dimensao1_medida_valor',
-                    'valor_medida',
-                    'medida_valor',
-                ],
-            }
-        );
-    }
+        {
+            type: 'dropdown',
+            key: 'customTemplate',
+            label: 'Template Personalizado',
+            defaultValue: savedChartTooltip?.customTemplate || 'default',
+            values: [
+                'default',
+                'valor_medida_dimensao1_dimensao2',
+                'medida_valor_dimensao1',
+                'dimensao1_medida_valor',
+                'dimensao2_dimensao1_medida_valor',
+                'valor_medida',
+                'medida_valor',
+            ],
+        }
+    );
     
     // Seção 5: Dicas de Contexto (Tooltip)
     elements.push({

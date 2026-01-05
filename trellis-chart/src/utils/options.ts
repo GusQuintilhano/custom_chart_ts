@@ -11,6 +11,40 @@
  */
 
 /**
+ * Função auxiliar para ler valor com hierarquia: nova seção > seção compatibilidade > consolidado > default
+ */
+function getValueWithCompat(
+    newSectionValue: unknown,
+    compatSectionValue: unknown,
+    consolidatedValue: unknown,
+    defaultValue: unknown,
+    useHasOwnProperty = true
+): unknown {
+    if (useHasOwnProperty) {
+        if (newSectionValue !== undefined && newSectionValue !== null) {
+            return newSectionValue;
+        }
+        if (compatSectionValue !== undefined && compatSectionValue !== null) {
+            return compatSectionValue;
+        }
+        if (consolidatedValue !== undefined && consolidatedValue !== null) {
+            return consolidatedValue;
+        }
+    } else {
+        if (newSectionValue !== undefined) {
+            return newSectionValue;
+        }
+        if (compatSectionValue !== undefined) {
+            return compatSectionValue;
+        }
+        if (consolidatedValue !== undefined) {
+            return consolidatedValue;
+        }
+    }
+    return defaultValue;
+}
+
+/**
  * Função auxiliar para ler valor com hierarquia correta
  * @param sectionValue Valor da seção individual
  * @param consolidatedValue Valor do chart_options consolidado
@@ -169,22 +203,57 @@ export interface ChartOptions {
  */
 export function readChartOptions(allVisualProps: Record<string, unknown>): ChartOptions {
     // Extrair seções individuais
-    const chartVisual = (allVisualProps?.chart_visual || {}) as ChartVisualOptions;
+    const chartVisual = (allVisualProps?.chart_visual || {}) as ChartVisualOptions; // Mantido para compatibilidade
+    const axes = (allVisualProps?.axes || {}) as { showYAxis?: boolean };
     const chartDimensions = (allVisualProps?.chart_dimensions || {}) as ChartDimensionsOptions;
-    const chartDividerLines = (allVisualProps?.chart_divider_lines || {}) as ChartDividerLinesOptions;
+    const chartDividerLines = (allVisualProps?.chart_divider_lines || {}) as ChartDividerLinesOptions & { showGridLines?: boolean };
+    const textSizes = (allVisualProps?.text_sizes || {}) as ChartTextSizesOptions & { measureNameRotation?: string; forceLabels?: boolean };
     const chartColorsStyle = (allVisualProps?.chart_colors_style || {}) as ChartColorsAndStyleOptions;
     const chartTooltip = (allVisualProps?.chart_tooltip || {}) as ChartTooltipOptions;
     const chartOptionsConsolidated = (allVisualProps?.chart_options || allVisualProps?.chartOptions || {}) as ChartOptionsConsolidated;
     
-    const showYAxis = getValue(chartVisual.showYAxis, chartOptionsConsolidated.showYAxis, true, true) !== false;
+    // Ler showYAxis da seção axes (nova), com fallback para chart_visual (compatibilidade) e consolidado
+    const showYAxis = getValueWithCompat(
+        axes.showYAxis,
+        chartVisual.showYAxis,
+        chartOptionsConsolidated.showYAxis,
+        true,
+        true
+    ) !== false;
     
-    // Construir chartOptions seguindo hierarquia: seção individual > consolidado > default
+    // Ler showGridLines da seção chart_divider_lines (nova), com fallback para chart_visual (compatibilidade) e consolidado
+    const showGridLines = getValueWithCompat(
+        chartDividerLines.showGridLines,
+        chartVisual.showGridLines,
+        chartOptionsConsolidated.showGridLines,
+        true,
+        true
+    ) !== false;
+    
+    // Ler measureNameRotation e forceLabels da seção text_sizes (nova), com fallback para chart_visual (compatibilidade) e consolidado
+    const measureNameRotation = getValueWithCompat(
+        textSizes.measureNameRotation,
+        chartVisual.measureNameRotation,
+        chartOptionsConsolidated.measureNameRotation,
+        '-90',
+        false
+    ) as string;
+    
+    const forceLabels = getValueWithCompat(
+        textSizes.forceLabels,
+        chartVisual.forceLabels,
+        chartOptionsConsolidated.forceLabels,
+        false,
+        true
+    ) === true;
+    
+    // Construir chartOptions seguindo hierarquia: seção individual > chart_visual (compatibilidade) > consolidado > default
     const chartOptions: ChartOptions = {
-        // Valores de chart_visual (prioridade máxima)
+        // Valores reorganizados em novas seções
         showYAxis,
-        showGridLines: getValue(chartVisual.showGridLines, chartOptionsConsolidated.showGridLines, true, true) !== false,
-        measureNameRotation: getValue(chartVisual.measureNameRotation, chartOptionsConsolidated.measureNameRotation, '-90', false) as string,
-        forceLabels: getValue(chartVisual.forceLabels, chartOptionsConsolidated.forceLabels, false, true) === true,
+        showGridLines,
+        measureNameRotation,
+        forceLabels,
         
         // Valores de chart_divider_lines (prioridade máxima)
         dividerLinesBetweenMeasures: getValue(chartDividerLines.dividerLinesBetweenMeasures, chartOptionsConsolidated.dividerLinesBetweenMeasures, true, true) !== false,
