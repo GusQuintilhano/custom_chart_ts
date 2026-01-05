@@ -160,6 +160,9 @@ export function readMeasureConfigs(
             enabled: true,
             format: (((measureConfig as any)?.tooltip_format as string) || 'simple') as 'simple' | 'detailed',
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
+            imageUrl: ((measureConfig as any)?.tooltip_imageUrl as string) || undefined,
+            imagePosition: (((measureConfig as any)?.tooltip_imagePosition as string) || 'none') as 'none' | 'top' | 'bottom' | 'left' | 'right',
+            layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grid',
         } : undefined;
         
         return {
