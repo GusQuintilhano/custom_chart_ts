@@ -40,20 +40,19 @@ export function formatCustomSimpleTooltip(
     const measureName = measureCol.name;
 
     const tooltipConfig = measureConfig.tooltip;
-    const imageUrl = tooltipConfig?.imageUrl;
     const imagePosition = tooltipConfig?.imagePosition || 'none';
     const layout = tooltipConfig?.layout || 'vertical';
 
     // Conteúdo de dados
     const dataContent = `<strong>${measureName}</strong><br/>${primaryLabel}: ${formattedValue}`;
 
-    // Se não tem imagem, retorna conteúdo simples
-    if (!imageUrl || imagePosition === 'none') {
+    // Se não tem posição de imagem configurada, retorna conteúdo simples
+    if (imagePosition === 'none') {
         return dataContent;
     }
 
-    // Montar HTML com imagem baseado na posição e layout
-    return buildTooltipHTML(dataContent, imageUrl, imagePosition, layout);
+    // Montar HTML com layout customizado (sem imagem por enquanto, pois tipo text não é suportado)
+    return dataContent;
 }
 
 /**
