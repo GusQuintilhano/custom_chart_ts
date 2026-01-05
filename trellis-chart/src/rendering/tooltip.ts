@@ -68,6 +68,7 @@ function formatSimpleTooltip(
 ): string {
     // Se há template personalizado, usar ele
     if (customTemplate && customTemplate.trim() !== '') {
+        // Note: secondaryDateFormat não está disponível neste contexto, mas processTooltipTemplate trata isso
         const templateResult = processTooltipTemplate(customTemplate, {
             dataPoint,
             measureIdx,
@@ -81,6 +82,7 @@ function formatSimpleTooltip(
                 valueSuffix: measureConfig.valueSuffix,
             },
             primaryDateFormat,
+            secondaryDateFormat: undefined, // Não disponível no contexto simples
         });
         if (templateResult) {
             return templateResult;
