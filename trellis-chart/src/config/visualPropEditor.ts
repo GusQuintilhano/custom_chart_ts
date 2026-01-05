@@ -550,7 +550,10 @@ function createEditorSections(
     // });
     
     // Seção para tooltip
-    const tooltipEnabled = (savedChartTooltip?.enabled === true) || false;
+    // Usar valor atual se disponível (para condicionais dinâmicas), senão usar valor salvo
+    const tooltipEnabled = (currentChartTooltip?.enabled !== undefined
+        ? currentChartTooltip.enabled === true
+        : (savedChartTooltip?.enabled === true)) || false;
     const tooltipChildren: any[] = [
         {
             type: 'toggle',
@@ -632,7 +635,7 @@ export function createVisualPropEditorDefinition(
     const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
     const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes, chartColorsStyle: savedChartColorsStyle, chartTooltip: savedChartTooltip } = readSavedValues(allSavedProps);
     
-    // Criar seções do editor
+    // Criar seções do editor (passar allSavedProps para permitir condicionais dinâmicas)
     const elements = createEditorSections(
         savedChartVisual,
         savedChartDimensions,
@@ -640,7 +643,8 @@ export function createVisualPropEditorDefinition(
         savedChartOptions,
         savedTextSizes,
         savedChartColorsStyle,
-        savedChartTooltip
+        savedChartTooltip,
+        allSavedProps
     );
     
     // Criar configurações por coluna para aparecer na aba "Configure"
