@@ -250,15 +250,10 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Usar formatação customizada se houver configuração de layout
-            const hasCustomConfig = measureTooltipConfig?.layout && measureTooltipConfig?.layout !== 'vertical';
-            const content = hasCustomConfig
-                ? (format === 'detailed'
-                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
-                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat))
-                : (format === 'detailed'
-                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat));
+            // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
+            const content = format === 'detailed'
+                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
@@ -305,15 +300,10 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Usar formatação customizada se houver configuração de layout
-            const hasCustomConfig = measureTooltipConfig?.layout && measureTooltipConfig?.layout !== 'vertical';
-            const content = hasCustomConfig
-                ? (format === 'detailed'
-                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
-                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat))
-                : (format === 'detailed'
-                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat));
+            // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
+            const content = format === 'detailed'
+                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
