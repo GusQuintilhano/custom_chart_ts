@@ -144,18 +144,24 @@ function createMeasureColumnSettings(
         });
         
         // Seção 4: Linha de Referência
-        measureElements.push({
-            type: 'section',
-            key: 'reference_line',
-            label: 'Linha de Referência',
-            isAccordianExpanded: false,
-            children: [
-                {
-                    type: 'toggle',
-                    key: 'referenceLine_enabled',
-                    label: 'Habilitar Linha de Referência',
-                    defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
-                },
+        // Ler valor atual (se disponível) ou valor salvo
+        const currentConfig = (currentVisualProps.visualProps as any)?.[measure.id] || savedConfig;
+        const referenceLineEnabled = (currentConfig as any)?.referenceLine_enabled !== undefined
+            ? (currentConfig as any).referenceLine_enabled === true
+            : ((savedConfig as any)?.referenceLine_enabled === true);
+        
+        const referenceLineChildren: any[] = [
+            {
+                type: 'toggle',
+                key: 'referenceLine_enabled',
+                label: 'Habilitar Linha de Referência',
+                defaultValue: referenceLineEnabled,
+            },
+        ];
+        
+        // Mostrar opções somente se linha de referência estiver habilitada
+        if (referenceLineEnabled) {
+            referenceLineChildren.push(
                 {
                     type: 'number',
                     key: 'referenceLine_value',
@@ -181,23 +187,37 @@ function createMeasureColumnSettings(
                     key: 'referenceLine_showLabel',
                     label: 'Exibir Label na Linha',
                     defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
-                },
-            ],
+                }
+            );
+        }
+        
+        measureElements.push({
+            type: 'section',
+            key: 'reference_line',
+            label: 'Linha de Referência',
+            isAccordianExpanded: false,
+            children: referenceLineChildren,
         });
         
         // Seção 5: Dica de Contexto (Tooltip)
-        measureElements.push({
-            type: 'section',
-            key: 'tooltip',
-            label: 'Dica de Contexto',
-            isAccordianExpanded: false,
-            children: [
-                {
-                    type: 'toggle',
-                    key: 'tooltip_enabled',
-                    label: 'Habilitar Dica de Contexto',
-                    defaultValue: (savedConfig as any)?.tooltip_enabled !== false,
-                },
+        // Ler valor atual (se disponível) ou valor salvo
+        const currentConfigTooltip = (currentVisualProps.visualProps as any)?.[measure.id] || savedConfig;
+        const tooltipEnabledMeasure = (currentConfigTooltip as any)?.tooltip_enabled !== undefined
+            ? (currentConfigTooltip as any).tooltip_enabled !== false
+            : ((savedConfig as any)?.tooltip_enabled !== false);
+        
+        const tooltipChildrenMeasure: any[] = [
+            {
+                type: 'toggle',
+                key: 'tooltip_enabled',
+                label: 'Habilitar Dica de Contexto',
+                defaultValue: tooltipEnabledMeasure,
+            },
+        ];
+        
+        // Mostrar opções somente se tooltip estiver habilitado
+        if (tooltipEnabledMeasure) {
+            tooltipChildrenMeasure.push(
                 {
                     type: 'dropdown',
                     key: 'tooltip_format',
@@ -218,8 +238,16 @@ function createMeasureColumnSettings(
                     label: 'Layout da Dica de Contexto',
                     defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
                     values: ['vertical', 'horizontal', 'grade'],
-                },
-            ],
+                }
+            );
+        }
+        
+        measureElements.push({
+            type: 'section',
+            key: 'tooltip',
+            label: 'Dica de Contexto',
+            isAccordianExpanded: false,
+            children: tooltipChildrenMeasure,
         });
         
         measureColumnSettings[measure.id] = {
