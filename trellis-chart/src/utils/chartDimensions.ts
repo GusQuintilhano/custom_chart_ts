@@ -142,11 +142,17 @@ export function readMeasureConfigs(
         
         // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
         // Também mesclar valores de seções aninhadas (ex: visualization.chartType -> chartType)
-        const measureConfig = {
+        const measureConfigFlat = {
             ...configNew,
             ...configOld,
             ...configFromColumnVisualProps, // Prioridade mais alta - configurações de columnSettingsDefinition
-            ...(visualizationSection.chartType ? { chartType: visualizationSection.chartType } : {}), // Extrair chartType da seção visualization se existir
+        };
+        
+        // Se chartType está em visualization.chartType, extrair para o nível superior
+        const chartTypeFromVisualization = visualizationSection.chartType;
+        const measureConfig = {
+            ...measureConfigFlat,
+            ...(chartTypeFromVisualization ? { chartType: chartTypeFromVisualization } : {}), // Extrair chartType da seção visualization se existir
         };
         
         // Debug: verificar valores
