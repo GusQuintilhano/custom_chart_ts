@@ -452,45 +452,46 @@ function createEditorSections(
         ],
     });
     
-    // Seção para cores e estilo
-    elements.push({
-        type: 'section',
-        key: 'chart_colors_style',
-        label: 'Cores e Estilo',
-        isAccordianExpanded: false,
-        children: [
-            {
-                type: 'colorpicker',
-                key: 'yAxisColor',
-                label: 'Cor do Eixo Y',
-                selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
-            },
-            {
-                type: 'colorpicker',
-                key: 'xAxisColor',
-                label: 'Cor do Eixo X',
-                selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
-            },
-            {
-                type: 'colorpicker',
-                key: 'backgroundColor',
-                label: 'Cor de Fundo',
-                selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
-            },
-            {
-                type: 'number',
-                key: 'axisStrokeWidth',
-                label: 'Espessura dos Eixos (px)',
-                defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
-                min: 0.5,
-                max: 5,
-                step: 0.1,
-            },
-        ],
-    });
+    // Seção para cores e estilo - TEMPORARIAMENTE REMOVIDA PARA DEBUG DO ERRO elements[4]
+    // TODO: Investigar por que o ThoughtSpot SDK está rejeitando esta seção no índice 4
+    // elements.push({
+    //     type: 'section',
+    //     key: 'chart_colors_style',
+    //     label: 'Cores e Estilo',
+    //     isAccordianExpanded: false,
+    //     children: [
+    //         {
+    //             type: 'colorpicker',
+    //             key: 'yAxisColor',
+    //             label: 'Cor do Eixo Y',
+    //             selectorType: 'COLOR',
+    //             defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
+    //         },
+    //         {
+    //             type: 'colorpicker',
+    //             key: 'xAxisColor',
+    //             label: 'Cor do Eixo X',
+    //             selectorType: 'COLOR',
+    //             defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
+    //         },
+    //         {
+    //             type: 'colorpicker',
+    //             key: 'backgroundColor',
+    //             label: 'Cor de Fundo',
+    //             selectorType: 'COLOR',
+    //             defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
+    //         },
+    //         {
+    //             type: 'number',
+    //             key: 'axisStrokeWidth',
+    //             label: 'Espessura dos Eixos (px)',
+    //             defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
+    //             min: 0.5,
+    //             max: 5,
+    //             step: 0.1,
+    //         },
+    //     ],
+    // });
     
     // Seção para tooltip
     const tooltipEnabled = (savedChartTooltip?.enabled === true) || false;
