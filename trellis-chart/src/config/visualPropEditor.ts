@@ -497,6 +497,7 @@ function createEditorSections(
     });
     
     // Seção para tooltip
+    const tooltipEnabled = (savedChartTooltip?.enabled === true) || false;
     elements.push({
         type: 'section',
         key: 'chart_tooltip',
@@ -507,14 +508,14 @@ function createEditorSections(
                 type: 'toggle',
                 key: 'enabled',
                 label: 'Habilitar Tooltip',
-                defaultValue: getSavedValue(savedChartTooltip?.enabled, savedChartOptions.tooltipEnabled, false) === true,
+                defaultValue: tooltipEnabled,
             },
-            ...(getSavedValue(savedChartTooltip?.enabled, savedChartOptions.tooltipEnabled, false) === true ? [
+            ...(tooltipEnabled ? [
                 {
                     type: 'dropdown',
                     key: 'format',
                     label: 'Formato do Tooltip',
-                    defaultValue: getSavedValue(savedChartTooltip?.format, savedChartOptions.tooltipFormat, 'simple'),
+                    defaultValue: savedChartTooltip?.format || 'simple',
                     values: ['simple', 'detailed'],
                     labels: ['Simples', 'Detalhado'],
                 },
@@ -522,14 +523,14 @@ function createEditorSections(
                     type: 'toggle',
                     key: 'showAllMeasures',
                     label: 'Mostrar Todas as Medidas',
-                    defaultValue: getSavedValue(savedChartTooltip?.showAllMeasures, savedChartOptions.tooltipShowAllMeasures, false) === true,
+                    defaultValue: (savedChartTooltip?.showAllMeasures === true) || false,
                 },
                 {
                     type: 'colorpicker',
                     key: 'backgroundColor',
                     label: 'Cor de Fundo do Tooltip',
                     selectorType: 'COLOR',
-                    defaultValue: getSavedValue(savedChartTooltip?.backgroundColor, savedChartOptions.tooltipBackgroundColor, '#ffffff'),
+                    defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
                 },
             ] : []),
         ],
