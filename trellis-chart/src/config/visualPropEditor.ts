@@ -111,6 +111,13 @@ function createMeasureColumnSettings(
                 label: 'Mostrar Valores no Eixo Y',
                 defaultValue: savedConfig?.showYAxisValues !== false,
             },
+            {
+                type: 'number',
+                key: 'yAxisTicks',
+                label: 'Número de Ticks no Eixo Y (0 para automático)',
+                defaultValue: savedConfig?.yAxisTicks === 'auto' || savedConfig?.yAxisTicks === undefined ? 0 : savedConfig?.yAxisTicks,
+                min: 0,
+            },
         ];
         
         measureColumnSettings[measure.id] = {
