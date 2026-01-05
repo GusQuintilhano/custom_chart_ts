@@ -468,15 +468,16 @@ export function createVisualPropEditorDefinition(
     // Criar configurações por coluna para aparecer na aba "Configure"
     const columnsVizPropDefinition: any[] = [];
     
-    if (measureColumns.length > 0) {
-        const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps);
-        if (Object.keys(measureColumnSettings).length > 0) {
-            columnsVizPropDefinition.push({
-                type: ColumnType.MEASURE,
-                columnSettingsDefinition: measureColumnSettings,
-            });
-        }
-    }
+    // Configuração de medidas por coluna removida temporariamente devido a erro de validação
+    // if (measureColumns.length > 0) {
+    //     const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps);
+    //     if (Object.keys(measureColumnSettings).length > 0) {
+    //         columnsVizPropDefinition.push({
+    //             type: ColumnType.MEASURE,
+    //             columnSettingsDefinition: measureColumnSettings,
+    //         });
+    //     }
+    // }
     
     if (dimensionColumns.length > 0) {
         const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, currentVisualProps);
