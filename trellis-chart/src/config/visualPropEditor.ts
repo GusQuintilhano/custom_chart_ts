@@ -128,18 +128,6 @@ function createMeasureColumnSettings(
                 label: 'Mostrar Valores Zero',
                 defaultValue: savedConfig?.showZeroValues !== false,
             },
-            ...(savedConfig?.minY !== undefined && savedConfig?.minY !== 'auto' ? [{
-                type: 'number',
-                key: 'minY',
-                label: 'Valor Mínimo do Eixo Y',
-                defaultValue: savedConfig.minY,
-            }] : []),
-            ...(savedConfig?.maxY !== undefined && savedConfig?.maxY !== 'auto' ? [{
-                type: 'number',
-                key: 'maxY',
-                label: 'Valor Máximo do Eixo Y',
-                defaultValue: savedConfig.maxY,
-            }] : []),
             {
                 type: 'number',
                 key: 'yAxisTicks',
