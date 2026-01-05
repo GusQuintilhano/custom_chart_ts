@@ -5,6 +5,7 @@
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 import type { ChartOptions } from './options';
+import { logger } from './logger';
 
 /**
  * Interface para dimensões calculadas do gráfico
@@ -143,14 +144,12 @@ export function readMeasureConfigs(
         };
         
         // Debug: verificar valores
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`[DEBUG] Measure ${measure.id} chartType:`, {
-                configNew: (configNew as any).chartType,
-                configOld: (configOld as any).chartType,
-                configFromColumnVisualProps: (configFromColumnVisualProps as any).chartType,
-                final: (measureConfig as any).chartType
-            });
-        }
+        logger.debug(`[DEBUG] Measure ${measure.id} chartType:`, {
+            configNew: (configNew as any).chartType,
+            configOld: (configOld as any).chartType,
+            configFromColumnVisualProps: (configFromColumnVisualProps as any).chartType,
+            final: (measureConfig as any).chartType
+        });
         
         const chartType = (measureConfig?.chartType as string) || 'barras';
         const defaultOpacity = chartType === 'linha' ? 0.8 : 0.9;
