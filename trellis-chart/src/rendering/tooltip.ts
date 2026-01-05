@@ -63,8 +63,31 @@ function formatSimpleTooltip(
     measureIdx: number,
     measureConfig: MeasureConfig,
     measureCol: ChartColumn,
-    primaryDateFormat?: string
+    primaryDateFormat?: string,
+    customTemplate?: string
 ): string {
+    // Se há template personalizado, usar ele
+    if (customTemplate && customTemplate.trim() !== '') {
+        const templateResult = processTooltipTemplate(customTemplate, {
+            dataPoint,
+            measureIdx,
+            measureCol,
+            measureConfig: {
+                format: measureConfig.format,
+                decimals: measureConfig.decimals,
+                useThousandsSeparator: measureConfig.useThousandsSeparator,
+                valueFormat: measureConfig.valueFormat,
+                valuePrefix: measureConfig.valuePrefix,
+                valueSuffix: measureConfig.valueSuffix,
+            },
+            primaryDateFormat,
+        });
+        if (templateResult) {
+            return templateResult;
+        }
+    }
+
+    // Formato padrão
     const value = dataPoint.values[measureIdx] || 0;
     const format = measureConfig.format || 'decimal';
     const decimals = measureConfig.decimals ?? 2;
@@ -293,6 +316,7 @@ export function setupTooltips(
 
         const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
         const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
+        const customTemplate = tooltipConfig?.customTemplate || '';
 
         circle.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
@@ -306,7 +330,7 @@ export function setupTooltips(
             // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
             const content = format === 'detailed'
                 ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
