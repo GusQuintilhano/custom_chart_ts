@@ -254,18 +254,18 @@ function createEditorSections(
 ): any[] {
     const elements: any[] = [];
     
-    // Seção 1: Layout e Visualização
+    // Seção 1: Aparência e Visualização
     const chartVisualChildren: any[] = [
         {
             type: 'toggle',
             key: 'showYAxis',
-            label: 'Mostrar Eixo Y',
+            label: 'Exibir Eixo Y',
             defaultValue: getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false,
         },
         {
             type: 'toggle',
             key: 'showGridLines',
-            label: 'Mostrar Linhas Divisórias',
+            label: 'Exibir Linhas Divisórias',
             defaultValue: getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false,
         },
         {
@@ -278,7 +278,7 @@ function createEditorSections(
         {
             type: 'toggle',
             key: 'forceLabels',
-            label: 'Forçar Labels',
+            label: 'Forçar Exibição de Labels',
             defaultValue: getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
         },
     ];
@@ -286,7 +286,7 @@ function createEditorSections(
     elements.push({
         type: 'section',
         key: 'chart_visual',
-        label: 'Layout e Visualização',
+        label: 'Aparência e Visualização',
         isAccordianExpanded: true,
         children: chartVisualChildren,
     });
