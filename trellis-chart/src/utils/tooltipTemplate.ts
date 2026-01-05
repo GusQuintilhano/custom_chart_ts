@@ -41,7 +41,7 @@ export function processTooltipTemplate(
     const format = measureConfig.format || 'decimal';
     const decimals = measureConfig.decimals ?? 2;
     const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
-    const valueFormat = measureConfig.valueFormat || 'normal';
+    const valueFormat = (measureConfig.valueFormat || 'normal') as 'normal' | 'compact';
     const valuePrefix = measureConfig.valuePrefix || '';
     const valueSuffix = measureConfig.valueSuffix || '';
 

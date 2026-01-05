@@ -39,6 +39,7 @@ export interface ChartOptionsSetup {
     tooltipFormat: 'simple' | 'detailed';
     tooltipShowAllMeasures: boolean;
     tooltipBackgroundColor: string;
+    tooltipCustomTemplate: string;
 }
 
 /**
@@ -93,6 +94,7 @@ export function setupChartOptions(
     const tooltipFormat = ((chartOptions as any).tooltipFormat || 'simple') as 'simple' | 'detailed';
     const tooltipShowAllMeasures = (chartOptions as any).tooltipShowAllMeasures || false;
     const tooltipBackgroundColor = (chartOptions as any).tooltipBackgroundColor || '#ffffff';
+    const tooltipCustomTemplate = (chartOptions as any).tooltipCustomTemplate || '';
     
     return {
         chartOptions,
