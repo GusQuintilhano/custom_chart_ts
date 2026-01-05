@@ -109,6 +109,7 @@ export interface ChartTooltipOptions {
     format?: 'simple' | 'detailed';
     showAllMeasures?: boolean;
     backgroundColor?: string;
+    customTemplate?: string;
 }
 
 /**
@@ -158,6 +159,7 @@ export interface ChartOptions {
     tooltipFormat: 'simple' | 'detailed';
     tooltipShowAllMeasures: boolean;
     tooltipBackgroundColor: string;
+    tooltipCustomTemplate: string;
 }
 
 /**
@@ -216,6 +218,7 @@ export function readChartOptions(allVisualProps: Record<string, unknown>): Chart
         tooltipFormat: (getValue(chartTooltip.format, (chartOptionsConsolidated as any).tooltipFormat, 'simple', false) as 'simple' | 'detailed') || 'simple',
         tooltipShowAllMeasures: getValue(chartTooltip.showAllMeasures, (chartOptionsConsolidated as any).tooltipShowAllMeasures, false, true) === true,
         tooltipBackgroundColor: getValue(chartTooltip.backgroundColor, (chartOptionsConsolidated as any).tooltipBackgroundColor, '#ffffff', false) as string,
+        tooltipCustomTemplate: getValue(chartTooltip.customTemplate, (chartOptionsConsolidated as any).tooltipCustomTemplate, '', false) as string,
     };
     
     return chartOptions;

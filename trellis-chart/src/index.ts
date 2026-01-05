@@ -74,6 +74,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         tooltipFormat,
         tooltipShowAllMeasures,
         tooltipBackgroundColor,
+        tooltipCustomTemplate,
     } = options;
 
     // Calcular dimensões do gráfico
