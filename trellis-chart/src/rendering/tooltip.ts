@@ -250,8 +250,8 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Usar formatação customizada se houver configuração de imagem/layout
-            const hasCustomConfig = measureTooltipConfig?.imageUrl && measureTooltipConfig?.imagePosition !== 'none';
+            // Usar formatação customizada se houver configuração de layout
+            const hasCustomConfig = measureTooltipConfig?.imagePosition && measureTooltipConfig?.imagePosition !== 'none';
             const content = hasCustomConfig
                 ? (format === 'detailed'
                     ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
@@ -305,8 +305,8 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Usar formatação customizada se houver configuração de imagem/layout
-            const hasCustomConfig = measureTooltipConfig?.imageUrl && measureTooltipConfig?.imagePosition !== 'none';
+            // Usar formatação customizada se houver configuração de layout
+            const hasCustomConfig = measureTooltipConfig?.imagePosition && measureTooltipConfig?.imagePosition !== 'none';
             const content = hasCustomConfig
                 ? (format === 'detailed'
                     ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
