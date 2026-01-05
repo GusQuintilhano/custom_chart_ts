@@ -51,148 +51,182 @@ function createMeasureColumnSettings(
         const savedConfigNew = (currentVisualProps.visualProps as any)?.[measure.id];
         const savedConfig = savedConfigNew || savedConfigOld || {};
         
-        // Organização das opções em grupos lógicos
-        const measureElements: any[] = [
-            // Grupo 1: Visualização
-            {
-                type: 'dropdown',
-                key: 'chartType',
-                label: 'Tipo de Gráfico',
-                defaultValue: savedConfig?.chartType || 'barras',
-                values: ['barras', 'linha'],
-            },
-            {
-                type: 'colorpicker',
-                key: 'color',
-                label: 'Cor',
-                selectorType: 'COLOR',
-                defaultValue: savedConfig?.color || defaultColor,
-            },
-            
-            // Grupo 2: Formatação de Números
-            {
-                type: 'dropdown',
-                key: 'format',
-                label: 'Formato do Número',
-                defaultValue: savedConfig?.format || 'decimal',
-                values: ['decimal', 'porcentagem', 'moeda', 'cientifico', 'inteiro'],
-            },
-            {
-                type: 'number',
-                key: 'decimals',
-                label: 'Casas Decimais',
-                defaultValue: savedConfig?.decimals ?? 2,
-            },
-            {
-                type: 'toggle',
-                key: 'useThousandsSeparator',
-                label: 'Usar Separador de Milhares',
-                defaultValue: savedConfig?.useThousandsSeparator !== false,
-            },
-            
-            // Grupo 3: Labels e Valores
-            {
-                type: 'dropdown',
-                key: 'valueLabelPosition',
-                label: 'Posição do Label de Valor',
-                defaultValue: savedConfig?.valueLabelPosition || 'automático',
-                values: ['automático', 'acima', 'dentro-superior', 'dentro-centro', 'abaixo'],
-            },
-            {
-                type: 'dropdown',
-                key: 'valueFormat',
-                label: 'Formato de Valor',
-                defaultValue: savedConfig?.valueFormat || 'normal',
-                values: ['normal', 'compacto'],
-            },
-            {
-                type: 'toggle',
-                key: 'showZeroValues',
-                label: 'Exibir Valores Zero',
-                defaultValue: savedConfig?.showZeroValues !== false,
-            },
-            {
-                type: 'toggle',
-                key: 'showYAxisValues',
-                label: 'Exibir Valores no Eixo Y',
-                defaultValue: savedConfig?.showYAxisValues !== false,
-            },
-            
-            // Grupo 4: Linha de Referência
-            {
-                type: 'toggle',
-                key: 'referenceLine_enabled',
-                label: 'Habilitar Linha de Referência',
-                defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
-            },
-            
-            // Grupo 5: Dica de Contexto (Tooltip)
-            {
-                type: 'toggle',
-                key: 'tooltip_enabled',
-                label: 'Habilitar Dica de Contexto',
-                defaultValue: (savedConfig as any)?.tooltip_enabled !== false,
-            },
-        ];
+        // Organização das opções em seções
+        const measureElements: any[] = [];
         
-        // Adicionar elementos de linha de referência condicionalmente
-        if ((savedConfig as any)?.referenceLine_enabled === true) {
-            measureElements.push(
+        // Seção 1: Visualização
+        measureElements.push({
+            type: 'section',
+            key: 'visualization',
+            label: 'Visualização',
+            isAccordianExpanded: true,
+            children: [
                 {
-                    type: 'number',
-                    key: 'referenceLine_value',
-                    label: 'Valor da Linha de Referência',
-                    defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+                    type: 'dropdown',
+                    key: 'chartType',
+                    label: 'Tipo de Gráfico',
+                    defaultValue: savedConfig?.chartType || 'barras',
+                    values: ['barras', 'linha'],
                 },
                 {
                     type: 'colorpicker',
-                    key: 'referenceLine_color',
-                    label: 'Cor da Linha de Referência',
+                    key: 'color',
+                    label: 'Cor',
                     selectorType: 'COLOR',
-                    defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+                    defaultValue: savedConfig?.color || defaultColor,
                 },
+            ],
+        });
+        
+        // Seção 2: Formatação de Números
+        measureElements.push({
+            type: 'section',
+            key: 'number_formatting',
+            label: 'Formatação de Números',
+            isAccordianExpanded: false,
+            children: [
                 {
                     type: 'dropdown',
-                    key: 'referenceLine_style',
-                    label: 'Estilo da Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
-                    values: ['sólida', 'tracejada', 'pontilhada'],
+                    key: 'format',
+                    label: 'Formato do Número',
+                    defaultValue: savedConfig?.format || 'decimal',
+                    values: ['decimal', 'porcentagem', 'moeda', 'cientifico', 'inteiro'],
+                },
+                {
+                    type: 'number',
+                    key: 'decimals',
+                    label: 'Casas Decimais',
+                    defaultValue: savedConfig?.decimals ?? 2,
                 },
                 {
                     type: 'toggle',
-                    key: 'referenceLine_showLabel',
-                    label: 'Exibir Label na Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
-                }
-            );
-        }
+                    key: 'useThousandsSeparator',
+                    label: 'Usar Separador de Milhares',
+                    defaultValue: savedConfig?.useThousandsSeparator !== false,
+                },
+            ],
+        });
         
-        // Adicionar elementos de tooltip condicionalmente
-        if ((savedConfig as any)?.tooltip_enabled !== false) {
-            measureElements.push(
+        // Seção 3: Labels e Valores
+        measureElements.push({
+            type: 'section',
+            key: 'labels_values',
+            label: 'Labels e Valores',
+            isAccordianExpanded: false,
+            children: [
                 {
                     type: 'dropdown',
-                    key: 'tooltip_format',
-                    label: 'Formato da Dica',
-                    defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
-                    values: ['simples', 'detalhado'],
-                },
-                {
-                    type: 'colorpicker',
-                    key: 'tooltip_backgroundColor',
-                    label: 'Cor de Fundo da Dica',
-                    selectorType: 'COLOR',
-                    defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
+                    key: 'valueLabelPosition',
+                    label: 'Posição do Label de Valor',
+                    defaultValue: savedConfig?.valueLabelPosition || 'automático',
+                    values: ['automático', 'acima', 'dentro-superior', 'dentro-centro', 'abaixo'],
                 },
                 {
                     type: 'dropdown',
-                    key: 'tooltip_layout',
-                    label: 'Layout da Dica de Contexto',
-                    defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
-                    values: ['vertical', 'horizontal', 'grade'],
-                }
-            );
-        }
+                    key: 'valueFormat',
+                    label: 'Formato de Valor',
+                    defaultValue: savedConfig?.valueFormat || 'normal',
+                    values: ['normal', 'compacto'],
+                },
+                {
+                    type: 'toggle',
+                    key: 'showZeroValues',
+                    label: 'Exibir Valores Zero',
+                    defaultValue: savedConfig?.showZeroValues !== false,
+                },
+                {
+                    type: 'toggle',
+                    key: 'showYAxisValues',
+                    label: 'Exibir Valores no Eixo Y',
+                    defaultValue: savedConfig?.showYAxisValues !== false,
+                },
+            ],
+        });
+        
+        // Seção 4: Linha de Referência
+        const referenceLineEnabled = (savedConfig as any)?.referenceLine_enabled === true;
+        measureElements.push({
+            type: 'section',
+            key: 'reference_line',
+            label: 'Linha de Referência',
+            isAccordianExpanded: false,
+            children: [
+                {
+                    type: 'toggle',
+                    key: 'referenceLine_enabled',
+                    label: 'Habilitar Linha de Referência',
+                    defaultValue: referenceLineEnabled,
+                },
+                ...(referenceLineEnabled ? [
+                    {
+                        type: 'number',
+                        key: 'referenceLine_value',
+                        label: 'Valor da Linha de Referência',
+                        defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'referenceLine_color',
+                        label: 'Cor da Linha de Referência',
+                        selectorType: 'COLOR',
+                        defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+                    },
+                    {
+                        type: 'dropdown',
+                        key: 'referenceLine_style',
+                        label: 'Estilo da Linha',
+                        defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
+                        values: ['sólida', 'tracejada', 'pontilhada'],
+                    },
+                    {
+                        type: 'toggle',
+                        key: 'referenceLine_showLabel',
+                        label: 'Exibir Label na Linha',
+                        defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+                    },
+                ] : []),
+            ],
+        });
+        
+        // Seção 5: Dica de Contexto (Tooltip)
+        const tooltipEnabled = (savedConfig as any)?.tooltip_enabled !== false;
+        measureElements.push({
+            type: 'section',
+            key: 'tooltip',
+            label: 'Dica de Contexto',
+            isAccordianExpanded: false,
+            children: [
+                {
+                    type: 'toggle',
+                    key: 'tooltip_enabled',
+                    label: 'Habilitar Dica de Contexto',
+                    defaultValue: tooltipEnabled,
+                },
+                ...(tooltipEnabled ? [
+                    {
+                        type: 'dropdown',
+                        key: 'tooltip_format',
+                        label: 'Formato da Dica',
+                        defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
+                        values: ['simples', 'detalhado'],
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'tooltip_backgroundColor',
+                        label: 'Cor de Fundo da Dica',
+                        selectorType: 'COLOR',
+                        defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
+                    },
+                    {
+                        type: 'dropdown',
+                        key: 'tooltip_layout',
+                        label: 'Layout da Dica de Contexto',
+                        defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
+                        values: ['vertical', 'horizontal', 'grade'],
+                    },
+                ] : []),
+            ],
+        });
         
         measureColumnSettings[measure.id] = {
             elements: measureElements,
