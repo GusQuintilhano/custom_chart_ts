@@ -482,7 +482,7 @@ function createEditorSections(
                 key: 'backgroundColor',
                 label: 'Cor de Fundo',
                 selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.backgroundColor || 'transparent',
+                defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
             },
             {
                 type: 'number',
