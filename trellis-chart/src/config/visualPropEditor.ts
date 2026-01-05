@@ -496,50 +496,50 @@ function createEditorSections(
         ],
     });
     
-    // Seção para tooltip
-    const tooltipEnabled = (savedChartTooltip?.enabled === true) || false;
-    const tooltipChildren: any[] = [
-        {
-            type: 'toggle',
-            key: 'enabled',
-            label: 'Habilitar Tooltip',
-            defaultValue: tooltipEnabled,
-        },
-    ];
-    
-    if (tooltipEnabled) {
-        tooltipChildren.push(
-            {
-                type: 'dropdown',
-                key: 'format',
-                label: 'Formato do Tooltip',
-                defaultValue: savedChartTooltip?.format || 'simple',
-                values: ['simple', 'detailed'],
-                labels: ['Simples', 'Detalhado'],
-            },
-            {
-                type: 'toggle',
-                key: 'showAllMeasures',
-                label: 'Mostrar Todas as Medidas',
-                defaultValue: (savedChartTooltip?.showAllMeasures === true) || false,
-            },
-            {
-                type: 'colorpicker',
-                key: 'backgroundColor',
-                label: 'Cor de Fundo do Tooltip',
-                selectorType: 'COLOR',
-                defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
-            }
-        );
-    }
-    
-    elements.push({
-        type: 'section',
-        key: 'chart_tooltip',
-        label: 'Tooltip',
-        isAccordianExpanded: false,
-        children: tooltipChildren,
-    });
+    // Seção para tooltip - TEMPORARIAMENTE REMOVIDA PARA DEBUG
+    // const tooltipEnabled = (savedChartTooltip?.enabled === true) || false;
+    // const tooltipChildren: any[] = [
+    //     {
+    //         type: 'toggle',
+    //         key: 'enabled',
+    //         label: 'Habilitar Tooltip',
+    //         defaultValue: tooltipEnabled,
+    //     },
+    // ];
+    // 
+    // if (tooltipEnabled) {
+    //     tooltipChildren.push(
+    //         {
+    //             type: 'dropdown',
+    //             key: 'format',
+    //             label: 'Formato do Tooltip',
+    //             defaultValue: savedChartTooltip?.format || 'simple',
+    //             values: ['simple', 'detailed'],
+    //             labels: ['Simples', 'Detalhado'],
+    //         },
+    //         {
+    //             type: 'toggle',
+    //             key: 'showAllMeasures',
+    //             label: 'Mostrar Todas as Medidas',
+    //             defaultValue: (savedChartTooltip?.showAllMeasures === true) || false,
+    //         },
+    //         {
+    //             type: 'colorpicker',
+    //             key: 'backgroundColor',
+    //             label: 'Cor de Fundo do Tooltip',
+    //             selectorType: 'COLOR',
+    //             defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
+    //         }
+    //     );
+    // }
+    // 
+    // elements.push({
+    //     type: 'section',
+    //     key: 'chart_tooltip',
+    //     label: 'Tooltip',
+    //     isAccordianExpanded: false,
+    //     children: tooltipChildren,
+    // });
     
     return elements;
 }
