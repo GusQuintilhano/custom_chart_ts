@@ -66,34 +66,6 @@ function createMeasureColumnSettings(
                 selectorType: 'COLOR',
                 defaultValue: savedConfig?.color || defaultColor,
             },
-            {
-                type: 'number',
-                key: 'opacity',
-                label: 'Opacidade (0-1)',
-                defaultValue: savedConfig?.opacity ?? 0.9,
-                min: 0,
-                max: 1,
-                step: 0.1,
-            },
-            {
-                type: 'dropdown',
-                key: 'format',
-                label: 'Formato do Número',
-                defaultValue: savedConfig?.format || 'decimal',
-                values: ['decimal', 'porcentagem', 'moeda', 'cientifico', 'inteiro'],
-            },
-            {
-                type: 'number',
-                key: 'decimals',
-                label: 'Casas Decimais',
-                defaultValue: savedConfig?.decimals ?? 2,
-            },
-            {
-                type: 'toggle',
-                key: 'useThousandsSeparator',
-                label: 'Usar Separador de Milhares',
-                defaultValue: savedConfig?.useThousandsSeparator !== false,
-            },
         ];
         
         measureColumnSettings[measure.id] = {
