@@ -39,7 +39,7 @@ export function renderLineChart(
         const value = item.values[measureIdx] || 0;
         const x = calculateBarCenterX(itemIdx, leftMargin, barWidth, barSpacing);
         const y = valueToY(value, minValue, maxValue, measureRowTop, measureRowHeight);
-        return { x, y, value };
+        return { x, y, value, dataIndex: itemIdx };
     });
     
     // Criar path para a linha
@@ -75,7 +75,7 @@ export function renderLineChart(
         );
         
         if (!formattedValue) {
-            return `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${color}" stroke="white" stroke-width="2" />`;
+            return `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${color}" stroke="white" stroke-width="2" data-measure-index="${measureIdx}" data-data-index="${point.dataIndex}" style="cursor: pointer;" />`;
         }
         
         return `
@@ -86,6 +86,9 @@ export function renderLineChart(
                 fill="${color}"
                 stroke="white"
                 stroke-width="2"
+                data-measure-index="${measureIdx}"
+                data-data-index="${point.dataIndex}"
+                style="cursor: pointer;"
             />
             <text 
                 x="${point.x}" 
@@ -192,6 +195,9 @@ export function renderBars(
                     height="${barHeight}"
                     fill="${measureConfig.color || '#3b82f6'}"
                     opacity="${opacity}"
+                    data-measure-index="${measureIdx}"
+                    data-data-index="${itemIdx}"
+                    style="cursor: pointer;"
                 />
                 ${formattedValue ? `
                 <text 

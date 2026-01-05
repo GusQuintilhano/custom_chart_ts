@@ -13,6 +13,7 @@ import { setupChartData } from './utils/dataSetup';
 import { setupChartOptions } from './utils/chartOptions';
 import { setupDynamicResize } from './handlers/dynamicResize';
 import { renderCompleteChart } from './rendering/chartRenderer';
+import { setupTooltips } from './rendering/tooltip';
 import { initializeChartSDK, emitRenderComplete } from './config/init';
 
 export const renderChart = async (ctx: CustomChartContext) => {
@@ -69,6 +70,10 @@ export const renderChart = async (ctx: CustomChartContext) => {
         yAxisColor,
         xAxisColor,
         axisStrokeWidth,
+        tooltipEnabled,
+        tooltipFormat,
+        tooltipShowAllMeasures,
+        tooltipBackgroundColor,
     } = options;
 
     // Calcular dimensões do gráfico
@@ -143,6 +148,26 @@ export const renderChart = async (ctx: CustomChartContext) => {
         barSpacing,
         measureLabelSpace,
     });
+
+    // Configurar tooltips se habilitado
+    if (tooltipEnabled) {
+        setupTooltips(
+            chartElement,
+            {
+                enabled: tooltipEnabled,
+                format: tooltipFormat,
+                showAllMeasures: tooltipShowAllMeasures,
+                backgroundColor: tooltipBackgroundColor,
+            },
+            {
+                chartData,
+                measureCols,
+                measureConfigs,
+                primaryDateFormat,
+                secondaryDateFormat,
+            }
+        );
+    }
 
     // Configurar resize dinâmico se necessário
     setupDynamicResize({

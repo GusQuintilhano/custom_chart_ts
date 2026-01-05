@@ -35,6 +35,10 @@ export interface ChartOptionsSetup {
     yAxisColor: string;
     xAxisColor: string;
     axisStrokeWidth: number;
+    tooltipEnabled: boolean;
+    tooltipFormat: 'simple' | 'detailed';
+    tooltipShowAllMeasures: boolean;
+    tooltipBackgroundColor: string;
 }
 
 /**
@@ -84,6 +88,12 @@ export function setupChartOptions(
     const xAxisColor = chartOptions.xAxisColor || '#374151';
     const axisStrokeWidth = chartOptions.axisStrokeWidth ?? 1.5;
     
+    // Ler opções de tooltip
+    const tooltipEnabled = (chartOptions as any).tooltipEnabled || false;
+    const tooltipFormat = ((chartOptions as any).tooltipFormat || 'simple') as 'simple' | 'detailed';
+    const tooltipShowAllMeasures = (chartOptions as any).tooltipShowAllMeasures || false;
+    const tooltipBackgroundColor = (chartOptions as any).tooltipBackgroundColor || '#ffffff';
+    
     return {
         chartOptions,
         showYAxis,
@@ -111,6 +121,10 @@ export function setupChartOptions(
         yAxisColor,
         xAxisColor,
         axisStrokeWidth,
+        tooltipEnabled,
+        tooltipFormat,
+        tooltipShowAllMeasures,
+        tooltipBackgroundColor,
     };
 }
 
