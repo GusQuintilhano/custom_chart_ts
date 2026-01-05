@@ -45,6 +45,7 @@ export interface ChartRenderParams {
     yAxisColor: string;
     xAxisColor: string;
     axisStrokeWidth: number;
+    backgroundColor: string;
     // Dimensões
     leftMargin: number;
     topMargin: number;
