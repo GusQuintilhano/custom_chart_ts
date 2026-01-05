@@ -524,12 +524,6 @@ function createEditorSections(
                 label: 'Cor de Fundo do Tooltip',
                 selectorType: 'COLOR',
                 defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
-            },
-            {
-                type: 'text',
-                key: 'imageUrl',
-                label: 'URL da Imagem (Global)',
-                defaultValue: savedChartTooltip?.imageUrl || '',
             }
         );
     }
