@@ -7,6 +7,7 @@ import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import { formatValue } from '../utils/formatters';
 import { formatDimension } from '../utils/formatters';
 import { processTooltipTemplate } from '../utils/tooltipTemplate';
+import { getTemplateById } from '../utils/tooltipTemplates';
 import { formatCustomSimpleTooltip, formatCustomDetailedTooltip } from './tooltipFormatter';
 
 export interface TooltipConfig {

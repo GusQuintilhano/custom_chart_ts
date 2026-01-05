@@ -524,6 +524,21 @@ function createEditorSections(
                 label: 'Cor de Fundo do Tooltip',
                 selectorType: 'COLOR',
                 defaultValue: savedChartTooltip?.backgroundColor || '#ffffff',
+            },
+            {
+                type: 'dropdown',
+                key: 'customTemplate',
+                label: 'Template Personalizado',
+                defaultValue: savedChartTooltip?.customTemplate || 'default',
+                values: [
+                    'default',
+                    'valor_medida_dimensao1_dimensao2',
+                    'medida_valor_dimensao1',
+                    'dimensao1_medida_valor',
+                    'dimensao2_dimensao1_medida_valor',
+                    'valor_medida',
+                    'medida_valor',
+                ],
             }
         );
     }
