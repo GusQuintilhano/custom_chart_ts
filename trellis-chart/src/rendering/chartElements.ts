@@ -29,7 +29,7 @@ export function renderLineChart(
     const decimals = measureConfig.decimals ?? 2;
     const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
     const opacity = measureConfig.opacity ?? 0.8;
-    const valueLabelPosition = measureConfig.valueLabelPosition || 'auto';
+    const valueLabelPosition = measureConfig.valueLabelPosition || 'automático';
     const valuePrefix = measureConfig.valuePrefix || '';
     const valueSuffix = measureConfig.valueSuffix || '';
     const valueFormat = measureConfig.valueFormat || 'normal';
