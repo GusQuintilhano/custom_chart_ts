@@ -100,18 +100,6 @@ function createMeasureColumnSettings(
                 values: ['normal', 'compact'],
             },
             {
-                type: 'text',
-                key: 'valuePrefix',
-                label: 'Prefix do Valor',
-                defaultValue: savedConfig?.valuePrefix || '',
-            },
-            {
-                type: 'text',
-                key: 'valueSuffix',
-                label: 'Sufixo do Valor',
-                defaultValue: savedConfig?.valueSuffix || '',
-            },
-            {
                 type: 'toggle',
                 key: 'showZeroValues',
                 label: 'Mostrar Valores Zero',
