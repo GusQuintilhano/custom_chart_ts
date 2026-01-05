@@ -9,6 +9,7 @@ import { renderYAxes, renderXAxis } from '../rendering/axes';
 import { renderDividerLinesBetweenMeasures, renderDividerLinesBetweenBars } from '../rendering/dividerLines';
 import { renderSecondaryXAxis } from '../rendering/secondaryAxis';
 import { renderAllChartElements } from '../rendering/chartElements';
+import { renderReferenceLines } from '../rendering/referenceLines';
 import { formatDimension } from '../utils/formatters';
 import { calculateLastMeasureRowTop } from '../utils/calculations';
 
@@ -53,6 +54,9 @@ export interface DynamicResizeParams {
     hasSecondaryDimension: boolean;
     secondaryDimensions: ChartColumn[];
     measureLabelSpace: number;
+    yAxisColor: string;
+    xAxisColor: string;
+    axisStrokeWidth: number;
 }
 
 /**
@@ -100,6 +104,9 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         hasSecondaryDimension,
         secondaryDimensions,
         measureLabelSpace,
+        yAxisColor,
+        xAxisColor,
+        axisStrokeWidth,
     } = params;
 
     if (!fitWidth && !fitHeight) {
@@ -174,14 +181,18 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             const newYAxesHtml = renderYAxes(
                 measureRanges,
                 measureCols,
+                measureConfigs,
                 topMargin,
                 newMeasureRowHeight,
                 spacingBetweenMeasures,
                 leftMargin,
-                leftMargin,
+                measureLabelSpace,
                 measureTitleFontSize,
                 measureNameRotation,
-                showYAxis
+                showYAxis,
+                yAxisColor,
+                axisStrokeWidth,
+                valueLabelFontSize
             );
 
             const newDividerLinesBetweenMeasuresHtml = renderDividerLinesBetweenMeasures({
@@ -228,6 +239,19 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 forceLabels,
             });
 
+            // Linhas de referência
+            const newReferenceLinesHtml = renderReferenceLines({
+                measureConfigs,
+                measureRanges,
+                measureColsCount: measureCols.length,
+                topMargin,
+                measureRowHeight: newMeasureRowHeight,
+                spacingBetweenMeasures,
+                leftMargin,
+                plotAreaWidth: newPlotAreaWidth,
+                valueLabelFontSize,
+            });
+
             // Recalcular eixo X secundário (se houver)
             let newSecondaryXAxisHtml = '';
             let newSecondaryXAxisLabelsHtml = '';
@@ -264,6 +288,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 measureRowHeight: newMeasureRowHeight,
                 labelFontSize,
                 plotAreaWidth: newPlotAreaWidth,
+                xAxisColor,
+                axisStrokeWidth,
             });
 
             // Atualizar wrapper e SVG
@@ -284,7 +310,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
                 svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + 
                     newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newAllChartElementsHtml + 
-                    newXAxis + newXAxisLabels;
+                    newReferenceLinesHtml + newXAxis + newXAxisLabels;
             }
         }
     };

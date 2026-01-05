@@ -66,6 +66,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         secondaryDateFormat,
         measureConfigs,
         chartOptions,
+        yAxisColor,
+        xAxisColor,
+        axisStrokeWidth,
     } = options;
 
     // Calcular dimensões do gráfico
@@ -92,8 +95,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureLabelSpace,
     } = chartDimensions;
 
-    // Calcular ranges (min/max) para cada medida
-    const measureRanges = calculateMeasureRanges(chartData, measureCols);
+    // Calcular ranges (min/max) para cada medida (considerando minY/maxY das configurações)
+    const measureRanges = calculateMeasureRanges(chartData, measureCols, measureConfigs);
 
     // Renderizar gráfico completo
     chartElement.innerHTML = renderCompleteChart({
@@ -124,6 +127,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureNameRotation,
         primaryDateFormat,
         secondaryDateFormat,
+        yAxisColor,
+        xAxisColor,
+        axisStrokeWidth,
         leftMargin,
         topMargin,
         bottomMargin,
@@ -180,6 +186,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         hasSecondaryDimension,
         secondaryDimensions,
         measureLabelSpace,
+        yAxisColor,
+        xAxisColor,
+        axisStrokeWidth,
     });
 
     emitRenderComplete(ctx);

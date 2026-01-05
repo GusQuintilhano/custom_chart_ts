@@ -12,6 +12,7 @@ export function createChartHtmlStructure(
     yAxesHtml: string,
     dividerLinesBetweenMeasuresHtml: string,
     dividerLinesBetweenBarsHtml: string,
+    referenceLinesHtml: string,
     allChartElementsHtml: string,
     xAxis: string,
     xAxisLabels: string
@@ -45,6 +46,7 @@ export function createChartHtmlStructure(
                     ${dividerLinesBetweenMeasuresHtml}
                     ${dividerLinesBetweenBarsHtml}
                     ${allChartElementsHtml}
+                    ${referenceLinesHtml}
                     ${xAxis}
                     ${xAxisLabels}
                 </svg>

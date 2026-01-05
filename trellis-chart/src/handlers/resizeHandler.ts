@@ -162,6 +162,7 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
             const newYAxesHtml = renderYAxes(
                 measureRanges,
                 measureCols,
+                measureConfigs,
                 topMargin,
                 newMeasureRowHeight,
                 spacingBetweenMeasures,
@@ -169,7 +170,10 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
                 leftMargin, // measureLabelSpace = leftMargin
                 measureTitleFontSize,
                 measureNameRotation,
-                showYAxis
+                showYAxis,
+                '#374151', // yAxisColor - TODO: passar do params
+                1.5, // axisStrokeWidth - TODO: passar do params
+                valueLabelFontSize
             );
             
             // Recalcular linhas divisórias
@@ -254,6 +258,8 @@ export function createAdjustDimensionsFunction(params: AdjustDimensionsParams): 
                 measureRowHeight: newMeasureRowHeight,
                 labelFontSize,
                 plotAreaWidth: newPlotAreaWidth,
+                xAxisColor: '#374151', // TODO: passar do params
+                axisStrokeWidth: 1.5, // TODO: passar do params
             });
             
             // Atualizar wrapper e SVG com novos valores

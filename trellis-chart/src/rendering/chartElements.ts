@@ -21,12 +21,19 @@ export function renderLineChart(
     barWidth: number,
     barSpacing: number,
     measureConfig: MeasureConfig,
-    valueLabelFontSize: number
+    valueLabelFontSize: number,
+    forceLabels: boolean
 ): string {
     const color = measureConfig.color || '#3b82f6';
     const format = measureConfig.format || 'decimal';
     const decimals = measureConfig.decimals ?? 2;
     const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
+    const opacity = measureConfig.opacity ?? 0.8;
+    const valueLabelPosition = measureConfig.valueLabelPosition || 'auto';
+    const valuePrefix = measureConfig.valuePrefix || '';
+    const valueSuffix = measureConfig.valueSuffix || '';
+    const valueFormat = measureConfig.valueFormat || 'normal';
+    const showZeroValues = measureConfig.showZeroValues !== false;
     
     const points = chartData.map((item, itemIdx) => {
         const value = item.values[measureIdx] || 0;
@@ -41,24 +48,55 @@ export function renderLineChart(
     ).join(' ');
     
     // Renderizar círculos nos pontos
-    const circles = points.map(point => `
-        <circle 
-            cx="${point.x}" 
-            cy="${point.y}" 
-            r="4"
-            fill="${color}"
-            stroke="white"
-            stroke-width="2"
-        />
-        <text 
-            x="${point.x}" 
-            y="${point.y - 8}" 
-            text-anchor="middle"
-            font-size="${valueLabelFontSize}"
-            fill="#374151"
-            font-weight="500"
-        >${formatValue(point.value, format, decimals, useThousandsSeparator)}</text>
-    `).join('');
+    const circles = points.map(point => {
+        if (!showZeroValues && point.value === 0) {
+            return '';
+        }
+        
+        // Calcular posição do label baseado em valueLabelPosition
+        let labelY = point.y - 8;
+        if (valueLabelPosition === 'inside-top') {
+            labelY = point.y + 12;
+        } else if (valueLabelPosition === 'inside-center') {
+            labelY = point.y + 4;
+        } else if (valueLabelPosition === 'below') {
+            labelY = point.y + 20;
+        }
+        
+        const formattedValue = formatValue(
+            point.value,
+            format,
+            decimals,
+            useThousandsSeparator,
+            valueFormat,
+            valuePrefix,
+            valueSuffix,
+            showZeroValues
+        );
+        
+        if (!formattedValue) {
+            return `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${color}" stroke="white" stroke-width="2" />`;
+        }
+        
+        return `
+            <circle 
+                cx="${point.x}" 
+                cy="${point.y}" 
+                r="4"
+                fill="${color}"
+                stroke="white"
+                stroke-width="2"
+            />
+            <text 
+                x="${point.x}" 
+                y="${labelY}" 
+                text-anchor="middle"
+                font-size="${valueLabelFontSize}"
+                fill="#374151"
+                font-weight="500"
+            >${formattedValue}</text>
+        `;
+    }).join('');
     
     return `
         <g>
@@ -67,7 +105,7 @@ export function renderLineChart(
                 stroke="${color}"
                 stroke-width="2"
                 fill="none"
-                opacity="0.8"
+                opacity="${opacity}"
             />
             ${circles}
         </g>
@@ -92,6 +130,15 @@ export function renderBars(
     forceLabels: boolean
 ): string {
     const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
+    const opacity = measureConfig.opacity ?? 0.9;
+    const valueLabelPosition = measureConfig.valueLabelPosition || 'auto';
+    const valuePrefix = measureConfig.valuePrefix || '';
+    const valueSuffix = measureConfig.valueSuffix || '';
+    const valueFormat = measureConfig.valueFormat || 'normal';
+    const showZeroValues = measureConfig.showZeroValues !== false;
+    const format = measureConfig.format || 'decimal';
+    const decimals = measureConfig.decimals ?? 2;
+    
     const barsHtml = chartData.map((item, itemIdx) => {
         const value = item.values[measureIdx] || 0;
         const barX = calculateBarX(itemIdx, leftMargin, barWidth, barSpacing);
@@ -106,6 +153,36 @@ export function renderBars(
         // Posição Y da barra (sempre do menor Y para maior Y)
         const barY = Math.min(valueY, baseY);
         
+        // Determinar se deve mostrar label
+        const shouldShowLabel = (barHeight > 15 || forceLabels) && (showZeroValues || value !== 0);
+        
+        // Calcular posição do label
+        let labelX = barX + barWidth / 2;
+        let labelY = barY - 5; // Padrão: acima
+        let labelAnchor = 'middle';
+        
+        if (shouldShowLabel && valueLabelPosition !== 'auto') {
+            if (valueLabelPosition === 'inside-top') {
+                labelY = barY + valueLabelFontSize + 2;
+            } else if (valueLabelPosition === 'inside-center') {
+                labelY = barY + barHeight / 2 + valueLabelFontSize / 3;
+            } else if (valueLabelPosition === 'below') {
+                labelY = barY + barHeight + valueLabelFontSize + 5;
+            }
+            // 'above' mantém o padrão (barY - 5)
+        }
+        
+        const formattedValue = shouldShowLabel ? formatValue(
+            value,
+            format,
+            decimals,
+            useThousandsSeparator,
+            valueFormat,
+            valuePrefix,
+            valueSuffix,
+            showZeroValues
+        ) : '';
+        
         return `
             <g>
                 <rect 
@@ -114,17 +191,17 @@ export function renderBars(
                     width="${barWidth}" 
                     height="${barHeight}"
                     fill="${measureConfig.color || '#3b82f6'}"
-                    opacity="0.9"
+                    opacity="${opacity}"
                 />
-                ${(barHeight > 15 || forceLabels) ? `
+                ${formattedValue ? `
                 <text 
-                    x="${barX + barWidth / 2}" 
-                    y="${barY - 5}" 
-                    text-anchor="middle"
+                    x="${labelX}" 
+                    y="${labelY}" 
+                    text-anchor="${labelAnchor}"
                     font-size="${valueLabelFontSize}"
                     fill="#374151"
                     font-weight="500"
-                >${formatValue(value, measureConfig.format || 'decimal', measureConfig.decimals ?? 2, useThousandsSeparator)}</text>
+                >${formattedValue}</text>
                 ` : ''}
             </g>
         `;
@@ -191,7 +268,8 @@ export function renderAllChartElements(params: RenderChartElementsParams): strin
                 barWidth,
                 barSpacing,
                 measureConfig,
-                valueLabelFontSize
+                valueLabelFontSize,
+                forceLabels
             );
         } else {
             return renderBars(

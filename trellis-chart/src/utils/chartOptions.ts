@@ -32,6 +32,9 @@ export interface ChartOptionsSetup {
     primaryDateFormat: string;
     secondaryDateFormat: string;
     measureConfigs: MeasureConfig[];
+    yAxisColor: string;
+    xAxisColor: string;
+    axisStrokeWidth: number;
 }
 
 /**
@@ -76,6 +79,11 @@ export function setupChartOptions(
     // Ler configurações de medidas
     const measureConfigs = readMeasureConfigs(measureCols, visualProps);
     
+    // Ler cores e estilo dos eixos
+    const yAxisColor = chartOptions.yAxisColor || '#374151';
+    const xAxisColor = chartOptions.xAxisColor || '#374151';
+    const axisStrokeWidth = chartOptions.axisStrokeWidth ?? 1.5;
+    
     return {
         chartOptions,
         showYAxis,
@@ -100,6 +108,9 @@ export function setupChartOptions(
         primaryDateFormat,
         secondaryDateFormat,
         measureConfigs,
+        yAxisColor,
+        xAxisColor,
+        axisStrokeWidth,
     };
 }
 

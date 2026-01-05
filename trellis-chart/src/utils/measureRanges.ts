@@ -3,7 +3,7 @@
  */
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
-import type { ChartDataPoint } from '../types/chartTypes';
+import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 
 /**
  * Interface para range de valores de uma medida
@@ -12,16 +12,20 @@ export interface MeasureRange {
     measure: ChartColumn;
     min: number;
     max: number;
+    effectiveMin?: number; // Valor mínimo efetivo (considerando minY configurado)
+    effectiveMax?: number; // Valor máximo efetivo (considerando maxY configurado)
     originalMin?: number;
     originalMax?: number;
 }
 
 /**
  * Calcula ranges (min/max) para cada medida individualmente
+ * Considera configurações de minY/maxY se fornecidas
  */
 export function calculateMeasureRanges(
     chartData: ChartDataPoint[],
-    measureCols: ChartColumn[]
+    measureCols: ChartColumn[],
+    measureConfigs?: MeasureConfig[]
 ): MeasureRange[] {
     return measureCols.map((measure, measureIdx) => {
         const values = chartData.map(d => d.values[measureIdx] || 0);
@@ -33,9 +37,22 @@ export function calculateMeasureRanges(
         const range = maxValue - minValue;
         const margin = range > 0 ? range * 0.1 : (maxValue > 0 ? maxValue * 0.1 : 0.1);
         
+        const calculatedMin = Math.max(0, minValue - margin);
+        const calculatedMax = maxValue + margin;
+        
+        // Aplicar minY/maxY das configurações se fornecidas
+        const measureConfig = measureConfigs?.[measureIdx];
+        const configuredMinY = measureConfig?.minY;
+        const configuredMaxY = measureConfig?.maxY;
+        
+        const effectiveMin = configuredMinY !== undefined && configuredMinY !== 'auto' ? configuredMinY : calculatedMin;
+        const effectiveMax = configuredMaxY !== undefined && configuredMaxY !== 'auto' ? configuredMaxY : calculatedMax;
+        
         return {
-            min: Math.max(0, minValue - margin), // Não permitir valores negativos se todos forem positivos
-            max: maxValue + margin,
+            min: effectiveMin,
+            max: effectiveMax,
+            effectiveMin,
+            effectiveMax,
             measure,
             originalMin: minValue,
             originalMax: maxValue,

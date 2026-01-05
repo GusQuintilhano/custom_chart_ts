@@ -3,17 +3,28 @@
  */
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
-import type { ChartDataPoint } from '../types/chartTypes';
-import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarCenterX } from '../utils/calculations';
-import { formatDimension } from '../utils/formatters';
+import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
+import type { MeasureRange } from '../utils/measureRanges';
+import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarCenterX, valueToY } from '../utils/calculations';
+import { formatDimension, formatValue } from '../utils/formatters';
 
 /**
- * Interface para range de valores de uma medida
+ * Calcula posições e valores dos ticks do eixo Y
  */
-export interface MeasureRange {
-    measure: ChartColumn;
-    min: number;
-    max: number;
+function calculateYTicks(minValue: number, maxValue: number, tickCount: number | 'auto'): number[] {
+    if (tickCount === 'auto' || tickCount === 0) {
+        // Auto: usar aproximadamente 5 ticks
+        tickCount = 5;
+    }
+    
+    const ticks: number[] = [];
+    const step = (maxValue - minValue) / (tickCount - 1);
+    
+    for (let i = 0; i < tickCount; i++) {
+        ticks.push(minValue + step * i);
+    }
+    
+    return ticks;
 }
 
 /**
@@ -22,6 +33,7 @@ export interface MeasureRange {
 export function renderYAxes(
     measureRanges: MeasureRange[],
     measureCols: ChartColumn[],
+    measureConfigs: MeasureConfig[],
     topMargin: number,
     measureRowHeight: number,
     spacingBetweenMeasures: number,
@@ -29,7 +41,10 @@ export function renderYAxes(
     measureLabelSpace: number,
     measureTitleFontSize: number,
     measureNameRotation: number,
-    showYAxis: boolean
+    showYAxis: boolean,
+    yAxisColor: string,
+    axisStrokeWidth: number,
+    valueLabelFontSize: number
 ): string {
     return measureRanges.map((range, measureIdx) => {
         const measureRowTop = calculateMeasureRowTop(
@@ -39,7 +54,21 @@ export function renderYAxes(
             spacingBetweenMeasures
         );
         const axisX = leftMargin - 10;
-
+        const measureConfig = measureConfigs[measureIdx];
+        
+        // Usar effectiveMin/effectiveMax se disponíveis, senão usar min/max
+        const minValue = range.effectiveMin ?? range.min;
+        const maxValue = range.effectiveMax ?? range.max;
+        
+        const showYAxisValues = measureConfig?.showYAxisValues !== false;
+        const yAxisTicks = measureConfig?.yAxisTicks ?? 'auto';
+        const format = measureConfig?.format || 'decimal';
+        const decimals = measureConfig?.decimals ?? 2;
+        const useThousandsSeparator = measureConfig?.useThousandsSeparator ?? true;
+        const valueFormat = measureConfig?.valueFormat || 'normal';
+        const valuePrefix = measureConfig?.valuePrefix || '';
+        const valueSuffix = measureConfig?.valueSuffix || '';
+        
         // Linha do eixo Y para esta medida
         const yAxisLine = showYAxis ? `
             <line 
@@ -47,10 +76,49 @@ export function renderYAxes(
                 y1="${measureRowTop}" 
                 x2="${axisX}" 
                 y2="${measureRowTop + measureRowHeight}" 
-                stroke="#374151" 
-                stroke-width="1.5"
+                stroke="${yAxisColor}" 
+                stroke-width="${axisStrokeWidth}"
             />
         ` : '';
+        
+        // Ticks e valores do eixo Y
+        let yAxisTicksHtml = '';
+        if (showYAxis && showYAxisValues) {
+            const ticks = calculateYTicks(minValue, maxValue, yAxisTicks);
+            yAxisTicksHtml = ticks.map(tickValue => {
+                const tickY = valueToY(tickValue, minValue, maxValue, measureRowTop, measureRowHeight);
+                const tickX = axisX;
+                const tickLabelX = axisX - 5;
+                const formattedTick = formatValue(
+                    tickValue,
+                    format,
+                    decimals,
+                    useThousandsSeparator,
+                    valueFormat,
+                    valuePrefix,
+                    valueSuffix,
+                    true
+                );
+                
+                return `
+                    <line 
+                        x1="${tickX}" 
+                        y1="${tickY}" 
+                        x2="${tickX - 5}" 
+                        y2="${tickY}" 
+                        stroke="${yAxisColor}" 
+                        stroke-width="${axisStrokeWidth}"
+                    />
+                    <text 
+                        x="${tickLabelX}" 
+                        y="${tickY + 4}" 
+                        text-anchor="end"
+                        font-size="${valueLabelFontSize}"
+                        fill="${yAxisColor}"
+                    >${formattedTick}</text>
+                `;
+            }).join('');
+        }
 
         // Título da medida (sempre mostrar) - com rotação configurável
         const titleX = measureLabelSpace / 2;
@@ -67,7 +135,7 @@ export function renderYAxes(
             >${range.measure.name}</text>
         `;
 
-        return yAxisLine + measureTitle;
+        return yAxisLine + yAxisTicksHtml + measureTitle;
     }).join('');
 }
 
@@ -85,6 +153,8 @@ export interface RenderXAxisParams {
     measureRowHeight: number;
     labelFontSize: number;
     plotAreaWidth: number;
+    xAxisColor: string;
+    axisStrokeWidth: number;
 }
 
 /**
@@ -102,6 +172,8 @@ export function renderXAxis(params: RenderXAxisParams): { xAxisLabels: string; x
         measureRowHeight,
         labelFontSize,
         plotAreaWidth,
+        xAxisColor,
+        axisStrokeWidth,
     } = params;
     
     // Renderizar labels do eixo X
@@ -116,7 +188,7 @@ export function renderXAxis(params: RenderXAxisParams): { xAxisLabels: string; x
                 y="${labelY}" 
                 text-anchor="middle"
                 font-size="${labelFontSize}"
-                fill="#374151"
+                fill="${xAxisColor}"
                 transform="rotate(-45 ${labelX} ${labelY})"
             >${primaryLabel}</text>
         `;
@@ -129,8 +201,8 @@ export function renderXAxis(params: RenderXAxisParams): { xAxisLabels: string; x
             y1="${lastMeasureRowTop + measureRowHeight}" 
             x2="${leftMargin + plotAreaWidth}" 
             y2="${lastMeasureRowTop + measureRowHeight}" 
-            stroke="#374151" 
-            stroke-width="1.5"
+            stroke="${xAxisColor}" 
+            stroke-width="${axisStrokeWidth}"
         />
     `;
     

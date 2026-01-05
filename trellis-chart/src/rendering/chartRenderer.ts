@@ -10,6 +10,7 @@ import { renderAllChartElements } from './chartElements';
 import { renderYAxes, renderXAxis } from './axes';
 import { renderDividerLinesBetweenMeasures, renderDividerLinesBetweenBars } from './dividerLines';
 import { renderSecondaryXAxis } from './secondaryAxis';
+import { renderReferenceLines } from './referenceLines';
 import { createChartHtmlStructure } from '../utils/htmlStructure';
 
 export interface ChartRenderParams {
@@ -41,6 +42,9 @@ export interface ChartRenderParams {
     measureNameRotation: number;
     primaryDateFormat: string;
     secondaryDateFormat: string;
+    yAxisColor: string;
+    xAxisColor: string;
+    axisStrokeWidth: number;
     // Dimensões
     leftMargin: number;
     topMargin: number;
@@ -88,6 +92,9 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         measureNameRotation,
         primaryDateFormat,
         secondaryDateFormat,
+        yAxisColor,
+        xAxisColor,
+        axisStrokeWidth,
         leftMargin,
         topMargin,
         spacingBetweenMeasures,
@@ -120,14 +127,18 @@ export function renderCompleteChart(params: ChartRenderParams): string {
     const yAxesHtml = renderYAxes(
         measureRanges,
         measureCols,
+        measureConfigs,
         topMargin,
         measureRowHeight,
         spacingBetweenMeasures,
         leftMargin,
-        leftMargin,
+        measureLabelSpace,
         measureTitleFontSize,
         measureNameRotation,
-        showYAxis
+        showYAxis,
+        yAxisColor,
+        axisStrokeWidth,
+        valueLabelFontSize
     );
 
     // Linhas divisórias
@@ -158,6 +169,19 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         spacingBetweenMeasures,
         dividerLinesColor: dividerLinesBetweenBarsColor,
         dividerLinesWidth: dividerLinesBetweenBarsWidth,
+    });
+
+    // Linhas de referência
+    const referenceLinesHtml = renderReferenceLines({
+        measureConfigs,
+        measureRanges,
+        measureColsCount: measureCols.length,
+        topMargin,
+        measureRowHeight,
+        spacingBetweenMeasures,
+        leftMargin,
+        plotAreaWidth,
+        valueLabelFontSize,
     });
 
     // Eixo X secundário (se houver)
@@ -204,6 +228,8 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         measureRowHeight,
         labelFontSize,
         plotAreaWidth,
+        xAxisColor,
+        axisStrokeWidth,
     });
 
     return createChartHtmlStructure(
@@ -216,6 +242,7 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         yAxesHtml,
         dividerLinesBetweenMeasuresHtml,
         dividerLinesBetweenBarsHtml,
+        referenceLinesHtml,
         allChartElementsHtml,
         xAxis,
         xAxisLabels
