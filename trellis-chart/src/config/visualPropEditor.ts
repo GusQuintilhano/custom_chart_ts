@@ -68,6 +68,15 @@ function createMeasureColumnSettings(
                     defaultValue: savedConfig?.color || defaultColor,
                 },
                 {
+                    type: 'number',
+                    key: 'opacity',
+                    label: 'Opacidade (0-1)',
+                    defaultValue: savedConfig?.opacity ?? (savedConfig?.chartType === 'line' ? 0.8 : 0.9),
+                    min: 0,
+                    max: 1,
+                    step: 0.1,
+                },
+                {
                     type: 'dropdown',
                     key: 'format',
                     label: 'Formato do Número',
@@ -86,6 +95,100 @@ function createMeasureColumnSettings(
                     label: 'Usar Separador de Milhares',
                     defaultValue: savedConfig?.useThousandsSeparator !== false,
                 },
+                {
+                    type: 'dropdown',
+                    key: 'valueLabelPosition',
+                    label: 'Posição do Label de Valor',
+                    defaultValue: savedConfig?.valueLabelPosition || 'auto',
+                    values: ['auto', 'above', 'inside-top', 'inside-center', 'below'],
+                    labels: ['Automático', 'Acima', 'Dentro (Topo)', 'Dentro (Centro)', 'Abaixo'],
+                },
+                {
+                    type: 'dropdown',
+                    key: 'valueFormat',
+                    label: 'Formato de Valor',
+                    defaultValue: savedConfig?.valueFormat || 'normal',
+                    values: ['normal', 'compact'],
+                    labels: ['Normal', 'Compacto (1.5K, 1.2M)'],
+                },
+                {
+                    type: 'text',
+                    key: 'valuePrefix',
+                    label: 'Prefix do Valor',
+                    defaultValue: savedConfig?.valuePrefix || '',
+                },
+                {
+                    type: 'text',
+                    key: 'valueSuffix',
+                    label: 'Sufixo do Valor',
+                    defaultValue: savedConfig?.valueSuffix || '',
+                },
+                {
+                    type: 'toggle',
+                    key: 'showZeroValues',
+                    label: 'Mostrar Valores Zero',
+                    defaultValue: savedConfig?.showZeroValues !== false,
+                },
+                {
+                    type: 'number',
+                    key: 'minY',
+                    label: 'Valor Mínimo do Eixo Y (auto para automático)',
+                    defaultValue: savedConfig?.minY === 'auto' || savedConfig?.minY === undefined ? undefined : savedConfig?.minY,
+                },
+                {
+                    type: 'number',
+                    key: 'maxY',
+                    label: 'Valor Máximo do Eixo Y (auto para automático)',
+                    defaultValue: savedConfig?.maxY === 'auto' || savedConfig?.maxY === undefined ? undefined : savedConfig?.maxY,
+                },
+                {
+                    type: 'number',
+                    key: 'yAxisTicks',
+                    label: 'Número de Ticks no Eixo Y (0 para automático)',
+                    defaultValue: savedConfig?.yAxisTicks === 'auto' || savedConfig?.yAxisTicks === undefined ? 0 : savedConfig?.yAxisTicks,
+                    min: 0,
+                },
+                {
+                    type: 'toggle',
+                    key: 'showYAxisValues',
+                    label: 'Mostrar Valores no Eixo Y',
+                    defaultValue: savedConfig?.showYAxisValues !== false,
+                },
+                {
+                    type: 'toggle',
+                    key: 'referenceLine_enabled',
+                    label: 'Habilitar Linha de Referência',
+                    defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
+                },
+                ...((savedConfig as any)?.referenceLine_enabled === true ? [
+                    {
+                        type: 'number',
+                        key: 'referenceLine_value',
+                        label: 'Valor da Linha de Referência',
+                        defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'referenceLine_color',
+                        label: 'Cor da Linha de Referência',
+                        selectorType: 'COLOR',
+                        defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+                    },
+                    {
+                        type: 'dropdown',
+                        key: 'referenceLine_style',
+                        label: 'Estilo da Linha',
+                        defaultValue: (savedConfig as any)?.referenceLine_style || 'solid',
+                        values: ['solid', 'dashed', 'dotted'],
+                        labels: ['Sólida', 'Tracejada', 'Pontilhada'],
+                    },
+                    {
+                        type: 'toggle',
+                        key: 'referenceLine_showLabel',
+                        label: 'Mostrar Label na Linha',
+                        defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+                    },
+                ] : []),
             ],
         };
     });
@@ -149,7 +252,9 @@ function createEditorSections(
     savedChartDimensions: any,
     savedChartDividerLines: any,
     savedChartOptions: any,
-    savedTextSizes: any
+    savedTextSizes: any,
+    savedChartColorsStyle: any,
+    savedChartTooltip: any
 ): any[] {
     const elements: any[] = [];
     
@@ -194,18 +299,18 @@ function createEditorSections(
     const showGridLinesValue = getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
     if (showGridLinesValue) {
         const defaultDividerColor = getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db');
-        elements.push({
-            type: 'section',
-            key: 'chart_divider_lines',
-            label: 'Configurações de Linhas Divisórias',
-            isAccordianExpanded: false,
-            children: [
-                {
-                    type: 'toggle',
-                    key: 'dividerLinesBetweenMeasures',
-                    label: 'Linhas entre Medidas',
-                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false,
-                },
+        const dividerLinesBetweenMeasuresEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false;
+        const dividerLinesBetweenGroupsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false;
+        const dividerLinesBetweenBarsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true;
+        
+        const dividerLinesChildren: any[] = [
+            {
+                type: 'toggle',
+                key: 'dividerLinesBetweenMeasures',
+                label: 'Linhas entre Medidas',
+                defaultValue: dividerLinesBetweenMeasuresEnabled,
+            },
+            ...(dividerLinesBetweenMeasuresEnabled ? [
                 {
                     type: 'colorpicker',
                     key: 'dividerLinesBetweenMeasuresColor',
@@ -219,12 +324,14 @@ function createEditorSections(
                     label: 'Espessura - Linhas entre Medidas (px)',
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasuresWidth, savedChartOptions.dividerLinesBetweenMeasuresWidth, 1) ?? 1,
                 },
-                {
-                    type: 'toggle',
-                    key: 'dividerLinesBetweenGroups',
-                    label: 'Linhas entre Grupos',
-                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false,
-                },
+            ] : []),
+            {
+                type: 'toggle',
+                key: 'dividerLinesBetweenGroups',
+                label: 'Linhas entre Grupos',
+                defaultValue: dividerLinesBetweenGroupsEnabled,
+            },
+            ...(dividerLinesBetweenGroupsEnabled ? [
                 {
                     type: 'colorpicker',
                     key: 'dividerLinesBetweenGroupsColor',
@@ -238,12 +345,14 @@ function createEditorSections(
                     label: 'Espessura - Linhas entre Grupos (px)',
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenGroupsWidth, savedChartOptions.dividerLinesBetweenGroupsWidth, 1) ?? 1,
                 },
-                {
-                    type: 'toggle',
-                    key: 'dividerLinesBetweenBars',
-                    label: 'Linhas entre Barras',
-                    defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true,
-                },
+            ] : []),
+            {
+                type: 'toggle',
+                key: 'dividerLinesBetweenBars',
+                label: 'Linhas entre Barras',
+                defaultValue: dividerLinesBetweenBarsEnabled,
+            },
+            ...(dividerLinesBetweenBarsEnabled ? [
                 {
                     type: 'colorpicker',
                     key: 'dividerLinesBetweenBarsColor',
@@ -257,7 +366,15 @@ function createEditorSections(
                     label: 'Espessura - Linhas entre Barras (px)',
                     defaultValue: getSavedValue(savedChartDividerLines.dividerLinesBetweenBarsWidth, savedChartOptions.dividerLinesBetweenBarsWidth, 1) ?? 1,
                 },
-            ],
+            ] : []),
+        ];
+        
+        elements.push({
+            type: 'section',
+            key: 'chart_divider_lines',
+            label: 'Configurações de Linhas Divisórias',
+            isAccordianExpanded: false,
+            children: dividerLinesChildren,
         });
     }
     
@@ -294,6 +411,12 @@ function createEditorSections(
                 key: 'barWidth',
                 label: 'Largura da Barra (px)',
                 defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40),
+            },
+            {
+                type: 'number',
+                key: 'barSpacing',
+                label: 'Espaçamento Entre Barras (px)',
+                defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15),
             }]),
             // Campo de altura da linha - só aparece se fitHeight não está ativo
             ...(getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true ? [] : [{
@@ -333,6 +456,85 @@ function createEditorSections(
         ],
     });
     
+    // Seção para cores e estilo
+    elements.push({
+        type: 'section',
+        key: 'chart_colors_style',
+        label: 'Cores e Estilo',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'colorpicker',
+                key: 'yAxisColor',
+                label: 'Cor do Eixo Y',
+                selectorType: 'COLOR',
+                defaultValue: getSavedValue(savedChartColorsStyle?.yAxisColor, savedChartOptions.yAxisColor, '#374151'),
+            },
+            {
+                type: 'colorpicker',
+                key: 'xAxisColor',
+                label: 'Cor do Eixo X',
+                selectorType: 'COLOR',
+                defaultValue: getSavedValue(savedChartColorsStyle?.xAxisColor, savedChartOptions.xAxisColor, '#374151'),
+            },
+            {
+                type: 'colorpicker',
+                key: 'backgroundColor',
+                label: 'Cor de Fundo',
+                selectorType: 'COLOR',
+                defaultValue: getSavedValue(savedChartColorsStyle?.backgroundColor, savedChartOptions.backgroundColor, 'transparent'),
+            },
+            {
+                type: 'number',
+                key: 'axisStrokeWidth',
+                label: 'Espessura dos Eixos (px)',
+                defaultValue: getSavedValue(savedChartColorsStyle?.axisStrokeWidth, savedChartOptions.axisStrokeWidth, 1.5) ?? 1.5,
+                min: 0.5,
+                max: 5,
+                step: 0.1,
+            },
+        ],
+    });
+    
+    // Seção para tooltip
+    elements.push({
+        type: 'section',
+        key: 'chart_tooltip',
+        label: 'Tooltip',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'enabled',
+                label: 'Habilitar Tooltip',
+                defaultValue: getSavedValue(savedChartTooltip?.enabled, savedChartOptions.tooltipEnabled, false) === true,
+            },
+            ...(getSavedValue(savedChartTooltip?.enabled, savedChartOptions.tooltipEnabled, false) === true ? [
+                {
+                    type: 'dropdown',
+                    key: 'format',
+                    label: 'Formato do Tooltip',
+                    defaultValue: getSavedValue(savedChartTooltip?.format, savedChartOptions.tooltipFormat, 'simple'),
+                    values: ['simple', 'detailed'],
+                    labels: ['Simples', 'Detalhado'],
+                },
+                {
+                    type: 'toggle',
+                    key: 'showAllMeasures',
+                    label: 'Mostrar Todas as Medidas',
+                    defaultValue: getSavedValue(savedChartTooltip?.showAllMeasures, savedChartOptions.tooltipShowAllMeasures, false) === true,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'backgroundColor',
+                    label: 'Cor de Fundo do Tooltip',
+                    selectorType: 'COLOR',
+                    defaultValue: getSavedValue(savedChartTooltip?.backgroundColor, savedChartOptions.tooltipBackgroundColor, '#ffffff'),
+                },
+            ] : []),
+        ],
+    });
+    
     return elements;
 }
 
@@ -355,7 +557,7 @@ export function createVisualPropEditorDefinition(
     
     // Ler valores salvos
     const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
-    const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes } = readSavedValues(allSavedProps);
+    const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes, chartColorsStyle: savedChartColorsStyle, chartTooltip: savedChartTooltip } = readSavedValues(allSavedProps);
     
     // Criar seções do editor
     const elements = createEditorSections(
@@ -363,7 +565,9 @@ export function createVisualPropEditorDefinition(
         savedChartDimensions,
         savedChartDividerLines,
         savedChartOptions,
-        savedTextSizes
+        savedTextSizes,
+        savedChartColorsStyle,
+        savedChartTooltip
     );
     
     // Criar configurações por coluna para aparecer na aba "Configure"

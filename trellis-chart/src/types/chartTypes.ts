@@ -79,6 +79,23 @@ export interface MeasureConfig {
     decimals?: number;
     chartType?: string;
     useThousandsSeparator?: boolean;
+    opacity?: number; // Opacidade da barra/linha (0-1)
+    valueLabelPosition?: 'above' | 'inside-top' | 'inside-center' | 'below' | 'auto'; // Posição do label de valor
+    minY?: number | 'auto'; // Valor mínimo do eixo Y
+    maxY?: number | 'auto'; // Valor máximo do eixo Y
+    yAxisTicks?: number | 'auto'; // Número de ticks no eixo Y
+    showYAxisValues?: boolean; // Mostrar valores no eixo Y
+    valuePrefix?: string; // Prefixo antes do valor (ex: "R$", "Total:")
+    valueSuffix?: string; // Sufixo depois do valor (ex: "%", "un")
+    showZeroValues?: boolean; // Mostrar valores zero
+    valueFormat?: 'normal' | 'compact'; // Formato: normal ou compacto (1.5K, 1.2M)
+    referenceLine?: {
+        enabled: boolean;
+        value: number;
+        color?: string;
+        style?: 'solid' | 'dashed' | 'dotted';
+        showLabel?: boolean;
+    };
 }
 
 /**
@@ -97,6 +114,8 @@ export interface MeasureRange {
     measure: ChartColumn;
     min: number;
     max: number;
+    effectiveMin?: number; // Valor mínimo efetivo (considerando minY configurado)
+    effectiveMax?: number; // Valor máximo efetivo (considerando maxY configurado)
 }
 
 /**

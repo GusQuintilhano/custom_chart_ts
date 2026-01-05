@@ -91,6 +91,7 @@ export function renderBars(
     valueLabelFontSize: number,
     forceLabels: boolean
 ): string {
+    const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
     const barsHtml = chartData.map((item, itemIdx) => {
         const value = item.values[measureIdx] || 0;
         const barX = calculateBarX(itemIdx, leftMargin, barWidth, barSpacing);
@@ -123,7 +124,7 @@ export function renderBars(
                     font-size="${valueLabelFontSize}"
                     fill="#374151"
                     font-weight="500"
-                >${formatValue(value, measureConfig.format || 'decimal', measureConfig.decimals ?? 2)}</text>
+                >${formatValue(value, measureConfig.format || 'decimal', measureConfig.decimals ?? 2, useThousandsSeparator)}</text>
                 ` : ''}
             </g>
         `;

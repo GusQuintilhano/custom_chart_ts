@@ -79,6 +79,7 @@ export interface ChartDimensionsOptions {
     measureLabelSpace?: number;
     measureRowHeight?: number;
     barWidth?: number;
+    barSpacing?: number; // Espaçamento entre barras (quando fitWidth desabilitado)
 }
 
 /**
@@ -88,6 +89,26 @@ export interface ChartTextSizesOptions {
     labelFontSize?: number;
     measureTitleFontSize?: number;
     valueLabelFontSize?: number;
+}
+
+/**
+ * Interface para opções de cores e estilo
+ */
+export interface ChartColorsAndStyleOptions {
+    yAxisColor?: string;
+    xAxisColor?: string;
+    backgroundColor?: string;
+    axisStrokeWidth?: number;
+}
+
+/**
+ * Interface para opções de tooltip
+ */
+export interface ChartTooltipOptions {
+    enabled?: boolean;
+    format?: 'simple' | 'detailed';
+    showAllMeasures?: boolean;
+    backgroundColor?: string;
 }
 
 /**
@@ -124,6 +145,19 @@ export interface ChartOptions {
     measureLabelSpace: number | null; // null = usar default baseado em showYAxis
     measureRowHeight: number;
     barWidth: number;
+    barSpacing: number | null; // null = usar default baseado em showYAxis
+    
+    // chart_colors_style
+    yAxisColor: string;
+    xAxisColor: string;
+    backgroundColor: string;
+    axisStrokeWidth: number;
+    
+    // chart_tooltip
+    tooltipEnabled: boolean;
+    tooltipFormat: 'simple' | 'detailed';
+    tooltipShowAllMeasures: boolean;
+    tooltipBackgroundColor: string;
 }
 
 /**
@@ -136,12 +170,16 @@ export function readChartOptions(allVisualProps: Record<string, unknown>): Chart
     const chartVisual = (allVisualProps?.chart_visual || {}) as ChartVisualOptions;
     const chartDimensions = (allVisualProps?.chart_dimensions || {}) as ChartDimensionsOptions;
     const chartDividerLines = (allVisualProps?.chart_divider_lines || {}) as ChartDividerLinesOptions;
+    const chartColorsStyle = (allVisualProps?.chart_colors_style || {}) as ChartColorsAndStyleOptions;
+    const chartTooltip = (allVisualProps?.chart_tooltip || {}) as ChartTooltipOptions;
     const chartOptionsConsolidated = (allVisualProps?.chart_options || allVisualProps?.chartOptions || {}) as ChartOptionsConsolidated;
+    
+    const showYAxis = getValue(chartVisual.showYAxis, chartOptionsConsolidated.showYAxis, true, true) !== false;
     
     // Construir chartOptions seguindo hierarquia: seção individual > consolidado > default
     const chartOptions: ChartOptions = {
         // Valores de chart_visual (prioridade máxima)
-        showYAxis: getValue(chartVisual.showYAxis, chartOptionsConsolidated.showYAxis, true, true) !== false,
+        showYAxis,
         showGridLines: getValue(chartVisual.showGridLines, chartOptionsConsolidated.showGridLines, true, true) !== false,
         measureNameRotation: getValue(chartVisual.measureNameRotation, chartOptionsConsolidated.measureNameRotation, '-90', false) as string,
         forceLabels: getValue(chartVisual.forceLabels, chartOptionsConsolidated.forceLabels, false, true) === true,
@@ -165,6 +203,19 @@ export function readChartOptions(allVisualProps: Record<string, unknown>): Chart
         measureLabelSpace: getValue(chartDimensions.measureLabelSpace, chartOptionsConsolidated.measureLabelSpace, null, false) as number | null,
         measureRowHeight: getValue(chartDimensions.measureRowHeight, chartOptionsConsolidated.measureRowHeight, 50, false) as number,
         barWidth: getValue(chartDimensions.barWidth, chartOptionsConsolidated.barWidth, 40, false) as number,
+        barSpacing: getValue(chartDimensions.barSpacing, chartOptionsConsolidated.barSpacing, null, false) as number | null,
+        
+        // Valores de chart_colors_style
+        yAxisColor: getValue(chartColorsStyle.yAxisColor, (chartOptionsConsolidated as any).yAxisColor, '#374151', false) as string,
+        xAxisColor: getValue(chartColorsStyle.xAxisColor, (chartOptionsConsolidated as any).xAxisColor, '#374151', false) as string,
+        backgroundColor: getValue(chartColorsStyle.backgroundColor, (chartOptionsConsolidated as any).backgroundColor, 'transparent', false) as string,
+        axisStrokeWidth: (getValue(chartColorsStyle.axisStrokeWidth, (chartOptionsConsolidated as any).axisStrokeWidth, 1.5, false) as number) ?? 1.5,
+        
+        // Valores de chart_tooltip
+        tooltipEnabled: getValue(chartTooltip.enabled, (chartOptionsConsolidated as any).tooltipEnabled, false, true) === true,
+        tooltipFormat: (getValue(chartTooltip.format, (chartOptionsConsolidated as any).tooltipFormat, 'simple', false) as 'simple' | 'detailed') || 'simple',
+        tooltipShowAllMeasures: getValue(chartTooltip.showAllMeasures, (chartOptionsConsolidated as any).tooltipShowAllMeasures, false, true) === true,
+        tooltipBackgroundColor: getValue(chartTooltip.backgroundColor, (chartOptionsConsolidated as any).tooltipBackgroundColor, '#ffffff', false) as string,
     };
     
     return chartOptions;
@@ -182,12 +233,16 @@ export function readSavedValues(allSavedProps: Record<string, unknown>): {
     chartDividerLines: ChartDividerLinesOptions;
     chartOptions: ChartOptionsConsolidated;
     textSizes: ChartTextSizesOptions;
+    chartColorsStyle: ChartColorsAndStyleOptions;
+    chartTooltip: ChartTooltipOptions;
 } {
     const savedChartVisual = (allSavedProps?.chart_visual || {}) as ChartVisualOptions;
     const savedChartDimensions = (allSavedProps?.chart_dimensions || {}) as ChartDimensionsOptions;
     const savedChartDividerLines = (allSavedProps?.chart_divider_lines || {}) as ChartDividerLinesOptions;
     const savedChartOptions = (allSavedProps?.chart_options || {}) as ChartOptionsConsolidated;
     const savedTextSizes = (allSavedProps?.text_sizes || {}) as ChartTextSizesOptions;
+    const savedChartColorsStyle = (allSavedProps?.chart_colors_style || {}) as ChartColorsAndStyleOptions;
+    const savedChartTooltip = (allSavedProps?.chart_tooltip || {}) as ChartTooltipOptions;
     
     return {
         chartVisual: savedChartVisual,
@@ -195,6 +250,8 @@ export function readSavedValues(allSavedProps: Record<string, unknown>): {
         chartDividerLines: savedChartDividerLines,
         chartOptions: savedChartOptions,
         textSizes: savedTextSizes,
+        chartColorsStyle: savedChartColorsStyle,
+        chartTooltip: savedChartTooltip,
     };
 }
 

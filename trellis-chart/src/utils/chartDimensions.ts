@@ -94,7 +94,8 @@ export function calculateChartDimensions(
         };
     } else {
         // Quando fitWidth não está ativo, calcular largura baseada nas barras
-        const barSpacing = showYAxis ? 20 : 15;
+        const configuredBarSpacing = chartOptions.barSpacing ?? null;
+        const barSpacing = configuredBarSpacing !== null ? configuredBarSpacing : (showYAxis ? 20 : 15);
         const totalBarWidth = fixedBarWidth * numBars;
         const totalBarSpacing = barSpacing * (numBars - 1);
         const plotAreaWidth = totalBarWidth + totalBarSpacing;
@@ -140,13 +141,37 @@ export function readMeasureConfigs(
             ...configFromColumnVisualProps,
         };
         
+        const chartType = (measureConfig?.chartType as string) || 'bar';
+        const defaultOpacity = chartType === 'line' ? 0.8 : 0.9;
+        
+        // Processar linha de referência
+        const referenceLineEnabled = (measureConfig as any)?.referenceLine_enabled === true;
+        const referenceLine: MeasureConfig['referenceLine'] = referenceLineEnabled ? {
+            enabled: true,
+            value: ((measureConfig as any)?.referenceLine_value as number) ?? 0,
+            color: ((measureConfig as any)?.referenceLine_color as string) || '#ef4444',
+            style: (((measureConfig as any)?.referenceLine_style as string) || 'solid') as 'solid' | 'dashed' | 'dotted',
+            showLabel: ((measureConfig as any)?.referenceLine_showLabel as boolean) !== false,
+        } : undefined;
+        
         return {
             measure,
             color: (measureConfig?.color as string) || defaultColors[measureIdx % defaultColors.length],
             format: (measureConfig?.format as string) || 'decimal',
             decimals: (measureConfig?.decimals as number) ?? 2,
-            chartType: (measureConfig?.chartType as string) || 'bar',
+            chartType,
             useThousandsSeparator: (measureConfig?.useThousandsSeparator as boolean) ?? true,
+            opacity: (measureConfig?.opacity as number) ?? defaultOpacity,
+            valueLabelPosition: (measureConfig?.valueLabelPosition as any) || 'auto',
+            minY: (measureConfig?.minY === undefined || (measureConfig?.minY as any) === 'auto') ? 'auto' : (measureConfig?.minY as number),
+            maxY: (measureConfig?.maxY === undefined || (measureConfig?.maxY as any) === 'auto') ? 'auto' : (measureConfig?.maxY as number),
+            yAxisTicks: (measureConfig?.yAxisTicks === undefined || (measureConfig?.yAxisTicks as any) === 'auto' || (measureConfig?.yAxisTicks as number) === 0) ? 'auto' : (measureConfig?.yAxisTicks as number),
+            showYAxisValues: (measureConfig?.showYAxisValues as boolean) ?? true,
+            valuePrefix: ((measureConfig as any)?.valuePrefix as string) || '',
+            valueSuffix: ((measureConfig as any)?.valueSuffix as string) || '',
+            showZeroValues: (measureConfig?.showZeroValues as boolean) ?? true,
+            valueFormat: ((measureConfig as any)?.valueFormat as 'normal' | 'compact') || 'normal',
+            referenceLine,
         };
     });
 }

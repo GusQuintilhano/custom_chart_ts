@@ -16,20 +16,58 @@ function addThousandsSeparator(numStr: string): string {
 }
 
 /**
+ * Formata um número no formato compacto (1.5K, 1.2M, etc.)
+ */
+function formatCompact(value: number, decimals: number = 1): string {
+    const absValue = Math.abs(value);
+    const sign = value < 0 ? '-' : '';
+    
+    if (absValue >= 1000000000) {
+        return `${sign}${(absValue / 1000000000).toFixed(decimals)}B`;
+    }
+    if (absValue >= 1000000) {
+        return `${sign}${(absValue / 1000000).toFixed(decimals)}M`;
+    }
+    if (absValue >= 1000) {
+        return `${sign}${(absValue / 1000).toFixed(decimals)}K`;
+    }
+    return value.toFixed(decimals);
+}
+
+/**
  * Formata um valor numérico de acordo com o tipo especificado
  * @param value Valor numérico a ser formatado
  * @param formatType Tipo de formatação (decimal, porcentagem, moeda, cientifico, inteiro)
  * @param decimals Número de casas decimais (padrão: 2)
  * @param useThousandsSeparator Se deve usar separador de milhares (padrão: false)
+ * @param valueFormat Formato do valor ('normal' | 'compact')
+ * @param prefix Prefixo antes do valor
+ * @param suffix Sufixo depois do valor
+ * @param showZero Se deve mostrar valores zero (se false e value === 0, retorna string vazia)
  * @returns String formatada
  */
 export function formatValue(
     value: number, 
     formatType: string, 
     decimals: number = 2, 
-    useThousandsSeparator: boolean = false
+    useThousandsSeparator: boolean = false,
+    valueFormat: 'normal' | 'compact' = 'normal',
+    prefix: string = '',
+    suffix: string = '',
+    showZero: boolean = true
 ): string {
+    // Se não deve mostrar zero e o valor é zero, retornar vazio
+    if (!showZero && value === 0) {
+        return '';
+    }
+    
     let formatted: string;
+    
+    // Se formato compacto, aplicar antes do tipo
+    if (valueFormat === 'compact' && formatType !== 'percentage' && formatType !== 'porcentagem') {
+        formatted = formatCompact(value, decimals);
+        return `${prefix}${formatted}${suffix}`;
+    }
     
     switch (formatType) {
         case 'percentage':
@@ -39,32 +77,32 @@ export function formatValue(
             if (useThousandsSeparator) {
                 formatted = addThousandsSeparator(formatted);
             }
-            return `${formatted}%`;
+            return `${prefix}${formatted}%${suffix}`;
         case 'currency':
         case 'moeda':
             formatted = value.toFixed(decimals);
             if (useThousandsSeparator) {
                 formatted = addThousandsSeparator(formatted);
             }
-            return `R$ ${formatted}`;
+            return `${prefix}R$ ${formatted}${suffix}`;
         case 'scientific':
         case 'cientifico':
             // Formato científico não usa separador de milhares
-            return value.toExponential(decimals);
+            return `${prefix}${value.toExponential(decimals)}${suffix}`;
         case 'integer':
         case 'inteiro':
             formatted = Math.round(value).toString();
             if (useThousandsSeparator) {
                 formatted = addThousandsSeparator(formatted);
             }
-            return formatted;
+            return `${prefix}${formatted}${suffix}`;
         case 'decimal':
         default:
             formatted = value.toFixed(decimals);
             if (useThousandsSeparator) {
                 formatted = addThousandsSeparator(formatted);
             }
-            return formatted;
+            return `${prefix}${formatted}${suffix}`;
     }
 }
 
