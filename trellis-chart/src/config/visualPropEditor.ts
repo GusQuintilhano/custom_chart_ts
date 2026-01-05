@@ -288,9 +288,14 @@ function createEditorSections(
     savedChartOptions: any,
     savedTextSizes: any,
     savedChartColorsStyle: any,
-    savedChartTooltip: any
+    savedChartTooltip: any,
+    currentVisualProps?: Record<string, unknown>
 ): any[] {
     const elements: any[] = [];
+    
+    // Ler valores atuais das props (se disponíveis) para calcular condicionais dinamicamente
+    const currentChartDividerLines = (currentVisualProps?.chart_divider_lines || {}) as any;
+    const currentChartTooltip = (currentVisualProps?.chart_tooltip || {}) as any;
     
     // Seção 1: Eixos
     elements.push({
