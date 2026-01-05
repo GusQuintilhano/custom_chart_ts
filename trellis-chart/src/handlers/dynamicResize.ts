@@ -57,6 +57,7 @@ export interface DynamicResizeParams {
     yAxisColor: string;
     xAxisColor: string;
     axisStrokeWidth: number;
+    backgroundColor: string;
 }
 
 /**

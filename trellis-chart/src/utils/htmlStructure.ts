@@ -15,7 +15,8 @@ export function createChartHtmlStructure(
     referenceLinesHtml: string,
     allChartElementsHtml: string,
     xAxis: string,
-    xAxisLabels: string
+    xAxisLabels: string,
+    backgroundColor: string = 'transparent'
 ): string {
     // Container overflow
     const containerOverflow = fitWidth && fitHeight ? 'overflow: hidden;'
@@ -40,6 +41,7 @@ export function createChartHtmlStructure(
         <div style="${containerStyle}">
             <div style="${wrapperStyle}">
                 <svg width="${svgWidth}" height="${svgHeight}" viewBox="${viewBox}" style="overflow: visible;" preserveAspectRatio="${preserveAspectRatio}">
+                    <rect width="100%" height="100%" fill="${backgroundColor}" />
                     ${secondaryXAxisHtml}
                     ${secondaryXAxisLabelsHtml}
                     ${yAxesHtml}

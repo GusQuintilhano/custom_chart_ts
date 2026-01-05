@@ -92,9 +92,10 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         measureNameRotation,
         primaryDateFormat,
         secondaryDateFormat,
-        yAxisColor,
-        xAxisColor,
-        axisStrokeWidth,
+    yAxisColor,
+    xAxisColor,
+    axisStrokeWidth,
+    backgroundColor,
         leftMargin,
         topMargin,
         spacingBetweenMeasures,
@@ -245,7 +246,8 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         referenceLinesHtml,
         allChartElementsHtml,
         xAxis,
-        xAxisLabels
+        xAxisLabels,
+        backgroundColor || '#ffffff'
     );
 }
 

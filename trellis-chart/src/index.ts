@@ -213,6 +213,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         yAxisColor,
         xAxisColor,
         axisStrokeWidth,
+        backgroundColor,
     });
 
     emitRenderComplete(ctx);
