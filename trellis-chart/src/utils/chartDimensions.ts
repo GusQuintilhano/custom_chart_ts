@@ -142,6 +142,16 @@ export function readMeasureConfigs(
             ...configFromColumnVisualProps, // Prioridade mais alta - configurações de columnSettingsDefinition
         };
         
+        // Debug: verificar valores
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[DEBUG] Measure ${measure.id} chartType:`, {
+                configNew: (configNew as any).chartType,
+                configOld: (configOld as any).chartType,
+                configFromColumnVisualProps: (configFromColumnVisualProps as any).chartType,
+                final: (measureConfig as any).chartType
+            });
+        }
+        
         const chartType = (measureConfig?.chartType as string) || 'barras';
         const defaultOpacity = chartType === 'linha' ? 0.8 : 0.9;
         
