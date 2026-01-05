@@ -9,8 +9,8 @@ import { logger } from '../utils/logger';
  * Gera o ChartConfig padrão baseado nas colunas do modelo
  */
 export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
-    logger.debug('📊 [DEBUG] ===== getDefaultChartConfig CHAMADO =====');
-    logger.debug('📊 [DEBUG] chartModel.columns.length:', chartModel.columns?.length);
+    logger.debug('===== getDefaultChartConfig CHAMADO =====');
+    logger.debug('chartModel.columns.length:', chartModel.columns?.length);
     
     const cols = chartModel.columns;
 
@@ -22,10 +22,10 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
         (col) => col.type === ColumnType.ATTRIBUTE,
     );
 
-    logger.debug('📊 [DEBUG] Medidas encontradas no chartModel:', measureColumns.length);
-    logger.debug('📊 [DEBUG] Nomes das medidas:', measureColumns.map(m => ({ id: m.id, name: m.name })));
-    logger.debug('📊 [DEBUG] Dimensões encontradas:', attributeColumns.length);
-    logger.debug('📊 [DEBUG] Nomes das dimensões:', attributeColumns.map(d => ({ id: d.id, name: d.name })));
+        logger.debug('Medidas encontradas no chartModel:', measureColumns.length);
+        logger.debug('Nomes das medidas:', measureColumns.map(m => ({ id: m.id, name: m.name })));
+        logger.debug('Dimensões encontradas:', attributeColumns.length);
+        logger.debug('Nomes das dimensões:', attributeColumns.map(d => ({ id: d.id, name: d.name })));
 
     if (attributeColumns.length === 0 || measureColumns.length === 0) {
         logger.debug('Sem colunas válidas, retornando []');
@@ -48,8 +48,8 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
         ],
     };
     
-    logger.debug('📊 [DEBUG] ChartConfig gerado com', measureColumns.length, 'medidas e', attributeColumns.length, 'dimensões');
-    logger.debug('📊 [DEBUG] ===== FIM getDefaultChartConfig =====');
+    logger.debug('ChartConfig gerado com', measureColumns.length, 'medidas e', attributeColumns.length, 'dimensões');
+    logger.debug('===== FIM getDefaultChartConfig =====');
     return [axisConfig];
 }
 
@@ -57,8 +57,8 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
  * Gera queries baseadas no ChartConfig
  */
 export function getQueriesFromChartConfig(chartConfig: ChartConfig[]): Array<Query> {
-    logger.debug('📤 [DEBUG] getQueriesFromChartConfig chamado');
-    logger.debug('📤 [DEBUG] chartConfig recebido:', JSON.stringify(chartConfig, null, 2));
+    logger.debug('getQueriesFromChartConfig chamado');
+    logger.debug('chartConfig recebido:', JSON.stringify(chartConfig, null, 2));
     
     // Contar medidas no chartConfig para detectar possíveis problemas
     const measuresInConfig = chartConfig.flatMap(config => 

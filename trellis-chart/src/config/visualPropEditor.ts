@@ -452,45 +452,45 @@ function createEditorSections(
         ],
     });
     
-    // Seção para cores e estilo - TEMPORARIAMENTE REMOVIDA PARA DEBUG
-    // elements.push({
-    //     type: 'section',
-    //     key: 'chart_colors_style',
-    //     label: 'Cores e Estilo',
-    //     isAccordianExpanded: false,
-    //     children: [
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'yAxisColor',
-    //             label: 'Cor do Eixo Y',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
-    //         },
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'xAxisColor',
-    //             label: 'Cor do Eixo X',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
-    //         },
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'backgroundColor',
-    //             label: 'Cor de Fundo',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
-    //         },
-    //         {
-    //             type: 'number',
-    //             key: 'axisStrokeWidth',
-    //             label: 'Espessura dos Eixos (px)',
-    //             defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
-    //             min: 0.5,
-    //             max: 5,
-    //             step: 0.1,
-    //         },
-    //     ],
-    // });
+    // Seção para cores e estilo
+    elements.push({
+        type: 'section',
+        key: 'chart_colors_style',
+        label: 'Cores e Estilo',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'colorpicker',
+                key: 'yAxisColor',
+                label: 'Cor do Eixo Y',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
+            },
+            {
+                type: 'colorpicker',
+                key: 'xAxisColor',
+                label: 'Cor do Eixo X',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
+            },
+            {
+                type: 'colorpicker',
+                key: 'backgroundColor',
+                label: 'Cor de Fundo',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
+            },
+            {
+                type: 'number',
+                key: 'axisStrokeWidth',
+                label: 'Espessura dos Eixos (px)',
+                defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
+                min: 0.5,
+                max: 5,
+                step: 0.1,
+            },
+        ],
+    });
     
     // Seção para tooltip
     const tooltipEnabled = (savedChartTooltip?.enabled === true) || false;
@@ -615,13 +615,13 @@ export function createVisualPropEditorDefinition(
     const measureIds = measureColumns.map(m => m.id).sort();
     const measureSignature = measureIds.join(',');
     
-    logger.debug('🎨 [DEBUG] ===== ASSINATURA DAS COLUNAS =====');
-    logger.debug('🎨 [DEBUG] Total de colunas:', columns.length);
-    logger.debug('🎨 [DEBUG] Total de medidas:', measureColumns.length);
-    logger.debug('🎨 [DEBUG] Total de dimensões:', dimensionColumns.length);
-    logger.debug('🎨 [DEBUG] IDs das medidas:', measureIds);
-    logger.debug('🎨 [DEBUG] Assinatura das colunas:', columnSignature);
-    logger.debug('🎨 [DEBUG] Assinatura das medidas:', measureSignature);
+    logger.debug('===== ASSINATURA DAS COLUNAS =====');
+    logger.debug('Total de colunas:', columns.length);
+    logger.debug('Total de medidas:', measureColumns.length);
+    logger.debug('Total de dimensões:', dimensionColumns.length);
+    logger.debug('IDs das medidas:', measureIds);
+    logger.debug('Assinatura das colunas:', columnSignature);
+    logger.debug('Assinatura das medidas:', measureSignature);
     
     const result: VisualPropEditorDefinition = {
         elements,

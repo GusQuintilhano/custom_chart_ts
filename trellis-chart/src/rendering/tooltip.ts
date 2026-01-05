@@ -46,8 +46,9 @@ function createTooltipElement(backgroundColor: string): HTMLElement {
             z-index: 10000;
             opacity: 0;
             transition: opacity 0.2s;
-            max-width: 300px;
+            max-width: 350px;
             line-height: 1.5;
+            word-wrap: break-word;
         `;
         document.body.appendChild(tooltip);
     } else {

@@ -49,9 +49,9 @@ export async function setupMissingMeasuresRetry(
             const currentRefreshTrigger = (columnDependency as any)?._refresh_trigger || 0;
             const newRefreshTrigger = currentRefreshTrigger + 1;
             
-            logger.debug(`🔄 [DEBUG] Tentando forçar atualização emitindo UpdateVisualProps...`);
-            logger.debug(`🔄 [DEBUG] Refresh trigger atual: ${currentRefreshTrigger} -> novo: ${newRefreshTrigger}`);
-            logger.debug(`🔄 [DEBUG] Medidas faltando:`, missingMeasures.map(m => m.name));
+            logger.debug(`Tentando forçar atualização emitindo UpdateVisualProps...`);
+            logger.debug(`Refresh trigger atual: ${currentRefreshTrigger} -> novo: ${newRefreshTrigger}`);
+            logger.debug(`Medidas faltando:`, missingMeasures.map(m => m.name));
             
             await ctx.emitEvent(ChartToTSEvent.UpdateVisualProps, {
                 visualProps: {
@@ -64,7 +64,7 @@ export async function setupMissingMeasuresRetry(
                 },
             });
             
-            logger.debug('✅ [DEBUG] UpdateVisualProps emitido com sucesso');
+            logger.debug('UpdateVisualProps emitido com sucesso');
         } catch (error) {
             logger.warn('Erro ao tentar emitir UpdateVisualProps para forçar atualização:', error);
         }
@@ -75,14 +75,14 @@ export async function setupMissingMeasuresRetry(
     
     // Função para verificar e re-renderizar se necessário
     const checkAndRetry = async (attemptNumber: number, renderChartFn: () => Promise<void>): Promise<boolean> => {
-        logger.debug(`🔄 [DEBUG] Tentativa ${attemptNumber}: Verificando se dados das medidas faltantes foram carregados...`);
+        logger.debug(`Tentativa ${attemptNumber}: Verificando se dados das medidas faltantes foram carregados...`);
         
         try {
             const updatedChartModel = ctx.getChartModel();
             const updatedData = updatedChartModel.data;
             
             if (!updatedData || updatedData.length === 0) {
-                logger.debug(`🔄 [DEBUG] Tentativa ${attemptNumber}: Ainda não há dados disponíveis`);
+                logger.debug(`Tentativa ${attemptNumber}: Ainda não há dados disponíveis`);
                 return false;
             }
             
@@ -168,7 +168,7 @@ export async function setupMissingMeasuresRetry(
                 
                 // Tentar forçar atualização a cada 5 tentativas
                 if (retryCount % 5 === 0) {
-                    logger.debug(`🔄 [DEBUG] Tentativa ${retryCount}: Tentando forçar atualização novamente...`);
+                    logger.debug(`Tentativa ${retryCount}: Tentando forçar atualização novamente...`);
                     await tryForceRefresh();
                 }
                 
