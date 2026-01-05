@@ -89,6 +89,7 @@ export function setupChartOptions(
     const yAxisColor = chartOptions.yAxisColor || '#374151';
     const xAxisColor = chartOptions.xAxisColor || '#374151';
     const axisStrokeWidth = chartOptions.axisStrokeWidth ?? 1.5;
+    const backgroundColor = chartOptions.backgroundColor || '#ffffff';
     
     // Ler opções de tooltip
     const tooltipEnabled = (chartOptions as any).tooltipEnabled || false;
@@ -124,6 +125,7 @@ export function setupChartOptions(
         yAxisColor,
         xAxisColor,
         axisStrokeWidth,
+        backgroundColor,
         tooltipEnabled,
         tooltipFormat,
         tooltipShowAllMeasures,
