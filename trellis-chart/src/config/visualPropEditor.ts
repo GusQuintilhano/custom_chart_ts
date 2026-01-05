@@ -309,13 +309,22 @@ function createEditorSections(
     });
     
     // Seção 2: Linhas Divisórias
-    const showGridLinesValue = (savedChartDividerLines as any).showGridLines !== undefined
+    // Usar valores atuais se disponíveis (para condicionais dinâmicas), senão usar valores salvos
+    const showGridLinesValue = (currentChartDividerLines.showGridLines !== undefined
+        ? currentChartDividerLines.showGridLines !== false
+        : (savedChartDividerLines as any).showGridLines !== undefined
         ? (savedChartDividerLines as any).showGridLines !== false
-        : getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false;
+        : getSavedValue(savedChartVisual.showGridLines, savedChartOptions.showGridLines, true) !== false);
     const defaultDividerColor = getSavedValue(savedChartDividerLines.dividerLinesColor, savedChartOptions.dividerLinesColor, '#d1d5db');
-    const dividerLinesBetweenMeasuresEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false;
-    const dividerLinesBetweenGroupsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false;
-    const dividerLinesBetweenBarsEnabled = getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true;
+    const dividerLinesBetweenMeasuresEnabled = (currentChartDividerLines.dividerLinesBetweenMeasures !== undefined
+        ? currentChartDividerLines.dividerLinesBetweenMeasures !== false
+        : getSavedValue(savedChartDividerLines.dividerLinesBetweenMeasures, savedChartOptions.dividerLinesBetweenMeasures, true) !== false);
+    const dividerLinesBetweenGroupsEnabled = (currentChartDividerLines.dividerLinesBetweenGroups !== undefined
+        ? currentChartDividerLines.dividerLinesBetweenGroups !== false
+        : getSavedValue(savedChartDividerLines.dividerLinesBetweenGroups, savedChartOptions.dividerLinesBetweenGroups, true) !== false);
+    const dividerLinesBetweenBarsEnabled = (currentChartDividerLines.dividerLinesBetweenBars !== undefined
+        ? currentChartDividerLines.dividerLinesBetweenBars === true
+        : getSavedValue(savedChartDividerLines.dividerLinesBetweenBars, savedChartOptions.dividerLinesBetweenBars, false) === true);
     
     // Sempre mostrar a seção (não usar condicional - limitação do SDK)
     const dividerLinesChildren: any[] = [
