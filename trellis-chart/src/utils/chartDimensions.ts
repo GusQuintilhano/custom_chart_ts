@@ -139,20 +139,28 @@ export function readMeasureConfigs(
         // O ThoughtSpot pode salvar valores em estruturas aninhadas (seções)
         // Se chartType está em uma seção 'visualization', pode estar em configFromColumnVisualProps.visualization.chartType
         const visualizationSection = (configFromColumnVisualProps.visualization || {}) as Record<string, unknown>;
+        const numberFormattingSection = (configFromColumnVisualProps.number_formatting || {}) as Record<string, unknown>;
         
         // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
-        // Também mesclar valores de seções aninhadas (ex: visualization.chartType -> chartType)
+        // Também mesclar valores de seções aninhadas (ex: visualization.chartType -> chartType, number_formatting.decimals -> decimals)
         const measureConfigFlat = {
             ...configNew,
             ...configOld,
             ...configFromColumnVisualProps, // Prioridade mais alta - configurações de columnSettingsDefinition
         };
         
-        // Se chartType está em visualization.chartType, extrair para o nível superior
+        // Extrair valores de seções aninhadas para o nível superior
         const chartTypeFromVisualization = visualizationSection.chartType;
+        const decimalsFromNumberFormatting = numberFormattingSection.decimals;
+        const formatFromNumberFormatting = numberFormattingSection.format;
+        const useThousandsSeparatorFromNumberFormatting = numberFormattingSection.useThousandsSeparator;
+        
         const measureConfig: Record<string, unknown> = {
             ...measureConfigFlat,
             ...(chartTypeFromVisualization ? { chartType: chartTypeFromVisualization } : {}), // Extrair chartType da seção visualization se existir
+            ...(decimalsFromNumberFormatting !== undefined ? { decimals: decimalsFromNumberFormatting } : {}), // Extrair decimals da seção number_formatting se existir
+            ...(formatFromNumberFormatting ? { format: formatFromNumberFormatting } : {}), // Extrair format da seção number_formatting se existir
+            ...(useThousandsSeparatorFromNumberFormatting !== undefined ? { useThousandsSeparator: useThousandsSeparatorFromNumberFormatting } : {}), // Extrair useThousandsSeparator da seção number_formatting se existir
         };
         
         // Debug: verificar valores
