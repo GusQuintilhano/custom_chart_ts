@@ -112,13 +112,44 @@ function createMeasureColumnSettings(
                 defaultValue: savedConfig?.showYAxisValues !== false,
             },
             {
-                type: 'number',
-                key: 'yAxisTicks',
-                label: 'Número de Ticks no Eixo Y (0 para automático)',
-                defaultValue: savedConfig?.yAxisTicks === 'auto' || savedConfig?.yAxisTicks === undefined ? 0 : savedConfig?.yAxisTicks,
-                min: 0,
+                type: 'toggle',
+                key: 'referenceLine_enabled',
+                label: 'Habilitar Linha de Referência',
+                defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
             },
         ];
+        
+        // Adicionar elementos de linha de referência condicionalmente
+        if ((savedConfig as any)?.referenceLine_enabled === true) {
+            measureElements.push(
+                {
+                    type: 'number',
+                    key: 'referenceLine_value',
+                    label: 'Valor da Linha de Referência',
+                    defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'referenceLine_color',
+                    label: 'Cor da Linha de Referência',
+                    selectorType: 'COLOR',
+                    defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+                },
+                {
+                    type: 'dropdown',
+                    key: 'referenceLine_style',
+                    label: 'Estilo da Linha',
+                    defaultValue: (savedConfig as any)?.referenceLine_style || 'solid',
+                    values: ['solid', 'dashed', 'dotted'],
+                },
+                {
+                    type: 'toggle',
+                    key: 'referenceLine_showLabel',
+                    label: 'Mostrar Label na Linha',
+                    defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+                }
+            );
+        }
         
         measureColumnSettings[measure.id] = {
             elements: measureElements,
