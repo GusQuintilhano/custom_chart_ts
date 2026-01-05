@@ -51,7 +51,9 @@ function createMeasureColumnSettings(
         const savedConfigNew = (currentVisualProps.visualProps as any)?.[measure.id];
         const savedConfig = savedConfigNew || savedConfigOld || {};
         
+        // Organização das opções em grupos lógicos
         const measureElements: any[] = [
+            // Grupo 1: Visualização
             {
                 type: 'dropdown',
                 key: 'chartType',
@@ -66,6 +68,8 @@ function createMeasureColumnSettings(
                 selectorType: 'COLOR',
                 defaultValue: savedConfig?.color || defaultColor,
             },
+            
+            // Grupo 2: Formatação de Números
             {
                 type: 'dropdown',
                 key: 'format',
@@ -85,6 +89,8 @@ function createMeasureColumnSettings(
                 label: 'Usar Separador de Milhares',
                 defaultValue: savedConfig?.useThousandsSeparator !== false,
             },
+            
+            // Grupo 3: Labels e Valores
             {
                 type: 'dropdown',
                 key: 'valueLabelPosition',
@@ -102,25 +108,29 @@ function createMeasureColumnSettings(
             {
                 type: 'toggle',
                 key: 'showZeroValues',
-                label: 'Mostrar Valores Zero',
+                label: 'Exibir Valores Zero',
                 defaultValue: savedConfig?.showZeroValues !== false,
             },
             {
                 type: 'toggle',
                 key: 'showYAxisValues',
-                label: 'Mostrar Valores no Eixo Y',
+                label: 'Exibir Valores no Eixo Y',
                 defaultValue: savedConfig?.showYAxisValues !== false,
             },
+            
+            // Grupo 4: Linha de Referência
             {
                 type: 'toggle',
                 key: 'referenceLine_enabled',
                 label: 'Habilitar Linha de Referência',
                 defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
             },
+            
+            // Grupo 5: Dica de Contexto (Tooltip)
             {
                 type: 'toggle',
                 key: 'tooltip_enabled',
-                label: 'Habilitar Tooltip',
+                label: 'Habilitar Dica de Contexto',
                 defaultValue: (savedConfig as any)?.tooltip_enabled !== false,
             },
         ];
@@ -151,7 +161,7 @@ function createMeasureColumnSettings(
                 {
                     type: 'toggle',
                     key: 'referenceLine_showLabel',
-                    label: 'Mostrar Label na Linha',
+                    label: 'Exibir Label na Linha',
                     defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
                 }
             );
@@ -163,21 +173,21 @@ function createMeasureColumnSettings(
                 {
                     type: 'dropdown',
                     key: 'tooltip_format',
-                    label: 'Formato do Tooltip',
+                    label: 'Formato da Dica',
                     defaultValue: (savedConfig as any)?.tooltip_format || 'simple',
                     values: ['simple', 'detailed'],
                 },
                 {
                     type: 'colorpicker',
                     key: 'tooltip_backgroundColor',
-                    label: 'Cor de Fundo do Tooltip',
+                    label: 'Cor de Fundo da Dica',
                     selectorType: 'COLOR',
                     defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
                 },
                 {
                     type: 'dropdown',
                     key: 'tooltip_layout',
-                    label: 'Layout do Tooltip',
+                    label: 'Layout da Dica de Contexto',
                     defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
                     values: ['vertical', 'horizontal', 'grid'],
                 }
