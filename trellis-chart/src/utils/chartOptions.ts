@@ -35,6 +35,7 @@ export interface ChartOptionsSetup {
     yAxisColor: string;
     xAxisColor: string;
     axisStrokeWidth: number;
+    backgroundColor: string;
     tooltipEnabled: boolean;
     tooltipFormat: 'simple' | 'detailed';
     tooltipShowAllMeasures: boolean;
