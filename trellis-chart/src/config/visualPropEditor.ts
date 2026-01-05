@@ -368,19 +368,19 @@ function createEditorSections(
         elements.push({
             type: 'section',
             key: 'chart_divider_lines',
-            label: 'Configurações de Linhas Divisórias',
+            label: 'Estilo das Linhas Divisórias',
             isAccordianExpanded: false,
             children: dividerLinesChildren,
         });
     }
     
-    // Seção 2: Dimensões e Tamanhos
+    // Seção 3: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
     const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
     elements.push({
         type: 'section',
         key: 'chart_dimensions',
-        label: 'Dimensões e Tamanhos',
+        label: 'Dimensões e Espaçamento',
         isAccordianExpanded: false,
         children: [
             {
@@ -424,11 +424,11 @@ function createEditorSections(
         ],
     });
     
-    // Seção para configuração de tamanhos de texto
+    // Seção 4: Tipografia e Textos
     elements.push({
         type: 'section',
         key: 'text_sizes',
-        label: 'Tamanhos de Texto',
+        label: 'Tipografia e Textos',
         isAccordianExpanded: false,
         children: [
             {
@@ -510,8 +510,11 @@ function createEditorSections(
                 type: 'dropdown',
                 key: 'format',
                 label: 'Formato do Tooltip',
-                defaultValue: savedChartTooltip?.format || 'simple',
-                values: ['simple', 'detailed'],
+                defaultValue: savedChartTooltip?.format || 'simples',
+                values: [
+                    { label: 'Simples', value: 'simple' },
+                    { label: 'Detalhado', value: 'detailed' }
+                ],
             },
             {
                 type: 'toggle',
@@ -544,10 +547,11 @@ function createEditorSections(
         );
     }
     
+    // Seção 5: Dicas de Contexto (Tooltip)
     elements.push({
         type: 'section',
         key: 'chart_tooltip',
-        label: 'Tooltip',
+        label: 'Dicas de Contexto (Tooltip)',
         isAccordianExpanded: false,
         children: tooltipChildren,
     });
@@ -656,19 +660,19 @@ export function createChartConfigEditorDefinition(): ChartConfigEditorDefinition
     return [
         {
             key: 'column',
-            label: 'Visual Attributes/Measures',
-            descriptionText: 'X-axis can only have attributes, Y-axis can only have measures.',
+            label: 'Atributos e Medidas',
+            descriptionText: 'O eixo X pode ter apenas atributos/dimensões. O eixo Y pode ter apenas medidas.',
             columnSections: [
                 {
                     key: 'x',
-                    label: 'X Axis (Dimensions)',
+                    label: 'Eixo X (Dimensões)',
                     allowAttributeColumns: true,
                     allowMeasureColumns: false,
                     allowTimeSeriesColumns: true,
                 },
                 {
                     key: 'y',
-                    label: 'Y Axis (Measures)',
+                    label: 'Eixo Y (Medidas)',
                     allowAttributeColumns: false,
                     allowMeasureColumns: true,
                     allowTimeSeriesColumns: false,
