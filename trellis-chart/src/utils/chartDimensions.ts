@@ -171,7 +171,7 @@ export function readMeasureConfigs(
             chartType,
             useThousandsSeparator: (measureConfig?.useThousandsSeparator as boolean) ?? true,
             opacity: (measureConfig?.opacity as number) ?? defaultOpacity,
-            valueLabelPosition: (measureConfig?.valueLabelPosition as any) || 'auto',
+            valueLabelPosition: (measureConfig?.valueLabelPosition as any) || 'automático',
             minY: (measureConfig?.minY === undefined || (measureConfig?.minY as any) === 'auto') ? 'auto' : (measureConfig?.minY as number),
             maxY: (measureConfig?.maxY === undefined || (measureConfig?.maxY as any) === 'auto') ? 'auto' : (measureConfig?.maxY as number),
             yAxisTicks: (measureConfig?.yAxisTicks === undefined || (measureConfig?.yAxisTicks as any) === 'auto' || (measureConfig?.yAxisTicks as number) === 0) ? 'auto' : (measureConfig?.yAxisTicks as number),

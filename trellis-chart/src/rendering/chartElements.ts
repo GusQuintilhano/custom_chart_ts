@@ -134,7 +134,7 @@ export function renderBars(
 ): string {
     const useThousandsSeparator = measureConfig.useThousandsSeparator ?? true;
     const opacity = measureConfig.opacity ?? 0.9;
-    const valueLabelPosition = measureConfig.valueLabelPosition || 'auto';
+    const valueLabelPosition = measureConfig.valueLabelPosition || 'automático';
     const valuePrefix = measureConfig.valuePrefix || '';
     const valueSuffix = measureConfig.valueSuffix || '';
     const valueFormat = measureConfig.valueFormat || 'normal';
