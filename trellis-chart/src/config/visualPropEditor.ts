@@ -144,7 +144,6 @@ function createMeasureColumnSettings(
         });
         
         // Seção 4: Linha de Referência
-        const referenceLineEnabled = (savedConfig as any)?.referenceLine_enabled === true;
         measureElements.push({
             type: 'section',
             key: 'reference_line',
@@ -155,41 +154,38 @@ function createMeasureColumnSettings(
                     type: 'toggle',
                     key: 'referenceLine_enabled',
                     label: 'Habilitar Linha de Referência',
-                    defaultValue: referenceLineEnabled,
+                    defaultValue: (savedConfig as any)?.referenceLine_enabled === true,
                 },
-                ...(referenceLineEnabled ? [
-                    {
-                        type: 'number',
-                        key: 'referenceLine_value',
-                        label: 'Valor da Linha de Referência',
-                        defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
-                    },
-                    {
-                        type: 'colorpicker',
-                        key: 'referenceLine_color',
-                        label: 'Cor da Linha de Referência',
-                        selectorType: 'COLOR',
-                        defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
-                    },
-                    {
-                        type: 'dropdown',
-                        key: 'referenceLine_style',
-                        label: 'Estilo da Linha',
-                        defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
-                        values: ['sólida', 'tracejada', 'pontilhada'],
-                    },
-                    {
-                        type: 'toggle',
-                        key: 'referenceLine_showLabel',
-                        label: 'Exibir Label na Linha',
-                        defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
-                    },
-                ] : []),
+                {
+                    type: 'number',
+                    key: 'referenceLine_value',
+                    label: 'Valor da Linha de Referência',
+                    defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'referenceLine_color',
+                    label: 'Cor da Linha de Referência',
+                    selectorType: 'COLOR',
+                    defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+                },
+                {
+                    type: 'dropdown',
+                    key: 'referenceLine_style',
+                    label: 'Estilo da Linha',
+                    defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
+                    values: ['sólida', 'tracejada', 'pontilhada'],
+                },
+                {
+                    type: 'toggle',
+                    key: 'referenceLine_showLabel',
+                    label: 'Exibir Label na Linha',
+                    defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+                },
             ],
         });
         
         // Seção 5: Dica de Contexto (Tooltip)
-        const tooltipEnabled = (savedConfig as any)?.tooltip_enabled !== false;
         measureElements.push({
             type: 'section',
             key: 'tooltip',
@@ -200,31 +196,29 @@ function createMeasureColumnSettings(
                     type: 'toggle',
                     key: 'tooltip_enabled',
                     label: 'Habilitar Dica de Contexto',
-                    defaultValue: tooltipEnabled,
+                    defaultValue: (savedConfig as any)?.tooltip_enabled !== false,
                 },
-                ...(tooltipEnabled ? [
-                    {
-                        type: 'dropdown',
-                        key: 'tooltip_format',
-                        label: 'Formato da Dica',
-                        defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
-                        values: ['simples', 'detalhado'],
-                    },
-                    {
-                        type: 'colorpicker',
-                        key: 'tooltip_backgroundColor',
-                        label: 'Cor de Fundo da Dica',
-                        selectorType: 'COLOR',
-                        defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
-                    },
-                    {
-                        type: 'dropdown',
-                        key: 'tooltip_layout',
-                        label: 'Layout da Dica de Contexto',
-                        defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
-                        values: ['vertical', 'horizontal', 'grade'],
-                    },
-                ] : []),
+                {
+                    type: 'dropdown',
+                    key: 'tooltip_format',
+                    label: 'Formato da Dica',
+                    defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
+                    values: ['simples', 'detalhado'],
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'tooltip_backgroundColor',
+                    label: 'Cor de Fundo da Dica',
+                    selectorType: 'COLOR',
+                    defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
+                },
+                {
+                    type: 'dropdown',
+                    key: 'tooltip_layout',
+                    label: 'Layout da Dica de Contexto',
+                    defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
+                    values: ['vertical', 'horizontal', 'grade'],
+                },
             ],
         });
         
