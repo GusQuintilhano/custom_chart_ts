@@ -68,25 +68,29 @@ function formatSimpleTooltip(
     customTemplate?: string
 ): string {
     // Se há template personalizado, usar ele
-    if (customTemplate && customTemplate.trim() !== '') {
-        // Note: secondaryDateFormat não está disponível neste contexto, mas processTooltipTemplate trata isso
-        const templateResult = processTooltipTemplate(customTemplate, {
-            dataPoint,
-            measureIdx,
-            measureCol,
-            measureConfig: {
-                format: measureConfig.format,
-                decimals: measureConfig.decimals,
-                useThousandsSeparator: measureConfig.useThousandsSeparator,
-                valueFormat: measureConfig.valueFormat,
-                valuePrefix: measureConfig.valuePrefix,
-                valueSuffix: measureConfig.valueSuffix,
-            },
-            primaryDateFormat,
-            secondaryDateFormat: undefined, // Não disponível no contexto simples
-        });
-        if (templateResult) {
-            return templateResult;
+    if (customTemplate && customTemplate !== 'default' && customTemplate.trim() !== '') {
+        // Converter ID do template para string do template
+        const templateString = getTemplateById(customTemplate as any);
+        if (templateString) {
+            // Note: secondaryDateFormat não está disponível neste contexto, mas processTooltipTemplate trata isso
+            const templateResult = processTooltipTemplate(templateString, {
+                dataPoint,
+                measureIdx,
+                measureCol,
+                measureConfig: {
+                    format: measureConfig.format,
+                    decimals: measureConfig.decimals,
+                    useThousandsSeparator: measureConfig.useThousandsSeparator,
+                    valueFormat: measureConfig.valueFormat,
+                    valuePrefix: measureConfig.valuePrefix,
+                    valueSuffix: measureConfig.valueSuffix,
+                },
+                primaryDateFormat,
+                secondaryDateFormat: undefined, // Não disponível no contexto simples
+            });
+            if (templateResult) {
+                return templateResult;
+            }
         }
     }
 
