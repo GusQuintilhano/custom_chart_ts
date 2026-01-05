@@ -241,6 +241,7 @@ export function setupTooltips(
 
         const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
         const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
+        const customTemplate = tooltipConfig?.customTemplate || '';
 
         rect.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
@@ -254,7 +255,7 @@ export function setupTooltips(
             // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
             const content = format === 'detailed'
                 ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);

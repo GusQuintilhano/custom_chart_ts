@@ -127,6 +127,7 @@ export function setupChartOptions(
         tooltipFormat,
         tooltipShowAllMeasures,
         tooltipBackgroundColor,
+        tooltipCustomTemplate,
     };
 }
 
