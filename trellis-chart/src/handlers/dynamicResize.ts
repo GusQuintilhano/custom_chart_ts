@@ -137,7 +137,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         let shouldUpdate = false;
 
         // Ajustar largura se fitWidth está ativo
-        if (fitWidth && containerWidth > 0 && containerWidth !== chartWidth) {
+        // Quando fitWidth está ativo, SEMPRE usar containerWidth (ajustar independente do valor anterior)
+        if (fitWidth && containerWidth > 0) {
             newChartWidth = containerWidth;
             shouldUpdate = true;
         } else if (!fitWidth) {
@@ -162,14 +163,15 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         let newBarWidth = barWidth;
         let newBarSpacing = barSpacing;
 
-        if (fitWidth && (shouldUpdate || containerWidth > 0)) {
+        // Quando fitWidth está ativo, SEMPRE recalcular barWidth e barSpacing baseado no novo tamanho
+        if (fitWidth && containerWidth > 0) {
             const newPlotAreaWidth = newChartWidth - leftMargin - rightMargin;
             newBarSpacing = showYAxis ? 20 : Math.max(15, newPlotAreaWidth / (chartData.length * 3));
             const newTotalSpacing = newBarSpacing * (chartData.length - 1);
             newBarWidth = showYAxis ? 40 : Math.max(30, (newPlotAreaWidth - newTotalSpacing) / chartData.length);
         }
 
-        // Se há mudanças, recalcular e atualizar
+        // Se há mudanças (ou fitWidth está ativo e temos containerWidth), recalcular e atualizar
         if (shouldUpdate || (fitWidth && containerWidth > 0)) {
             const newPlotAreaWidth = (!fitWidth) ? plotAreaWidth : (newChartWidth - leftMargin - rightMargin);
             const lastMeasureRowTop = calculateLastMeasureRowTop(
