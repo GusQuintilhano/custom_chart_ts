@@ -135,10 +135,11 @@ export function readMeasureConfigs(
         const configOld = (allVisualProps[measureKeyOld] || {}) as Record<string, unknown>;
         const configNew = (allVisualProps[measure.id] || {}) as Record<string, unknown>;
         
+        // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
         const measureConfig = {
             ...configNew,
             ...configOld,
-            ...configFromColumnVisualProps,
+            ...configFromColumnVisualProps, // Prioridade mais alta - configurações de columnSettingsDefinition
         };
         
         const chartType = (measureConfig?.chartType as string) || 'barras';
