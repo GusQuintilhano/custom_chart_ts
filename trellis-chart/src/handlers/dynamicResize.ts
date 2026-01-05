@@ -297,36 +297,47 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             });
 
             // Atualizar wrapper e SVG
-            if (wrapperDiv && !fitWidth) {
-                wrapperDiv.style.width = `${newChartWidth}px`;
-                wrapperDiv.style.height = fitHeight ? '100%' : `${newChartHeight}px`;
-            }
-
-            if (wrapperDiv && !fitWidth) {
-                const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
-                if (svgElement) {
-                    svgElement.setAttribute('width', `${newChartWidth}px`);
+            // Quando fitWidth está ativo, wrapper deve ser 100% da largura
+            if (wrapperDiv) {
+                if (fitWidth) {
+                    wrapperDiv.style.width = '100%';
+                } else {
+                    wrapperDiv.style.width = `${newChartWidth}px`;
                 }
+                wrapperDiv.style.height = fitHeight ? '100%' : `${newChartHeight}px`;
             }
 
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
             if (svgElement) {
+                // SVG sempre usa viewBox para scaling responsivo
                 svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
+                if (fitWidth) {
+                    svgElement.setAttribute('width', '100%');
+                    svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
+                } else {
+                    svgElement.setAttribute('width', `${newChartWidth}px`);
+                    svgElement.setAttribute('height', `${newChartHeight}px`);
+                }
                 svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + 
                     newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newAllChartElementsHtml + 
-                    newReferenceLinesHtml + newXAxis + newXAxisLabels;
+                    newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
             }
         }
     };
 
-    // Ajustar após um pequeno delay
+    // Ajustar imediatamente e também após um pequeno delay para garantir
+    adjustDimensions();
+    
+    // Também observar mudanças no container
+    const resizeObserver = new ResizeObserver(() => {
+        adjustDimensions();
+    });
+    resizeObserver.observe(containerDiv);
+    chartElement.__resizeObserver = resizeObserver;
+    
+    // Ajustar novamente após um delay para casos onde o container ainda não tem dimensões finais
     setTimeout(() => {
         adjustDimensions();
-        const resizeObserver = new ResizeObserver(() => {
-            adjustDimensions();
-        });
-        resizeObserver.observe(containerDiv);
-        chartElement.__resizeObserver = resizeObserver;
     }, 100);
 }
 
