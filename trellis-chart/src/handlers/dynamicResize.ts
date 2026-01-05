@@ -108,6 +108,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         yAxisColor,
         xAxisColor,
         axisStrokeWidth,
+        backgroundColor,
     } = params;
 
     if (!fitWidth && !fitHeight) {
