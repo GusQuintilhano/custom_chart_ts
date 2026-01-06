@@ -8,7 +8,7 @@ FROM registry.ifoodcorp.com.br/ifood/docker-images/golden/nodejs:18-alpine
 LABEL maintainer="iFood Data Visualization Team"
 LABEL description="Custom Charts SDK - ThoughtSpot Chart SDK para visualização de dados"
 LABEL version="1.0.0"
-LABEL org.opencontainers.image.source="https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts"
+LABEL org.opencontainers.image.source=".../custom-charts"
 
 # Configurar diretório de trabalho
 WORKDIR /app
