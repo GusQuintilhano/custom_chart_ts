@@ -21,6 +21,8 @@ COPY trellis-chart/package*.json ./trellis-chart/
 WORKDIR /workspace/trellis-chart
 RUN npm ci || npm install
 
+# Configurar TypeScript para não verificar tipos de shared (skipLibCheck já está ativo)
+
 # Copiar código fonte do trellis-chart (já estamos em /workspace/trellis-chart)
 COPY trellis-chart/ ./
 
