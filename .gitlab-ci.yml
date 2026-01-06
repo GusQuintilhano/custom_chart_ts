@@ -5,13 +5,12 @@ include:
     file: pipelines/ifood-security/main.yml
 
 variables:
-  NODE_VERSION: "18"
-  DOCKER_DRIVER: overlay2
-  SERVICE_NAME: dataviz-custom-charts
   FORCE_RELEASE: "true"
   SEMANTIC_VERSION_FILE: ""
+  SERVICE_NAME: dataviz-custom-charts
   BUILD_MULTIARCH: 'false'
   DEV_IMAGE_TAG: dev
+  NODE_VERSION: "18"
 
 # Validação de estrutura e arquivos
 validate:
