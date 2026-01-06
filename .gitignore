@@ -45,6 +45,13 @@ src.backup*/
 # Arquivos de tracking local
 TASK.md
 
+# Railway (deploy/hosting)
+railway.json
+.railwayignore
+.railway-deploy-summary.md
+nixpacks.toml
+deploy.sh
+
 
 
 
