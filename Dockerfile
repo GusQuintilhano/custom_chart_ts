@@ -26,6 +26,9 @@ RUN npm ci || npm install
 # Copiar código fonte do trellis-chart (já estamos em /workspace/trellis-chart)
 COPY trellis-chart/ ./
 
+# Criar symlink para node_modules em shared para que TypeScript encontre dependências
+RUN ln -s /workspace/trellis-chart/node_modules /workspace/shared/node_modules || true
+
 # Build do projeto (o path mapping @shared/* aponta para ../shared/)
 RUN npm run build
 
