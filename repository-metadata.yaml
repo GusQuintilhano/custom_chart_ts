@@ -23,7 +23,7 @@ metadata:
 spec:
   contents:
     - name: dataviz-custom-charts
-      description: "Projeto de Custom Charts desenvolvidos com Muze Studio e ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
+      description: "Projeto de Custom Charts desenvolvidos com ThoughtSpot Chart SDK para visualização de dados avançada no iFood"
       type: other
       subType:
         - other
@@ -31,10 +31,10 @@ spec:
       links:
         - type: docs
           title: "Documentação"
-          href: "https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts/-/tree/main/docs"
+          href: ".../custom-charts/-/tree/main/docs"
         - type: other
           title: "Repositório"
-          href: "https://code.ifoodcorp.com.br/ifood/data/viz/custom-charts"
+          href: ".../custom-charts"
       deployment:
         type: container_registry
       certifications:

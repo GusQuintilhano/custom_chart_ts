@@ -11,7 +11,7 @@ variables:
 
 # Validação de estrutura e arquivos
 validate:
-  stage: validate
+  stage: test
   image: node:${NODE_VERSION}
   script:
     - echo "Validando estrutura do projeto..."
@@ -26,7 +26,7 @@ validate:
 
 # Build dos charts
 build-charts:
-  stage: build
+  stage: test
   image: node:${NODE_VERSION}
   script:
     - echo "Empacotando charts..."
