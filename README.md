@@ -7,12 +7,33 @@ Charts desenvolvidos com ThoughtSpot Chart SDK para visualização de dados no T
 ### Trellis Chart
 
 - **Localização:** [`trellis-chart/`](./trellis-chart/)
+- **URL:** `https://ts-custom-charts-production.up.railway.app/trellis`
 - **Tipo:** Chart SDK
 - **Descrição:** Chart que permite visualizar múltiplas medidas simultaneamente em formato "crosschart" (trellis)
 
+### Boxplot Chart
+
+- **Localização:** [`boxplot-chart/`](./boxplot-chart/)
+- **URL:** `https://ts-custom-charts-production.up.railway.app/boxplot`
+- **Tipo:** Chart SDK
+- **Descrição:** Boxplot para visualização de distribuições estatísticas com quartis, mediana e outliers
+
 ## 🚀 Integração
 
-Estes charts são servidos via **dataviz-api** e integrados com o ThoughtSpot.
+Estes charts são servidos via **Railway** usando roteamento por path e integrados com o ThoughtSpot.
+
+### Estrutura de Roteamento
+
+O servidor `charts-router/` roteia múltiplos gráficos na mesma URL base:
+- `/trellis` → Trellis Chart
+- `/boxplot` → Boxplot Chart
+
+### Código Compartilhado
+
+Utilitários e funções comuns estão em `shared/`:
+- `shared/utils/` - Formatters, calculations, logger, statistical
+- `shared/config/` - Inicialização do Chart SDK
+- `shared/types/` - Tipos TypeScript comuns
 
 ## 📚 Documentação
 

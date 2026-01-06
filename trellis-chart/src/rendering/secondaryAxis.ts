@@ -4,7 +4,7 @@
 
 import type { ChartDataPoint } from '../types/chartTypes';
 import { groupDataBySecondaryDimension, sortGroupsByStartIndex, type DataGroup } from '../utils/grouping';
-import { calculateBarX, calculateBarCenterX } from '../utils/calculations';
+import { calculateBarX, calculateBarCenterX } from '@shared/utils/calculations';
 
 /**
  * Renderiza o eixo X secundário (labels agrupadas na parte superior)

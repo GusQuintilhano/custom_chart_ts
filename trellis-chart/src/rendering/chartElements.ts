@@ -4,8 +4,8 @@
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
-import { formatValue } from '../utils/formatters';
-import { valueToY, calculateBarX, calculateBarCenterX } from '../utils/calculations';
+import { formatValue } from '@shared/utils/formatters';
+import { valueToY, calculateBarX, calculateBarCenterX } from '@shared/utils/calculations';
 
 /**
  * Renderiza um gráfico de linha para uma medida

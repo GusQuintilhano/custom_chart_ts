@@ -3,7 +3,8 @@
  */
 
 import { getChartContext, type CustomChartContext, ChartToTSEvent } from '@thoughtspot/ts-chart-sdk';
-import { logger } from '../utils/logger';
+import { logger } from '@shared/utils/logger';
+import { initializeChartSDK as initShared } from '@shared/config/init';
 import { getDefaultChartConfig, getQueriesFromChartConfig } from './chartConfig';
 import { createVisualPropEditorDefinition, createChartConfigEditorDefinition } from './visualPropEditor';
 
@@ -12,23 +13,16 @@ export interface RenderChartFunction {
 }
 
 /**
- * Inicializa o Chart SDK e configura o contexto
+ * Inicializa o Chart SDK e configura o contexto (wrapper para usar shared)
  */
 export async function initializeChartSDK(renderChart: RenderChartFunction): Promise<CustomChartContext> {
-    try {
-        const ctx = await getChartContext({
-            getDefaultChartConfig: getDefaultChartConfig,
-            getQueriesFromChartConfig: getQueriesFromChartConfig,
-            visualPropEditorDefinition: createVisualPropEditorDefinition,
-            chartConfigEditorDefinition: createChartConfigEditorDefinition,
-            renderChart,
-        });
-        await renderChart(ctx);
-        return ctx;
-    } catch (error) {
-        logger.error('Erro no init:', error);
-        throw error;
-    }
+    return initShared(renderChart, {
+        getDefaultChartConfig,
+        getQueriesFromChartConfig,
+    }, {
+        visualPropEditorDefinition: createVisualPropEditorDefinition,
+        chartConfigEditorDefinition: createChartConfigEditorDefinition,
+    });
 }
 
 /**

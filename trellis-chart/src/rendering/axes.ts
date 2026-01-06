@@ -5,8 +5,8 @@
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 import type { MeasureRange } from '../utils/measureRanges';
-import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarCenterX, valueToY } from '../utils/calculations';
-import { formatDimension, formatValue } from '../utils/formatters';
+import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarCenterX, valueToY } from '@shared/utils/calculations';
+import { formatDimension, formatValue } from '@shared/utils/formatters';
 
 /**
  * Calcula posições e valores dos ticks do eixo Y

@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-
 import { resolve } from 'path';
 
 export default defineConfig({
@@ -12,7 +11,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    base: '/trellis/',
+    base: '/boxplot/',
     rollupOptions: {
       input: {
         main: './index.html'
@@ -20,18 +19,18 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    port: 3001,
     host: 'localhost',
     open: true,
-    strictPort: false // Tenta outra porta se 3000 estiver ocupada
+    strictPort: false
   },
   preview: {
-    port: 3000,
-    host: true, // Aceita requisições de qualquer host (necessário para Railway)
+    port: 3001,
+    host: true,
     strictPort: false,
     allowedHosts: [
       'ts-custom-charts-production.up.railway.app',
-      '.railway.app', // Permite todos os subdomínios do Railway
+      '.railway.app',
       'localhost',
       '127.0.0.1'
     ]
