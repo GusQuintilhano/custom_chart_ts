@@ -8,6 +8,7 @@ import { formatValue, formatDimension } from '@shared/utils/formatters';
 import { processTooltipTemplate } from '../utils/tooltipTemplate';
 import { getTemplateById } from '../utils/tooltipTemplates';
 import { formatCustomSimpleTooltip, formatCustomDetailedTooltip } from './tooltipFormatter';
+import { analytics } from '@shared/utils/analytics';
 
 export interface TooltipConfig {
     enabled: boolean;
@@ -192,6 +193,12 @@ function showTooltip(
     tooltip.innerHTML = content;
     tooltip.style.opacity = '1';
     tooltip.style.display = 'block';
+    
+    // Rastrear interação de tooltip
+    analytics.trackInteraction('trellis', 'tooltip_open', 'tooltip', {
+        position: { x, y },
+        elementSize: { width: elementWidth, height: elementHeight },
+    });
 
     // Reposicionar para evitar sair da tela
     const rect = tooltip.getBoundingClientRect();

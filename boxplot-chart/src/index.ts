@@ -6,6 +6,8 @@
 
 import { CustomChartContext } from '@thoughtspot/ts-chart-sdk';
 import { logger } from '@shared/utils/logger';
+import { analytics } from '@shared/utils/analytics';
+import { PerformanceMonitor } from '@shared/utils/performanceMonitor';
 import { initializeChartSDK } from '@shared/config/init';
 import { getDefaultChartConfig, getQueriesFromChartConfig } from './config/chartConfig';
 import { createVisualPropEditorDefinition, createChartConfigEditorDefinition } from './config/visualPropEditor';
@@ -17,6 +19,9 @@ import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
 import { ChartToTSEvent, ColumnType } from '@thoughtspot/ts-chart-sdk';
 
 export const renderChart = async (ctx: CustomChartContext) => {
+    const performanceMonitor = new PerformanceMonitor();
+    const sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
     try {
         const chartModel = ctx.getChartModel();
         const chartElement = ctx.chartContainer;
@@ -41,6 +46,26 @@ export const renderChart = async (ctx: CustomChartContext) => {
 
         // Usar primeira medida
         const measureColumn = measureColumns[0];
+        
+        // Iniciar monitoramento de performance
+        const containerWidth = chartElement.clientWidth || 800;
+        const containerHeight = chartElement.clientHeight || 600;
+        const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
+        
+        performanceMonitor.startRender(
+            sessionId,
+            dataSize,
+            measureColumns.length,
+            dimensionColumns.length,
+            containerWidth,
+            containerHeight
+        );
+
+        // Rastrear uso
+        analytics.trackUsage('boxplot', {
+            numMeasures: measureColumns.length,
+            numDimensions: dimensionColumns.length,
+        });
 
         // Calcular dados do boxplot
         const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumns);
@@ -94,8 +119,20 @@ export const renderChart = async (ctx: CustomChartContext) => {
         );
 
         chartElement.innerHTML = html;
+        
+        // Finalizar monitoramento e rastrear performance
+        const perfEvent = performanceMonitor.endRender(sessionId);
+        if (perfEvent) {
+            perfEvent.chartType = 'boxplot';
+            analytics.trackPerformance(perfEvent);
+        }
+        
         ctx.emitEvent(ChartToTSEvent.RenderComplete);
     } catch (error) {
+        // Rastrear erros
+        analytics.trackError('boxplot', error instanceof Error ? error : String(error), {
+            sessionId,
+        });
         logger.error('Erro ao renderizar Boxplot:', error);
         const chartElement = ctx.chartContainer;
         chartElement.innerHTML = `<div style="padding: 20px; color: #ef4444;">Erro ao renderizar Boxplot: ${error}</div>`;

@@ -13,6 +13,7 @@ import {
     type ChartConfigEditorDefinition
 } from '@thoughtspot/ts-chart-sdk';
 import { logger } from '../utils/logger';
+import { analytics } from '../utils/analytics';
 
 export interface RenderChartFunction {
     (context: CustomChartContext): Promise<void>;
@@ -47,6 +48,12 @@ export async function initializeChartSDK(
         await renderChart(ctx);
         return ctx;
     } catch (error) {
+        // Rastrear erros de inicialização (tentamos identificar o tipo de gráfico pelo contexto)
+        // Como não temos acesso direto ao tipo aqui, usamos 'trellis' como padrão
+        // Os gráficos individuais podem sobrescrever isso
+        analytics.trackError('trellis', error instanceof Error ? error : String(error), {
+            context: 'sdk_initialization',
+        });
         logger.error('Erro no init:', error);
         throw error;
     }

@@ -7,6 +7,8 @@
 
 import { CustomChartContext } from '@thoughtspot/ts-chart-sdk';
 import { logger } from '@shared/utils/logger';
+import { analytics } from '@shared/utils/analytics';
+import { PerformanceMonitor } from '@shared/utils/performanceMonitor';
 import { calculateChartDimensions } from './utils/chartDimensions';
 import { calculateMeasureRanges } from './utils/measureRanges';
 import { setupChartData } from './utils/dataSetup';
@@ -18,30 +20,55 @@ import { initializeChartSDK, emitRenderComplete } from './config/init';
 
 export const renderChart = async (ctx: CustomChartContext) => {
     const chartModel = ctx.getChartModel();
-    // Setup e validação de dados
-    const dataSetup = await setupChartData(ctx, chartModel);
-    if (!dataSetup) {
-        return Promise.resolve(); // Erro já foi tratado
-    }
+    const performanceMonitor = new PerformanceMonitor();
+    const sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
+    try {
+        // Setup e validação de dados
+        const dataSetup = await setupChartData(ctx, chartModel);
+        if (!dataSetup) {
+            return Promise.resolve(); // Erro já foi tratado
+        }
 
-    const {
-        chartElement,
-        measureCols,
-        primaryDimension,
-        secondaryDimensions,
-        hasSecondaryDimension,
-        chartData,
-    } = dataSetup;
+        const {
+            chartElement,
+            measureCols,
+            primaryDimension,
+            secondaryDimensions,
+            hasSecondaryDimension,
+            chartData,
+        } = dataSetup;
 
-    // Setup de opções e configurações
-    const { visualProps } = chartModel;
-    const allVisualProps = visualProps as Record<string, unknown>;
-    const options = setupChartOptions(
-        allVisualProps,
-        primaryDimension,
-        secondaryDimensions,
-        measureCols
-    );
+        // Iniciar monitoramento de performance
+        const containerWidth = chartElement.clientWidth || 800;
+        const containerHeight = chartElement.clientHeight || 600;
+        const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
+        
+        performanceMonitor.startRender(
+            sessionId,
+            dataSize,
+            measureCols.length,
+            hasSecondaryDimension ? secondaryDimensions.length + 1 : 1,
+            containerWidth,
+            containerHeight
+        );
+
+        // Rastrear uso e configurações
+        const { visualProps } = chartModel;
+        const allVisualProps = visualProps as Record<string, unknown>;
+        analytics.trackUsage('trellis', {
+            numMeasures: measureCols.length,
+            hasSecondaryDimension,
+            numSecondaryDimensions: hasSecondaryDimension ? secondaryDimensions.length : 0,
+        });
+
+        // Setup de opções e configurações
+        const options = setupChartOptions(
+            allVisualProps,
+            primaryDimension,
+            secondaryDimensions,
+            measureCols
+        );
 
     const {
         fitWidth,
@@ -218,8 +245,23 @@ export const renderChart = async (ctx: CustomChartContext) => {
         backgroundColor,
     });
 
-    emitRenderComplete(ctx);
-    return Promise.resolve();
+        // Finalizar monitoramento e rastrear performance
+        const perfEvent = performanceMonitor.endRender(sessionId);
+        if (perfEvent) {
+            perfEvent.chartType = 'trellis';
+            analytics.trackPerformance(perfEvent);
+        }
+
+        emitRenderComplete(ctx);
+        return Promise.resolve();
+    } catch (error) {
+        // Rastrear erros
+        analytics.trackError('trellis', error instanceof Error ? error : String(error), {
+            sessionId,
+        });
+        logger.error('Erro ao renderizar Trellis Chart:', error);
+        throw error;
+    }
 };
 
 // Inicialização
