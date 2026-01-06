@@ -4,7 +4,7 @@
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint } from '../types/chartTypes';
-import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarX } from '../utils/calculations';
+import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarX } from '@shared/utils/calculations';
 
 /**
  * Interface para parâmetros de renderização de linhas divisórias entre medidas

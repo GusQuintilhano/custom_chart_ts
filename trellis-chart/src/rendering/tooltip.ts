@@ -4,8 +4,7 @@
 
 import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
-import { formatValue } from '../utils/formatters';
-import { formatDimension } from '../utils/formatters';
+import { formatValue, formatDimension } from '@shared/utils/formatters';
 import { processTooltipTemplate } from '../utils/tooltipTemplate';
 import { getTemplateById } from '../utils/tooltipTemplates';
 import { formatCustomSimpleTooltip, formatCustomDetailedTooltip } from './tooltipFormatter';

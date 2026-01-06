@@ -1,0 +1,24 @@
+{
+  "name": "boxplot-chart",
+  "version": "1.0.0",
+  "description": "Boxplot chart using ThoughtSpot Chart SDK",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "vite preview --port $PORT --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@thoughtspot/ts-chart-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "overrides": {
+    "glob": "^10.5.0"
+  }
+}
+

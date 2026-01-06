@@ -3,9 +3,8 @@
  */
 
 import type { MeasureConfig, MeasureRange } from '../types/chartTypes';
-import { valueToY } from '../utils/calculations';
-import { formatValue } from '../utils/formatters';
-import { calculateMeasureRowTop } from '../utils/calculations';
+import { valueToY, calculateMeasureRowTop } from '@shared/utils/calculations';
+import { formatValue } from '@shared/utils/formatters';
 
 export interface RenderReferenceLinesParams {
     measureConfigs: MeasureConfig[];

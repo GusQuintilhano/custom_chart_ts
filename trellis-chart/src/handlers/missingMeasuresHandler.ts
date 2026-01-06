@@ -7,7 +7,7 @@ import { ChartToTSEvent, CustomChartContext } from '@thoughtspot/ts-chart-sdk';
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartElement } from '../types/chartTypes';
 import { extractDataPointsArray, createColumnIndexMap } from '../utils/dataProcessing';
-import { logger } from '../utils/logger';
+import { logger } from '@shared/utils/logger';
 
 /**
  * Configura retry logic para medidas faltantes

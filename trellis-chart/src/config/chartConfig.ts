@@ -3,7 +3,7 @@
  */
 
 import { ChartConfig, ChartModel, ColumnType, Query } from '@thoughtspot/ts-chart-sdk';
-import { logger } from '../utils/logger';
+import { logger } from '@shared/utils/logger';
 
 /**
  * Gera o ChartConfig padrão baseado nas colunas do modelo

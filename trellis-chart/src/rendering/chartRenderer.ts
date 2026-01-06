@@ -4,14 +4,14 @@
 
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint, MeasureConfig, MeasureRange } from '../types/chartTypes';
-import { calculateLastMeasureRowTop } from '../utils/calculations';
-import { formatDimension } from '../utils/formatters';
+import { calculateLastMeasureRowTop } from '@shared/utils/calculations';
+import { formatDimension } from '@shared/utils/formatters';
 import { renderAllChartElements } from './chartElements';
 import { renderYAxes, renderXAxis } from './axes';
 import { renderDividerLinesBetweenMeasures, renderDividerLinesBetweenBars } from './dividerLines';
 import { renderSecondaryXAxis } from './secondaryAxis';
 import { renderReferenceLines } from './referenceLines';
-import { createChartHtmlStructure } from '../utils/htmlStructure';
+import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
 
 export interface ChartRenderParams {
     chartData: ChartDataPoint[];

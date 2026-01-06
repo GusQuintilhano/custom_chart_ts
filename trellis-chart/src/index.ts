@@ -6,7 +6,7 @@
  */
 
 import { CustomChartContext } from '@thoughtspot/ts-chart-sdk';
-import { logger } from './utils/logger';
+import { logger } from '@shared/utils/logger';
 import { calculateChartDimensions } from './utils/chartDimensions';
 import { calculateMeasureRanges } from './utils/measureRanges';
 import { setupChartData } from './utils/dataSetup';

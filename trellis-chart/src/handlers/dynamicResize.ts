@@ -10,8 +10,8 @@ import { renderDividerLinesBetweenMeasures, renderDividerLinesBetweenBars } from
 import { renderSecondaryXAxis } from '../rendering/secondaryAxis';
 import { renderAllChartElements } from '../rendering/chartElements';
 import { renderReferenceLines } from '../rendering/referenceLines';
-import { formatDimension } from '../utils/formatters';
-import { calculateLastMeasureRowTop } from '../utils/calculations';
+import { formatDimension } from '@shared/utils/formatters';
+import { calculateLastMeasureRowTop } from '@shared/utils/calculations';
 
 export interface DynamicResizeParams {
     chartElement: ChartElement;
