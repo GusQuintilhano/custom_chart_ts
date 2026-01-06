@@ -23,8 +23,6 @@ validate:
   only:
     - main
     - merge_requests
-  # Garantir que validate rode antes do quality_gates_checkpoint
-  needs: []
 
 # Build dos charts
 build-charts:
