@@ -21,8 +21,8 @@ COPY trellis-chart/package*.json ./trellis-chart/
 WORKDIR /workspace/trellis-chart
 RUN npm ci || npm install
 
-# Copiar código fonte do trellis-chart
-COPY trellis-chart/ ./../trellis-chart/
+# Copiar código fonte do trellis-chart (já estamos em /workspace/trellis-chart)
+COPY trellis-chart/ ./
 
 # Build do projeto (o path mapping @shared/* aponta para ../shared/)
 RUN npm run build
