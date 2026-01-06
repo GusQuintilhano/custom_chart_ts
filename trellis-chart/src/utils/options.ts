@@ -1,0 +1,350 @@
+/**
+ * Módulo para gerenciar opções de configuração do gráfico
+ * Centraliza leitura, hierarquia e defaults das opções
+ */
+
+/**
+ * Hierarquia de leitura de opções:
+ * 1. Seção individual (chart_visual, chart_dimensions, chart_divider_lines)
+ * 2. chart_options consolidado
+ * 3. Valores default
+ */
+
+/**
+ * Função auxiliar para ler valor com hierarquia: nova seção > seção compatibilidade > consolidado > default
+ */
+function getValueWithCompat(
+    newSectionValue: unknown,
+    compatSectionValue: unknown,
+    consolidatedValue: unknown,
+    defaultValue: unknown,
+    useHasOwnProperty = true
+): unknown {
+    if (useHasOwnProperty) {
+        if (newSectionValue !== undefined && newSectionValue !== null) {
+            return newSectionValue;
+        }
+        if (compatSectionValue !== undefined && compatSectionValue !== null) {
+            return compatSectionValue;
+        }
+        if (consolidatedValue !== undefined && consolidatedValue !== null) {
+            return consolidatedValue;
+        }
+    } else {
+        if (newSectionValue !== undefined) {
+            return newSectionValue;
+        }
+        if (compatSectionValue !== undefined) {
+            return compatSectionValue;
+        }
+        if (consolidatedValue !== undefined) {
+            return consolidatedValue;
+        }
+    }
+    return defaultValue;
+}
+
+/**
+ * Função auxiliar para ler valor com hierarquia correta
+ * @param sectionValue Valor da seção individual
+ * @param consolidatedValue Valor do chart_options consolidado
+ * @param defaultValue Valor padrão
+ * @param useHasOwnProperty Se true, ignora valores null/undefined. Se false, aceita valores falsy (como false ou 0)
+ * @returns Valor final a ser usado
+ */
+export function getValue(
+    sectionValue: unknown,
+    consolidatedValue: unknown,
+    defaultValue: unknown,
+    useHasOwnProperty = true
+): unknown {
+    if (useHasOwnProperty) {
+        if (sectionValue !== undefined && sectionValue !== null) {
+            return sectionValue;
+        }
+        if (consolidatedValue !== undefined && consolidatedValue !== null) {
+            return consolidatedValue;
+        }
+    } else {
+        // Para valores que podem ser falsy (como false ou 0)
+        if (sectionValue !== undefined) {
+            return sectionValue;
+        }
+        if (consolidatedValue !== undefined) {
+            return consolidatedValue;
+        }
+    }
+    return defaultValue;
+}
+
+/**
+ * Interface para opções de chart_visual
+ */
+export interface ChartVisualOptions {
+    showYAxis?: boolean;
+    showGridLines?: boolean;
+    measureNameRotation?: string;
+    forceLabels?: boolean;
+}
+
+/**
+ * Interface para opções de chart_divider_lines
+ */
+export interface ChartDividerLinesOptions {
+    dividerLinesBetweenMeasures?: boolean;
+    dividerLinesBetweenGroups?: boolean;
+    dividerLinesBetweenBars?: boolean;
+    dividerLinesColor?: string; // Mantido para compatibilidade
+    // Estilos individuais para cada tipo de linha
+    dividerLinesBetweenMeasuresColor?: string;
+    dividerLinesBetweenMeasuresWidth?: number;
+    dividerLinesBetweenGroupsColor?: string;
+    dividerLinesBetweenGroupsWidth?: number;
+    dividerLinesBetweenBarsColor?: string;
+    dividerLinesBetweenBarsWidth?: number;
+}
+
+/**
+ * Interface para opções de chart_dimensions
+ */
+export interface ChartDimensionsOptions {
+    fitWidth?: boolean;
+    fitHeight?: boolean;
+    measureLabelSpace?: number;
+    measureRowHeight?: number;
+    barWidth?: number;
+    barSpacing?: number; // Espaçamento entre barras (quando fitWidth desabilitado)
+}
+
+/**
+ * Interface para opções de text_sizes
+ */
+export interface ChartTextSizesOptions {
+    labelFontSize?: number;
+    measureTitleFontSize?: number;
+    valueLabelFontSize?: number;
+}
+
+/**
+ * Interface para opções de cores e estilo
+ */
+export interface ChartColorsAndStyleOptions {
+    yAxisColor?: string;
+    xAxisColor?: string;
+    backgroundColor?: string;
+    axisStrokeWidth?: number;
+}
+
+/**
+ * Interface para opções de tooltip
+ */
+export interface ChartTooltipOptions {
+    enabled?: boolean;
+    format?: 'simple' | 'detailed';
+    showAllMeasures?: boolean;
+    backgroundColor?: string;
+    customTemplate?: string;
+}
+
+/**
+ * Interface para opções consolidadas (chart_options)
+ */
+export interface ChartOptionsConsolidated extends ChartVisualOptions, ChartDividerLinesOptions, ChartDimensionsOptions {}
+
+/**
+ * Interface para todas as opções do gráfico após consolidação
+ */
+export interface ChartOptions {
+    // chart_visual
+    showYAxis: boolean;
+    showGridLines: boolean;
+    measureNameRotation: string;
+    forceLabels: boolean;
+    
+    // chart_divider_lines
+    dividerLinesBetweenMeasures: boolean;
+    dividerLinesBetweenGroups: boolean;
+    dividerLinesBetweenBars: boolean;
+    dividerLinesColor: string; // Mantido para compatibilidade
+    // Estilos individuais
+    dividerLinesBetweenMeasuresColor: string;
+    dividerLinesBetweenMeasuresWidth: number;
+    dividerLinesBetweenGroupsColor: string;
+    dividerLinesBetweenGroupsWidth: number;
+    dividerLinesBetweenBarsColor: string;
+    dividerLinesBetweenBarsWidth: number;
+    
+    // chart_dimensions
+    fitWidth: boolean;
+    fitHeight: boolean;
+    measureLabelSpace: number | null; // null = usar default baseado em showYAxis
+    measureRowHeight: number;
+    barWidth: number;
+    barSpacing: number | null; // null = usar default baseado em showYAxis
+    
+    // chart_colors_style
+    yAxisColor: string;
+    xAxisColor: string;
+    backgroundColor: string;
+    axisStrokeWidth: number;
+    
+    // chart_tooltip
+    tooltipEnabled: boolean;
+    tooltipFormat: 'simple' | 'detailed';
+    tooltipShowAllMeasures: boolean;
+    tooltipBackgroundColor: string;
+    tooltipCustomTemplate: string;
+}
+
+/**
+ * Lê e consolida todas as opções do gráfico seguindo a hierarquia correta
+ * @param allVisualProps Props visuais completos do ThoughtSpot
+ * @returns Objeto ChartOptions com todas as opções consolidadas
+ */
+export function readChartOptions(allVisualProps: Record<string, unknown>): ChartOptions {
+    // Extrair seções individuais
+    const chartVisual = (allVisualProps?.chart_visual || {}) as ChartVisualOptions; // Mantido para compatibilidade
+    const axes = (allVisualProps?.axes || {}) as { showYAxis?: boolean };
+    const chartDimensions = (allVisualProps?.chart_dimensions || {}) as ChartDimensionsOptions;
+    const chartDividerLines = (allVisualProps?.chart_divider_lines || {}) as ChartDividerLinesOptions & { showGridLines?: boolean };
+    const textSizes = (allVisualProps?.text_sizes || {}) as ChartTextSizesOptions & { measureNameRotation?: string; forceLabels?: boolean };
+    const chartColorsStyle = (allVisualProps?.chart_colors_style || {}) as ChartColorsAndStyleOptions;
+    const chartTooltip = (allVisualProps?.chart_tooltip || {}) as ChartTooltipOptions;
+    const chartOptionsConsolidated = (allVisualProps?.chart_options || allVisualProps?.chartOptions || {}) as ChartOptionsConsolidated;
+    
+    // Ler showYAxis da seção axes (nova), com fallback para chart_visual (compatibilidade) e consolidado
+    const showYAxis = getValueWithCompat(
+        axes.showYAxis,
+        chartVisual.showYAxis,
+        chartOptionsConsolidated.showYAxis,
+        true,
+        true
+    ) !== false;
+    
+    // Ler showGridLines da seção chart_divider_lines (nova), com fallback para chart_visual (compatibilidade) e consolidado
+    const showGridLines = getValueWithCompat(
+        chartDividerLines.showGridLines,
+        chartVisual.showGridLines,
+        chartOptionsConsolidated.showGridLines,
+        true,
+        true
+    ) !== false;
+    
+    // Ler measureNameRotation e forceLabels da seção text_sizes (nova), com fallback para chart_visual (compatibilidade) e consolidado
+    const measureNameRotation = getValueWithCompat(
+        textSizes.measureNameRotation,
+        chartVisual.measureNameRotation,
+        chartOptionsConsolidated.measureNameRotation,
+        '-90',
+        false
+    ) as string;
+    
+    const forceLabels = getValueWithCompat(
+        textSizes.forceLabels,
+        chartVisual.forceLabels,
+        chartOptionsConsolidated.forceLabels,
+        false,
+        true
+    ) === true;
+    
+    // Construir chartOptions seguindo hierarquia: seção individual > chart_visual (compatibilidade) > consolidado > default
+    const chartOptions: ChartOptions = {
+        // Valores reorganizados em novas seções
+        showYAxis,
+        showGridLines,
+        measureNameRotation,
+        forceLabels,
+        
+        // Valores de chart_divider_lines (prioridade máxima)
+        dividerLinesBetweenMeasures: getValue(chartDividerLines.dividerLinesBetweenMeasures, chartOptionsConsolidated.dividerLinesBetweenMeasures, true, true) !== false,
+        dividerLinesBetweenGroups: getValue(chartDividerLines.dividerLinesBetweenGroups, chartOptionsConsolidated.dividerLinesBetweenGroups, true, true) !== false,
+        dividerLinesBetweenBars: getValue(chartDividerLines.dividerLinesBetweenBars, chartOptionsConsolidated.dividerLinesBetweenBars, false, true) === true,
+        dividerLinesColor: getValue(chartDividerLines.dividerLinesColor, chartOptionsConsolidated.dividerLinesColor, '#d1d5db', false) as string,
+        // Estilos individuais - usar cor/tamanho específico ou fallback para cor geral
+        dividerLinesBetweenMeasuresColor: getValue(chartDividerLines.dividerLinesBetweenMeasuresColor, chartOptionsConsolidated.dividerLinesBetweenMeasuresColor, chartDividerLines.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db', false) as string,
+        dividerLinesBetweenMeasuresWidth: (getValue(chartDividerLines.dividerLinesBetweenMeasuresWidth, chartOptionsConsolidated.dividerLinesBetweenMeasuresWidth, 1, false) as number) ?? 1,
+        dividerLinesBetweenGroupsColor: getValue(chartDividerLines.dividerLinesBetweenGroupsColor, chartOptionsConsolidated.dividerLinesBetweenGroupsColor, chartDividerLines.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db', false) as string,
+        dividerLinesBetweenGroupsWidth: (getValue(chartDividerLines.dividerLinesBetweenGroupsWidth, chartOptionsConsolidated.dividerLinesBetweenGroupsWidth, 1, false) as number) ?? 1,
+        dividerLinesBetweenBarsColor: getValue(chartDividerLines.dividerLinesBetweenBarsColor, chartOptionsConsolidated.dividerLinesBetweenBarsColor, chartDividerLines.dividerLinesColor || chartOptionsConsolidated.dividerLinesColor || '#d1d5db', false) as string,
+        dividerLinesBetweenBarsWidth: (getValue(chartDividerLines.dividerLinesBetweenBarsWidth, chartOptionsConsolidated.dividerLinesBetweenBarsWidth, 1, false) as number) ?? 1,
+        
+        // Valores de chart_dimensions (prioridade máxima)
+        fitWidth: getValue(chartDimensions.fitWidth, chartOptionsConsolidated.fitWidth, false, true) === true,
+        fitHeight: getValue(chartDimensions.fitHeight, chartOptionsConsolidated.fitHeight, false, true) === true,
+        measureLabelSpace: getValue(chartDimensions.measureLabelSpace, chartOptionsConsolidated.measureLabelSpace, null, false) as number | null,
+        measureRowHeight: getValue(chartDimensions.measureRowHeight, chartOptionsConsolidated.measureRowHeight, 50, false) as number,
+        barWidth: getValue(chartDimensions.barWidth, chartOptionsConsolidated.barWidth, 40, false) as number,
+        barSpacing: getValue(chartDimensions.barSpacing, chartOptionsConsolidated.barSpacing, null, false) as number | null,
+        
+        // Valores de chart_colors_style
+        yAxisColor: getValue(chartColorsStyle.yAxisColor, (chartOptionsConsolidated as any).yAxisColor, '#374151', false) as string,
+        xAxisColor: getValue(chartColorsStyle.xAxisColor, (chartOptionsConsolidated as any).xAxisColor, '#374151', false) as string,
+        backgroundColor: getValue(chartColorsStyle.backgroundColor, (chartOptionsConsolidated as any).backgroundColor, 'transparent', false) as string,
+        axisStrokeWidth: (getValue(chartColorsStyle.axisStrokeWidth, (chartOptionsConsolidated as any).axisStrokeWidth, 1.5, false) as number) ?? 1.5,
+        
+        // Valores de chart_tooltip
+        tooltipEnabled: getValue(chartTooltip.enabled, (chartOptionsConsolidated as any).tooltipEnabled, false, true) === true,
+        tooltipFormat: (getValue(chartTooltip.format, (chartOptionsConsolidated as any).tooltipFormat, 'simple', false) as 'simple' | 'detailed') || 'simple',
+        tooltipShowAllMeasures: getValue(chartTooltip.showAllMeasures, (chartOptionsConsolidated as any).tooltipShowAllMeasures, false, true) === true,
+        tooltipBackgroundColor: getValue(chartTooltip.backgroundColor, (chartOptionsConsolidated as any).tooltipBackgroundColor, '#ffffff', false) as string,
+        tooltipCustomTemplate: getValue(chartTooltip.customTemplate, (chartOptionsConsolidated as any).tooltipCustomTemplate, '', false) as string,
+    };
+    
+    return chartOptions;
+}
+
+/**
+ * Lê valores salvos para uso no visualPropEditorDefinition
+ * Usa a mesma hierarquia: seção individual > consolidado > default
+ * @param allSavedProps Props salvos completos
+ * @returns Objeto com valores salvos por seção
+ */
+export function readSavedValues(allSavedProps: Record<string, unknown>): {
+    chartVisual: ChartVisualOptions;
+    chartDimensions: ChartDimensionsOptions;
+    chartDividerLines: ChartDividerLinesOptions;
+    chartOptions: ChartOptionsConsolidated;
+    textSizes: ChartTextSizesOptions;
+    chartColorsStyle: ChartColorsAndStyleOptions;
+    chartTooltip: ChartTooltipOptions;
+} {
+    const savedChartVisual = (allSavedProps?.chart_visual || {}) as ChartVisualOptions;
+    const savedChartDimensions = (allSavedProps?.chart_dimensions || {}) as ChartDimensionsOptions;
+    const savedChartDividerLines = (allSavedProps?.chart_divider_lines || {}) as ChartDividerLinesOptions;
+    const savedChartOptions = (allSavedProps?.chart_options || {}) as ChartOptionsConsolidated;
+    const savedTextSizes = (allSavedProps?.text_sizes || {}) as ChartTextSizesOptions;
+    const savedChartColorsStyle = (allSavedProps?.chart_colors_style || {}) as ChartColorsAndStyleOptions;
+    const savedChartTooltip = (allSavedProps?.chart_tooltip || {}) as ChartTooltipOptions;
+    
+    return {
+        chartVisual: savedChartVisual,
+        chartDimensions: savedChartDimensions,
+        chartDividerLines: savedChartDividerLines,
+        chartOptions: savedChartOptions,
+        textSizes: savedTextSizes,
+        chartColorsStyle: savedChartColorsStyle,
+        chartTooltip: savedChartTooltip,
+    };
+}
+
+/**
+ * Função auxiliar simplificada para ler valor salvo (usada no editor)
+ * @param sectionValue Valor da seção individual
+ * @param consolidatedValue Valor do chart_options consolidado
+ * @param defaultValue Valor padrão
+ * @returns Valor final a ser usado
+ */
+export function getSavedValue(
+    sectionValue: unknown,
+    consolidatedValue: unknown,
+    defaultValue: unknown
+): unknown {
+    if (sectionValue !== undefined) {
+        return sectionValue;
+    }
+    if (consolidatedValue !== undefined) {
+        return consolidatedValue;
+    }
+    return defaultValue;
+}
+

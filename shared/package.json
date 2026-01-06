@@ -1,15 +1,16 @@
 {
-  "name": "ifood-charts-sdk",
+  "name": "@ifood/shared-chart-utils",
   "version": "1.0.0",
-  "description": "Custom Charts desenvolvidos com ThoughtSpot Chart SDK para integração com ThoughtSpot",
+  "description": "Shared utilities for ThoughtSpot custom charts",
+  "type": "module",
+  "main": "index.js",
   "scripts": {},
   "dependencies": {},
   "devDependencies": {},
   "keywords": [
     "thoughtspot",
     "chart-sdk",
-    "custom-charts",
-    "data-visualization"
+    "shared"
   ],
   "author": "iFood Data Team",
   "license": "ISC"
