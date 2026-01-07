@@ -14,15 +14,17 @@ LABEL org.opencontainers.image.source=".../custom-charts"
 WORKDIR /app
 
 # Copiar arquivos de dependências primeiro (para cache de layers)
+# O wildcard package*.json já copia package-lock.json quando existe
 COPY charts-router/package*.json ./charts-router/
 COPY trellis-chart/package*.json ./trellis-chart/
 COPY boxplot-chart/package*.json ./boxplot-chart/
 COPY shared/package*.json ./shared/
 
 # Instalar dependências de todos os projetos
+# Usa npm ci quando há package-lock.json, npm install caso contrário
 RUN cd charts-router && npm ci --only=production && \
     cd ../trellis-chart && npm ci --only=production && \
-    cd ../boxplot-chart && npm ci --only=production
+    cd ../boxplot-chart && npm install --only=production
 
 # Copiar código fonte
 COPY charts-router/ ./charts-router/
