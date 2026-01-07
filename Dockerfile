@@ -1,8 +1,8 @@
 # Dockerfile para Custom Charts SDK - iFood
 # Baseado na golden image do iFood: ifood/docker-images/golden/nodejs
 
-# Usar golden image do iFood como base
-FROM registry.ifoodcorp.com.br/ifood/docker-images/golden/nodejs:18-alpine
+# Stage 1: Build stage
+FROM node:18-alpine AS dist
 
 # Metadados
 LABEL maintainer="iFood Data Visualization Team"
@@ -19,53 +19,28 @@ COPY trellis-chart/package*.json ./trellis-chart/
 COPY boxplot-chart/package*.json ./boxplot-chart/
 COPY shared/package*.json ./shared/
 
-# Instalar dependências do charts-router (servidor principal)
-WORKDIR /app/charts-router
-RUN npm ci --only=production
-
-# Instalar dependências dos gráficos
-WORKDIR /app/trellis-chart
-RUN npm ci --only=production
-
-WORKDIR /app/boxplot-chart
-RUN npm ci --only=production
+# Instalar dependências de todos os projetos
+RUN cd charts-router && npm ci --only=production && \
+    cd ../trellis-chart && npm ci --only=production && \
+    cd ../boxplot-chart && npm ci --only=production
 
 # Copiar código fonte
-WORKDIR /app
 COPY charts-router/ ./charts-router/
 COPY trellis-chart/ ./trellis-chart/
 COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
-# Build dos projetos
-WORKDIR /app/charts-router
-RUN npm run build
+# Build de todos os projetos em um único comando
+RUN cd charts-router && npm run build && \
+    cd ../trellis-chart && npm run build && \
+    cd ../boxplot-chart && npm run build
 
-WORKDIR /app/trellis-chart
-RUN npm run build
+# Stage 2: Production stage
+FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge AS production
 
-WORKDIR /app/boxplot-chart
-RUN npm run build
+# Copiar apenas os arquivos necessários do stage de build
+COPY --from=dist /app /app/app
 
-# Criar diretório para logs
-RUN mkdir -p /app/logs && chmod 755 /app/logs
+EXPOSE 8080
 
-# Usar usuário não-root (se a golden image já definir, respeitar)
-# A golden image do iFood geralmente já configura um usuário não-root
-
-# Expor porta (padrão 3000, pode ser sobrescrito via PORT)
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:${PORT:-3000}/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
-# Variáveis de ambiente padrão
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Voltar para o diretório do charts-router para o start
-WORKDIR /app/charts-router
-
-# Comando de start
-CMD ["node", "dist/server.js"]
+ENTRYPOINT [ "/executor", "/app/node/node /app/app/charts-router/dist/server.js" ]
