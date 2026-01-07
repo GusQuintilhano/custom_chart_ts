@@ -20,11 +20,11 @@ COPY trellis-chart/package*.json ./trellis-chart/
 COPY boxplot-chart/package*.json ./boxplot-chart/
 COPY shared/package*.json ./shared/
 
-# Instalar dependências de todos os projetos
+# Instalar dependências de todos os projetos (incluindo dev para build)
 # Usa npm ci quando há package-lock.json, npm install caso contrário
-RUN cd charts-router && npm ci --only=production && \
-    cd ../trellis-chart && npm ci --only=production && \
-    cd ../boxplot-chart && npm install --only=production
+RUN cd charts-router && npm ci && \
+    cd ../trellis-chart && npm ci && \
+    cd ../boxplot-chart && npm install
 
 # Copiar código fonte
 COPY charts-router/ ./charts-router/
