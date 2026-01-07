@@ -51,7 +51,7 @@ export function renderBoxplot(
         // Renderizar elementos do boxplot
         const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, color, opacity, globalMin, globalMax);
         const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, color, whiskerWidth, globalMin, globalMax);
-        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, globalMin, globalMax);
+        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, globalMin, globalMax, '#000000');
         const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, color, showOutliers, globalMin, globalMax);
 
         // Label da dimensão
@@ -88,7 +88,9 @@ export function renderYAxis(
 ): string {
     if (!options.showYAxis) return '';
 
-    const { topMargin, leftMargin, plotAreaHeight, yAxisColor, axisStrokeWidth } = config;
+    const { topMargin, leftMargin, plotAreaHeight } = config;
+    const yAxisColor = '#374151';
+    const axisStrokeWidth = 1.5;
 
     // Linha do eixo Y
     const axisLine = `

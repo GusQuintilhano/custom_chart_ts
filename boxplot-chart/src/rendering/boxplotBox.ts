@@ -12,9 +12,12 @@ export function renderBoxplotBox(
     config: BoxplotRenderConfig,
     orientation: 'vertical' | 'horizontal',
     color: string,
-    opacity: number
+    opacity: number,
+    globalMin: number,
+    globalMax: number
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
+    const globalRange = globalMax - globalMin;
 
     if (orientation === 'vertical') {
         const boxHeight = (stats.q3 - stats.q1) / (stats.whiskerUpper - stats.whiskerLower) * plotAreaHeight;
