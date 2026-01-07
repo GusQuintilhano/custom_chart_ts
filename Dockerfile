@@ -22,7 +22,8 @@ COPY shared/package*.json ./shared/
 
 # Instalar dependências de todos os projetos (incluindo dev para build)
 # Usa npm ci quando há package-lock.json, npm install caso contrário
-RUN cd charts-router && npm ci && \
+RUN cd shared && npm install && \
+    cd ../charts-router && npm ci && \
     cd ../trellis-chart && npm ci && \
     cd ../boxplot-chart && npm install
 
