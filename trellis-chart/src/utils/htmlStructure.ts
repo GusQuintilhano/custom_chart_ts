@@ -64,9 +64,11 @@ export function createChartHtmlStructure(
         chartHeight,
         svgWidth,
         svgHeight,
+        viewBox,
         preserveAspectRatio,
         wrapperStyle,
         containerStyle: containerStyle.substring(0, 100) + '...', // Truncar para não poluir
+        info: 'O viewBox deve corresponder exatamente à largura em que o conteúdo foi desenhado. Quando fitWidth está ativo, o conteúdo é redesenhado para chartWidth (' + chartWidth + 'px).',
     });
 
     return `
