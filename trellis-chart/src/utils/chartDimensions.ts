@@ -296,16 +296,26 @@ export function readMeasureConfigs(
         }
         
         // Processar tooltip
-        const tooltipEnabled = (measureConfig as any)?.tooltip_enabled !== false;
+        // Verificar se tooltip_enabled está explicitamente definido como false
+        // Pode ser false, "false", 0, ou undefined/null (que significa habilitado por padrão)
+        const tooltipEnabledRaw = (measureConfig as any)?.tooltip_enabled;
+        const tooltipEnabled = tooltipEnabledRaw !== false && 
+                              tooltipEnabledRaw !== 'false' && 
+                              tooltipEnabledRaw !== 0 &&
+                              tooltipEnabledRaw !== '0';
+        
         // Mapear formato de português para inglês para compatibilidade
         const tooltipFormatRaw = ((measureConfig as any)?.tooltip_format as string) || 'simples';
         const tooltipFormatMapped = tooltipFormatRaw === 'detalhado' ? 'detailed' : (tooltipFormatRaw === 'simples' ? 'simple' : tooltipFormatRaw);
-        const tooltip: MeasureConfig['tooltip'] = tooltipEnabled ? {
-            enabled: true,
+        
+        // Sempre criar o objeto tooltip, mas com enabled baseado na configuração
+        // Isso permite desabilitar o tooltip para uma medida específica
+        const tooltip: MeasureConfig['tooltip'] = {
+            enabled: tooltipEnabled,
             format: tooltipFormatMapped as 'simple' | 'detailed',
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
             layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
-        } : undefined;
+        };
         
         // Debug: log das configurações de tooltip
         console.log(`[DEBUG] Measure ${measure.id} tooltip:`, {
