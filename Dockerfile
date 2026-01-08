@@ -34,9 +34,9 @@ COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
 # Build de todos os projetos em um único comando
-# Verificar se o build foi bem-sucedido
+# Verificar se o build foi bem-sucedido (aceitar qualquer localização de server.js)
 RUN cd charts-router && npm run build && \
-    test -f dist/server.js || (echo "ERROR: charts-router/dist/server.js not found" && exit 1) && \
+    (find dist -name "server.js" -type f | head -1 | grep -q . || (echo "ERROR: server.js not found after build" && find dist -type f && exit 1)) && \
     cd ../trellis-chart && npm run build && \
     cd ../boxplot-chart && npm run build
 
@@ -71,7 +71,8 @@ COPY --from=dist /app/boxplot-chart/dist ./boxplot-chart/dist
 COPY --from=dist /app/shared ./shared
 
 # Verificar se os arquivos foram copiados corretamente
-RUN test -f charts-router/dist/server.js || (echo "ERROR: charts-router/dist/server.js not found after copy" && ls -la charts-router/ && ls -la charts-router/dist/ 2>/dev/null || echo "dist directory does not exist" && exit 1)
+RUN find charts-router/dist -name "server.js" -type f | head -1 | grep -q . || \
+    (echo "ERROR: server.js not found after copy" && find charts-router/dist -type f 2>/dev/null && ls -la charts-router/ && exit 1)
 
 # Criar diretório para logs
 RUN mkdir -p /app/logs && chmod 755 /app/logs
@@ -94,6 +95,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENV NODE_ENV=production
 ENV PORT=8080
 
+# Copiar script de entrada
+COPY charts-router/start.sh ./charts-router/start.sh
+RUN chmod +x charts-router/start.sh
+
 # Comando de start
 WORKDIR /app/charts-router
-CMD ["node", "dist/server.js"]
+CMD ["./start.sh"]
