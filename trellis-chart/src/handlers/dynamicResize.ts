@@ -120,6 +120,16 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         chartElement.__resizeObserver.disconnect();
     }
 
+    // Garantir que o chartElement ocupe 100% da largura quando fitWidth está ativo
+    if (fitWidth) {
+        chartElement.style.width = '100%';
+        chartElement.style.minWidth = '100%';
+        chartElement.style.maxWidth = '100%';
+        chartElement.style.boxSizing = 'border-box';
+        chartElement.style.margin = '0';
+        chartElement.style.padding = '0';
+    }
+    
     const containerDiv = chartElement.querySelector('div') as HTMLElement;
     const wrapperDiv = containerDiv?.querySelector('div') as HTMLElement;
 
