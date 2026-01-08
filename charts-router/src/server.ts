@@ -92,10 +92,12 @@ app.get('/trellis', (req, res) => {
     res.sendFile(indexPath, (err) => {
         if (err) {
             console.error('Error serving trellis index:', err);
+            const errDetails = err as NodeJS.ErrnoException;
             console.error('Error details:', {
-                code: err.code,
-                path: err.path,
-                syscall: err.syscall
+                code: errDetails.code,
+                path: errDetails.path,
+                syscall: errDetails.syscall,
+                message: err.message
             });
             res.status(404).json({ error: 'Trellis chart not found', path: indexPath });
         } else {
