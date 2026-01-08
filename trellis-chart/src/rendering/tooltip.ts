@@ -271,7 +271,14 @@ export function setupTooltips(
 
         // Usar configuração da medida se disponível, senão usar configuração global
         const measureTooltipConfig = measureConfig.tooltip;
-        const enabled = measureTooltipConfig?.enabled !== false && (tooltipConfig?.enabled !== false);
+        // Verificar se tooltip está habilitado para esta medida específica
+        // Se measureTooltipConfig existe e enabled é false, desabilitar para esta medida
+        // Se measureTooltipConfig não existe, usar configuração global
+        const measureEnabled = measureTooltipConfig !== undefined 
+            ? measureTooltipConfig.enabled !== false 
+            : (tooltipConfig?.enabled !== false);
+        const globalEnabled = tooltipConfig?.enabled !== false;
+        const enabled = measureEnabled && globalEnabled;
         
         if (!enabled) {
             return;
@@ -334,7 +341,14 @@ export function setupTooltips(
 
         // Usar configuração da medida se disponível, senão usar configuração global
         const measureTooltipConfig = measureConfig.tooltip;
-        const enabled = measureTooltipConfig?.enabled !== false && (tooltipConfig?.enabled !== false);
+        // Verificar se tooltip está habilitado para esta medida específica
+        // Se measureTooltipConfig existe e enabled é false, desabilitar para esta medida
+        // Se measureTooltipConfig não existe, usar configuração global
+        const measureEnabled = measureTooltipConfig !== undefined 
+            ? measureTooltipConfig.enabled !== false 
+            : (tooltipConfig?.enabled !== false);
+        const globalEnabled = tooltipConfig?.enabled !== false;
+        const enabled = measureEnabled && globalEnabled;
         
         if (!enabled) {
             return;
