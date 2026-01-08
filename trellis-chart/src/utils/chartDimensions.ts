@@ -197,10 +197,22 @@ export function readMeasureConfigs(
                                                   (configFromColumnVisualProps as any).referenceLine_showLabel;
         
         // Extrair configurações de tooltip de seções aninhadas
-        const tooltipEnabledFromSection = tooltipSection.enabled;
-        const tooltipFormatFromSection = tooltipSection.format;
-        const tooltipBackgroundColorFromSection = tooltipSection.backgroundColor;
-        const tooltipLayoutFromSection = tooltipSection.layout;
+        // O ThoughtSpot pode salvar de diferentes formas:
+        // 1. No nível raiz: tooltip_enabled, tooltip_format, etc.
+        // 2. Em seção aninhada: tooltip.enabled, tooltip.format, etc.
+        // 3. Em seção aninhada com prefixo: tooltip.tooltip_enabled, etc.
+        const tooltipEnabledFromSection = tooltipSection.enabled ??
+                                         tooltipSection.tooltip_enabled ??
+                                         (configFromColumnVisualProps as any).tooltip_enabled;
+        const tooltipFormatFromSection = tooltipSection.format ??
+                                        tooltipSection.tooltip_format ??
+                                        (configFromColumnVisualProps as any).tooltip_format;
+        const tooltipBackgroundColorFromSection = tooltipSection.backgroundColor ??
+                                                 tooltipSection.tooltip_backgroundColor ??
+                                                 (configFromColumnVisualProps as any).tooltip_backgroundColor;
+        const tooltipLayoutFromSection = tooltipSection.layout ??
+                                        tooltipSection.tooltip_layout ??
+                                        (configFromColumnVisualProps as any).tooltip_layout;
         
         const measureConfig: Record<string, unknown> = {
             ...measureConfigFlat,
@@ -294,6 +306,18 @@ export function readMeasureConfigs(
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
             layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
         } : undefined;
+        
+        // Debug: log das configurações de tooltip
+        console.log(`[DEBUG] Measure ${measure.id} tooltip:`, {
+            tooltip_enabled: (measureConfig as any)?.tooltip_enabled,
+            tooltip_enabled_parsed: tooltipEnabled,
+            tooltip_format: tooltipFormatRaw,
+            tooltip_format_mapped: tooltipFormatMapped,
+            tooltip_backgroundColor: (measureConfig as any)?.tooltip_backgroundColor,
+            tooltip_layout: (measureConfig as any)?.tooltip_layout,
+            allTooltipKeys: Object.keys(measureConfig).filter(k => k.startsWith('tooltip_')),
+            finalTooltip: tooltip,
+        });
         
         return {
             measure,
