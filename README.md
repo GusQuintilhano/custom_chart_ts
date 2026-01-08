@@ -381,23 +381,6 @@ O sistema é composto por:
 - Integração com Datadog ou Google Analytics
 - Dashboard de métricas
 
-## 🐳 Executar Imagem Docker Localmente
-
-Para baixar e executar a imagem Docker do registry do GitLab localmente, consulte o guia completo em [`RUN_LOCAL.md`](./RUN_LOCAL.md).
-
-**Comando rápido:**
-```bash
-# Login no registry
-docker login registry.infra.ifood-prod.com.br
-
-# Baixar imagem
-docker pull registry.infra.ifood-prod.com.br/ifood/data/viz/custom-charts:dev
-
-# Executar
-docker run -d -p 8080:8080 --name custom-charts \
-  registry.infra.ifood-prod.com.br/ifood/data/viz/custom-charts:dev
-```
-
 ## 📄 Licença
 
 Veja [LICENSE](./LICENSE) para mais detalhes.
