@@ -179,6 +179,27 @@ export const renderChart = async (ctx: CustomChartContext) => {
     // Calcular ranges (min/max) para cada medida (considerando minY/maxY das configurações)
     const measureRanges = calculateMeasureRanges(chartData, measureCols, measureConfigs);
 
+    // Garantir que o chartElement ocupe 100% da largura quando fitWidth está ativo
+    if (fitWidth) {
+        chartElement.style.width = '100%';
+        chartElement.style.minWidth = '100%';
+        chartElement.style.maxWidth = '100%';
+        chartElement.style.boxSizing = 'border-box';
+        chartElement.style.margin = '0';
+        chartElement.style.padding = '0';
+        
+        console.log('[FitWidth] Aplicando estilos ao chartElement:', {
+            width: chartElement.style.width,
+            minWidth: chartElement.style.minWidth,
+            maxWidth: chartElement.style.maxWidth,
+            boxSizing: chartElement.style.boxSizing,
+            computedWidth: window.getComputedStyle(chartElement).width,
+            actualWidth: chartElement.offsetWidth,
+            clientWidth: chartElement.clientWidth,
+            parentWidth: chartElement.parentElement?.offsetWidth,
+        });
+    }
+
     // Renderizar gráfico completo
     chartElement.innerHTML = renderCompleteChart({
         chartData,
