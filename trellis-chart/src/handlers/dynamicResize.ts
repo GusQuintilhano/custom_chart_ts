@@ -442,6 +442,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             
             // Garantir que o container também tenha width: 100% quando fitWidth está ativo
             if (fitWidth) {
+                // Remover qualquer padding/margin que possa estar limitando a largura
                 containerDiv.style.width = '100%';
                 containerDiv.style.minWidth = '100%';
                 containerDiv.style.maxWidth = '100%';
@@ -449,6 +450,35 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 containerDiv.style.position = 'relative';
                 containerDiv.style.margin = '0';
                 containerDiv.style.padding = '0';
+                containerDiv.style.border = 'none';
+                containerDiv.style.display = 'block';
+                containerDiv.style.overflow = 'visible';
+                
+                // Verificar se há diferença entre offsetWidth e clientWidth (indica padding/border)
+                const containerOffsetWidth = containerDiv.offsetWidth;
+                const containerClientWidth = containerDiv.clientWidth;
+                const containerPaddingDiff = containerOffsetWidth - containerClientWidth;
+                
+                // Se há diferença, pode ser border ou padding que não foi removido
+                if (containerPaddingDiff > 0) {
+                    // Tentar remover border explicitamente
+                    containerDiv.style.borderLeft = 'none';
+                    containerDiv.style.borderRight = 'none';
+                    containerDiv.style.borderTop = 'none';
+                    containerDiv.style.borderBottom = 'none';
+                    
+                    // Log para debug
+                    const computedStyle = window.getComputedStyle(containerDiv);
+                    console.log('[FitWidth] ContainerDiv tem diferença entre offsetWidth e clientWidth:', {
+                        offsetWidth: containerOffsetWidth,
+                        clientWidth: containerClientWidth,
+                        diff: containerPaddingDiff,
+                        computedPaddingLeft: computedStyle.paddingLeft,
+                        computedPaddingRight: computedStyle.paddingRight,
+                        computedBorderLeft: computedStyle.borderLeftWidth,
+                        computedBorderRight: computedStyle.borderRightWidth,
+                    });
+                }
                 
                 // Se o container está menor que o pai, tentar compensar com margin negativo
                 const parentWidth = containerDiv.parentElement?.offsetWidth || 0;
