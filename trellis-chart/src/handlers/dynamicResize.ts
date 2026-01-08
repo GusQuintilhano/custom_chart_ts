@@ -145,29 +145,31 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
     const adjustDimensions = () => {
         // Tentar obter dimensões do container de várias formas
-        // IMPORTANTE: Quando fitWidth está ativo, usar offsetWidth ou getBoundingClientRect
-        // em vez de clientWidth, pois clientWidth não inclui padding
+        // IMPORTANTE: Quando fitWidth está ativo, precisamos usar a largura REAL do SVG (clientWidth)
+        // não a largura do container (offsetWidth), pois offsetWidth inclui padding que não afeta o SVG
+        // O SVG renderizado ocupa apenas o clientWidth do container
         let containerWidth = fitWidth 
-            ? (containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || containerDiv.clientWidth || 0)
+            ? (containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0)
             : containerDiv.clientWidth;
         let containerHeight = fitHeight
-            ? (containerDiv.offsetHeight || containerDiv.getBoundingClientRect().height || containerDiv.clientHeight || 0)
+            ? (containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0)
             : containerDiv.clientHeight;
         
         // Se ainda não temos dimensões, tentar outras formas
         if (fitWidth && containerWidth === 0) {
-            containerWidth = containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || 0;
+            // Tentar clientWidth primeiro (largura real do conteúdo)
+            containerWidth = containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0;
         }
         if (fitHeight && containerHeight === 0) {
-            containerHeight = containerDiv.offsetHeight || containerDiv.getBoundingClientRect().height || 0;
+            containerHeight = containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0;
         }
         
         // Se ainda não temos dimensões e fitWidth está ativo, tentar obter do elemento pai
         if (fitWidth && containerWidth === 0 && containerDiv.parentElement) {
-            // Para o pai, também usar offsetWidth para incluir padding
-            const parentWidth = containerDiv.parentElement.offsetWidth || 
+            // Para o pai, usar clientWidth (largura real do conteúdo, sem padding)
+            const parentWidth = containerDiv.parentElement.clientWidth || 
                               containerDiv.parentElement.getBoundingClientRect().width ||
-                              containerDiv.parentElement.clientWidth || 0;
+                              containerDiv.parentElement.offsetWidth || 0;
             if (parentWidth > 0) {
                 containerWidth = parentWidth;
                 
