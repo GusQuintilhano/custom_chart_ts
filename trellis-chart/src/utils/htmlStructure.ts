@@ -25,7 +25,12 @@ export function createChartHtmlStructure(
         : 'overflow: auto;';
     
     // Wrapper style
-    const wrapperStyle = fitWidth ? 'width: 100%; height: 100%;'
+    // Quando apenas fitWidth está ativo, o wrapper deve ter altura fixa (chartHeight) para permitir scroll
+    // Quando fitHeight está ativo, o wrapper deve ter altura 100%
+    const wrapperStyle = fitWidth && !fitHeight 
+        ? `width: 100%; height: ${chartHeight}px; flex-shrink: 0;`
+        : fitWidth && fitHeight
+        ? 'width: 100%; height: 100%;'
         : `width: ${chartWidth}px; height: ${fitHeight ? '100%' : `${chartHeight}px`}; flex-shrink: 0;`;
     
     // Container style
