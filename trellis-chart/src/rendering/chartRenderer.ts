@@ -171,6 +171,8 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         spacingBetweenMeasures,
         dividerLinesColor: dividerLinesBetweenBarsColor,
         dividerLinesWidth: dividerLinesBetweenBarsWidth,
+        hasSecondaryDimension,
+        secondaryDateFormat,
     });
 
     // Linhas de referência

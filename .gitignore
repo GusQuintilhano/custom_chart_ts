@@ -45,6 +45,17 @@ src.backup*/
 # Arquivos de tracking local
 TASK.md
 
+# Railway (deploy/hosting)
+railway.json
+.railwayignore
+.railway-deploy-summary.md
+nixpacks.toml
+deploy.sh
+Dockerfile.railway
+docker-compose.railway.yml
+RAILWAY.md
 
 
 
+
+RUN_LOCAL.md

@@ -205,7 +205,6 @@ export function createVisualPropEditorDefinition(
 
     return {
         elements: editorSections,
-        columnSettingsDefinition,
     };
 }
 

@@ -1,43 +1,49 @@
-# Dockerfile para deploy do Trellis Chart no Railway
-# Chart SDK customizado para ThoughtSpot
+# Dockerfile para Custom Charts SDK - iFood
+# Baseado na golden image do iFood: ifood/docker-images/golden/nodejs
 
-FROM node:18-alpine
+# Stage 1: Build stage
+FROM node:18-alpine AS dist
 
 # Metadados
 LABEL maintainer="iFood Data Visualization Team"
-LABEL description="Trellis Chart - Custom Chart SDK para ThoughtSpot"
+LABEL description="Custom Charts SDK - ThoughtSpot Chart SDK para visualização de dados"
 LABEL version="1.0.0"
+LABEL org.opencontainers.image.source=".../custom-charts"
 
 # Configurar diretório de trabalho
-WORKDIR /workspace
+WORKDIR /app
 
-# Copiar pasta shared/ primeiro (necessária para imports @shared/*)
+# Copiar arquivos de dependências primeiro (para cache de layers)
+# O wildcard package*.json já copia package-lock.json quando existe
+COPY charts-router/package*.json ./charts-router/
+COPY trellis-chart/package*.json ./trellis-chart/
+COPY boxplot-chart/package*.json ./boxplot-chart/
+COPY shared/package*.json ./shared/
+
+# Instalar dependências de todos os projetos (incluindo dev para build)
+# Usa npm ci quando há package-lock.json, npm install caso contrário
+RUN cd shared && npm install && \
+    cd ../charts-router && npm ci && \
+    cd ../trellis-chart && npm ci && \
+    cd ../boxplot-chart && npm install
+
+# Copiar código fonte
+COPY charts-router/ ./charts-router/
+COPY trellis-chart/ ./trellis-chart/
+COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
-# Copiar arquivos do trellis-chart
-COPY trellis-chart/package*.json ./trellis-chart/
+# Build de todos os projetos em um único comando
+RUN cd charts-router && npm run build && \
+    cd ../trellis-chart && npm run build && \
+    cd ../boxplot-chart && npm run build
 
-# Instalar dependências do trellis-chart
-WORKDIR /workspace/trellis-chart
-RUN npm ci || npm install
+# Stage 2: Production stage
+FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge AS production
 
-# Configurar TypeScript para não verificar tipos de shared (skipLibCheck já está ativo)
+# Copiar apenas os arquivos necessários do stage de build
+COPY --from=dist /app /app/app
 
-# Copiar código fonte do trellis-chart (já estamos em /workspace/trellis-chart)
-COPY trellis-chart/ ./
+EXPOSE 8080
 
-# Criar symlink para node_modules em shared para que TypeScript encontre dependências
-RUN ln -s /workspace/trellis-chart/node_modules /workspace/shared/node_modules || true
-
-# Build do projeto (o path mapping @shared/* aponta para ../shared/)
-RUN npm run build
-
-# Expor porta (Railway define a porta via $PORT)
-EXPOSE 3000
-
-# Voltar para o diretório do trellis-chart para o start
-WORKDIR /workspace/trellis-chart
-
-# Comando de start (usa PORT do Railway)
-CMD ["npm", "start"]
-
+ENTRYPOINT [ "/executor", "/app/node/node /app/app/charts-router/dist/server.js" ]
