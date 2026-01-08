@@ -647,15 +647,17 @@ export function createVisualPropEditorDefinition(
     currentVisualProps: ChartModel,
     ctx: CustomChartContext,
 ): VisualPropEditorDefinition {
-    logger.debug('🎨 [DEBUG] visualPropEditorDefinition chamado');
-    logger.debug('🎨 [DEBUG] currentVisualProps:', currentVisualProps);
-    
-    const columns = currentVisualProps.columns || [];
-    const measureColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.MEASURE);
-    const dimensionColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.ATTRIBUTE);
-    
-    logger.debug('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
-    logger.debug('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
+    try {
+        logger.debug('🎨 [DEBUG] visualPropEditorDefinition chamado');
+        // Não fazer log de currentVisualProps completo (pode ser muito grande e causar timeout)
+        logger.debug('🎨 [DEBUG] currentVisualProps keys:', Object.keys(currentVisualProps));
+        
+        const columns = currentVisualProps.columns || [];
+        const measureColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.MEASURE);
+        const dimensionColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.ATTRIBUTE);
+        
+        logger.debug('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
+        logger.debug('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
     
     // Ler valores salvos
     const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
@@ -715,9 +717,13 @@ export function createVisualPropEditorDefinition(
         ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
     };
     
-    logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', JSON.stringify(result, null, 2));
-    logger.debug('🎨 [DEBUG] columnsVizPropDefinition:', columnsVizPropDefinition.length > 0 ? 'SIM - ' + columnsVizPropDefinition.length + ' colunas' : 'NÃO');
-    logger.debug('🎨 [DEBUG] Medidas processadas:', measureColumns.map(m => m.id));
+    // Log resumido para evitar timeout (não fazer JSON.stringify de objetos grandes)
+    logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', {
+        elementsCount: elements.length,
+        hasColumnsVizProp: columnsVizPropDefinition.length > 0,
+        columnsVizPropCount: columnsVizPropDefinition.length,
+        measuresProcessed: measureColumns.length,
+    });
     
     if (columnsVizPropDefinition.length > 0) {
         const measuresInConfig = Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}).length || 0;
@@ -725,14 +731,18 @@ export function createVisualPropEditorDefinition(
         
         if (measureColumns.length !== measuresInConfig) {
             logger.debug(`DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
-            logger.debug('Isso indica que getDefaultChartConfig precisa ser re-executado!');
-            logger.debug('Medidas no chartModel:', measureColumns.map(m => ({ id: m.id, name: m.name })));
-            logger.debug('IDs no columnsVizPropDefinition:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
         }
     }
-    logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
-    
-    return result;
+        logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
+        
+        return result;
+    } catch (error) {
+        logger.error('❌ [ERROR] Erro em visualPropEditorDefinition:', error);
+        // Retornar estrutura mínima para evitar timeout completo
+        return {
+            elements: [],
+        };
+    }
 }
 
 /**
