@@ -24,22 +24,64 @@ app.use(express.json());
 app.use(analyticsMiddleware);
 
 // Determinar caminho base do projeto
-// Se estamos em dist/charts-router/src/, subir para /app
-// Se estamos em dist/src/, subir para /app/charts-router
+// No Docker, os arquivos estão em /app/trellis-chart/dist e /app/boxplot-chart/dist
+// O servidor está em /app/charts-router/dist/charts-router/src/ ou /app/charts-router/dist/src/
+import fs from 'fs';
+
 let projectRoot: string;
-if (__dirname.includes('dist/charts-router/src')) {
-    // Código compilado em dist/charts-router/src/
-    projectRoot = path.resolve(__dirname, '../../../');
-} else if (__dirname.includes('dist/src')) {
-    // Código compilado em dist/src/
-    projectRoot = path.resolve(__dirname, '../../');
-} else {
-    // Desenvolvimento ou outra estrutura
-    projectRoot = path.resolve(__dirname, '../../');
+let trellisDistPath: string;
+let boxplotDistPath: string;
+
+// Tentar diferentes caminhos possíveis
+const possibleRoots = [
+    '/app',  // Caminho absoluto no Docker
+    path.resolve(__dirname, '../../../'),  // Se estamos em dist/charts-router/src/
+    path.resolve(__dirname, '../../'),    // Se estamos em dist/src/
+    path.resolve(__dirname, '../../..'),  // Alternativa
+];
+
+// Procurar o diretório trellis-chart/dist
+for (const root of possibleRoots) {
+    const trellisPath = path.join(root, 'trellis-chart/dist');
+    if (fs.existsSync(trellisPath)) {
+        projectRoot = root;
+        trellisDistPath = trellisPath;
+        boxplotDistPath = path.join(root, 'boxplot-chart/dist');
+        break;
+    }
 }
 
-const trellisDistPath = path.join(projectRoot, 'trellis-chart/dist');
-const boxplotDistPath = path.join(projectRoot, 'boxplot-chart/dist');
+// Se não encontrou, usar caminho padrão
+if (!trellisDistPath) {
+    if (__dirname.includes('dist/charts-router/src')) {
+        projectRoot = path.resolve(__dirname, '../../../');
+    } else if (__dirname.includes('dist/src')) {
+        projectRoot = path.resolve(__dirname, '../../');
+    } else {
+        projectRoot = path.resolve(__dirname, '../../');
+    }
+    trellisDistPath = path.join(projectRoot, 'trellis-chart/dist');
+    boxplotDistPath = path.join(projectRoot, 'boxplot-chart/dist');
+}
+
+// Log para debug
+console.log('Server initialization:');
+console.log('  __dirname:', __dirname);
+console.log('  projectRoot:', projectRoot);
+console.log('  trellisDistPath:', trellisDistPath);
+console.log('  boxplotDistPath:', boxplotDistPath);
+console.log('  trellisDistPath exists:', fs.existsSync(trellisDistPath));
+console.log('  boxplotDistPath exists:', fs.existsSync(boxplotDistPath));
+
+if (!fs.existsSync(trellisDistPath)) {
+    console.error(`ERROR: Trellis dist path does not exist: ${trellisDistPath}`);
+    console.error('  Searching for trellis-chart...');
+    const searchPaths = ['/app', '/app/charts-router', process.cwd()];
+    for (const searchRoot of searchPaths) {
+        const searchPath = path.join(searchRoot, 'trellis-chart/dist');
+        console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
+    }
+}
 
 // Servir Trellis Chart em /trellis
 app.use('/trellis', express.static(trellisDistPath));
