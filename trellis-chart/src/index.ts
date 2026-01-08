@@ -41,19 +41,22 @@ export const renderChart = async (ctx: CustomChartContext) => {
 
         // Iniciar monitoramento de performance
         // Obter dimensões do container para uso no cálculo inicial (especialmente importante para fitWidth)
+        // IMPORTANTE: Usar clientWidth (largura real do conteúdo) em vez de offsetWidth (que inclui padding)
+        // O SVG renderizado ocupa apenas o clientWidth, então o conteúdo deve ser redesenhado para essa largura
         let containerWidth = chartElement.clientWidth || chartElement.offsetWidth || 0;
         let containerHeight = chartElement.clientHeight || chartElement.offsetHeight || 0;
         
         // Se não temos dimensões, tentar obter do elemento pai
+        // Também usar clientWidth primeiro (largura real do conteúdo)
         if (containerWidth === 0 && chartElement.parentElement) {
             containerWidth = chartElement.parentElement.clientWidth || 
-                             chartElement.parentElement.offsetWidth || 
-                             chartElement.parentElement.getBoundingClientRect().width || 0;
+                             chartElement.parentElement.getBoundingClientRect().width ||
+                             chartElement.parentElement.offsetWidth || 0;
         }
         if (containerHeight === 0 && chartElement.parentElement) {
             containerHeight = chartElement.parentElement.clientHeight || 
-                             chartElement.parentElement.offsetHeight || 
-                             chartElement.parentElement.getBoundingClientRect().height || 0;
+                             chartElement.parentElement.getBoundingClientRect().height ||
+                             chartElement.parentElement.offsetHeight || 0;
         }
         
             // Usar valores padrão se ainda não temos dimensões
