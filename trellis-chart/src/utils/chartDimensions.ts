@@ -159,11 +159,25 @@ export function readMeasureConfigs(
         const useThousandsSeparatorFromNumberFormatting = numberFormattingSection.useThousandsSeparator;
         
         // Extrair configurações de linha de referência de seções aninhadas
-        const referenceLineEnabledFromSection = referenceLineSection.enabled;
-        const referenceLineValueFromSection = referenceLineSection.value;
-        const referenceLineColorFromSection = referenceLineSection.color;
-        const referenceLineStyleFromSection = referenceLineSection.style;
-        const referenceLineShowLabelFromSection = referenceLineSection.showLabel;
+        // O ThoughtSpot pode salvar de diferentes formas:
+        // 1. No nível raiz: referenceLine_enabled, referenceLine_value, etc.
+        // 2. Em seção aninhada: referenceLine.enabled, referenceLine.value, etc.
+        // 3. Em seção aninhada com prefixo: referenceLine.referenceLine_enabled, etc.
+        const referenceLineEnabledFromSection = referenceLineSection.enabled ?? 
+                                                referenceLineSection.referenceLine_enabled ??
+                                                (configFromColumnVisualProps as any).referenceLine_enabled;
+        const referenceLineValueFromSection = referenceLineSection.value ?? 
+                                              referenceLineSection.referenceLine_value ??
+                                              (configFromColumnVisualProps as any).referenceLine_value;
+        const referenceLineColorFromSection = referenceLineSection.color ?? 
+                                             referenceLineSection.referenceLine_color ??
+                                             (configFromColumnVisualProps as any).referenceLine_color;
+        const referenceLineStyleFromSection = referenceLineSection.style ?? 
+                                             referenceLineSection.referenceLine_style ??
+                                             (configFromColumnVisualProps as any).referenceLine_style;
+        const referenceLineShowLabelFromSection = referenceLineSection.showLabel ?? 
+                                                  referenceLineSection.referenceLine_showLabel ??
+                                                  (configFromColumnVisualProps as any).referenceLine_showLabel;
         
         // Extrair configurações de tooltip de seções aninhadas
         const tooltipEnabledFromSection = tooltipSection.enabled;
@@ -204,7 +218,20 @@ export function readMeasureConfigs(
         const defaultOpacity = chartType === 'linha' ? 0.8 : 0.9;
         
         // Processar linha de referência
-        const referenceLineEnabled = (measureConfig as any)?.referenceLine_enabled === true;
+        // Verificar se referenceLine_enabled está definido (pode ser true, "true", ou undefined)
+        const referenceLineEnabledRaw = (measureConfig as any)?.referenceLine_enabled;
+        const referenceLineEnabled = referenceLineEnabledRaw === true || referenceLineEnabledRaw === 'true' || referenceLineEnabledRaw === 1;
+        
+        // Debug: log dos valores de linha de referência
+        logger.debug(`[DEBUG] Measure ${measure.id} referenceLine:`, {
+            referenceLine_enabled: referenceLineEnabledRaw,
+            referenceLine_enabled_parsed: referenceLineEnabled,
+            referenceLine_value: (measureConfig as any)?.referenceLine_value,
+            referenceLine_color: (measureConfig as any)?.referenceLine_color,
+            referenceLine_style: (measureConfig as any)?.referenceLine_style,
+            allReferenceLineKeys: Object.keys(measureConfig).filter(k => k.startsWith('referenceLine_')),
+        });
+        
         const referenceLine: MeasureConfig['referenceLine'] = referenceLineEnabled ? {
             enabled: true,
             value: ((measureConfig as any)?.referenceLine_value as number) ?? 0,
