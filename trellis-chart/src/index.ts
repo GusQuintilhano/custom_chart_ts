@@ -40,8 +40,26 @@ export const renderChart = async (ctx: CustomChartContext) => {
         } = dataSetup;
 
         // Iniciar monitoramento de performance
-        const containerWidth = chartElement.clientWidth || 800;
-        const containerHeight = chartElement.clientHeight || 600;
+        // Obter dimensões do container para uso no cálculo inicial (especialmente importante para fitWidth)
+        let containerWidth = chartElement.clientWidth || chartElement.offsetWidth || 0;
+        let containerHeight = chartElement.clientHeight || chartElement.offsetHeight || 0;
+        
+        // Se não temos dimensões, tentar obter do elemento pai
+        if (containerWidth === 0 && chartElement.parentElement) {
+            containerWidth = chartElement.parentElement.clientWidth || 
+                             chartElement.parentElement.offsetWidth || 
+                             chartElement.parentElement.getBoundingClientRect().width || 0;
+        }
+        if (containerHeight === 0 && chartElement.parentElement) {
+            containerHeight = chartElement.parentElement.clientHeight || 
+                             chartElement.parentElement.offsetHeight || 
+                             chartElement.parentElement.getBoundingClientRect().height || 0;
+        }
+        
+        // Usar valores padrão se ainda não temos dimensões
+        const initialContainerWidth = containerWidth || 800;
+        const initialContainerHeight = containerHeight || 600;
+        
         const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
         
         performanceMonitor.startRender(
@@ -49,8 +67,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
             dataSize,
             measureCols.length,
             hasSecondaryDimension ? secondaryDimensions.length + 1 : 1,
-            containerWidth,
-            containerHeight
+            initialContainerWidth,
+            initialContainerHeight
         );
 
         // Rastrear uso e configurações
@@ -105,23 +123,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
         tooltipCustomTemplate,
     } = options;
 
-    // Obter dimensões do container para uso no cálculo inicial (especialmente importante para fitWidth)
-    let containerWidth = chartElement.clientWidth || chartElement.offsetWidth || 0;
-    let containerHeight = chartElement.clientHeight || chartElement.offsetHeight || 0;
-    
-    // Se não temos dimensões, tentar obter do elemento pai
-    if (containerWidth === 0 && chartElement.parentElement) {
-        containerWidth = chartElement.parentElement.clientWidth || 
-                         chartElement.parentElement.offsetWidth || 
-                         chartElement.parentElement.getBoundingClientRect().width || 0;
-    }
-    if (containerHeight === 0 && chartElement.parentElement) {
-        containerHeight = chartElement.parentElement.clientHeight || 
-                         chartElement.parentElement.offsetHeight || 
-                         chartElement.parentElement.getBoundingClientRect().height || 0;
-    }
-    
     // Calcular dimensões do gráfico
+    // (containerWidth e containerHeight já foram obtidos acima)
     const chartDimensions = calculateChartDimensions(
         chartOptions,
         chartData,
