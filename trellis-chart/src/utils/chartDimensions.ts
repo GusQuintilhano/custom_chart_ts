@@ -246,31 +246,6 @@ export function readMeasureConfigs(
             ...(tooltipLayoutFromSection ? { tooltip_layout: tooltipLayoutFromSection } : {}),
         };
         
-        // Debug: verificar se referenceLine_enabled está em measureConfigFlat (nível raiz)
-        // referenceLineSectionUnderscore já foi declarado acima
-        console.log(`[DEBUG] Measure ${measure.id} - Verificando referenceLine_enabled:`, {
-            inMeasureConfigFlat: (measureConfigFlat as any).referenceLine_enabled,
-            inConfigFromColumnVisualProps: (configFromColumnVisualProps as any).referenceLine_enabled,
-            inReferenceLineSection: referenceLineSection.enabled ?? referenceLineSection.referenceLine_enabled,
-            inReferenceLineSection_reference_line: referenceLineSectionUnderscore.referenceLine_enabled ?? referenceLineSectionUnderscore.enabled,
-            referenceLineEnabledFromSection,
-            finalInMeasureConfig: (measureConfig as any).referenceLine_enabled,
-            allKeysInMeasureConfigFlat: Object.keys(measureConfigFlat).filter(k => k.includes('reference') || k.includes('Reference')),
-            allKeysInConfigFromColumnVisualProps: Object.keys(configFromColumnVisualProps).filter(k => k.includes('reference') || k.includes('Reference')),
-        });
-        
-        // Log completo de configFromColumnVisualProps (pode ser grande, mas necessário para debug)
-        console.log(`[DEBUG] Measure ${measure.id} - fullConfigFromColumnVisualProps:`, JSON.stringify(configFromColumnVisualProps, null, 2));
-        
-        // Debug: verificar valores
-        logger.debug(`[DEBUG] Measure ${measure.id} chartType:`, {
-            configNew: (configNew as any).chartType,
-            configOld: (configOld as any).chartType,
-            configFromColumnVisualProps: (configFromColumnVisualProps as any).chartType,
-            visualizationSection: (visualizationSection as any).chartType,
-            final: (measureConfig as any).chartType
-        });
-        
         const chartType = (measureConfig?.chartType as string) || 'barras';
         const defaultOpacity = chartType === 'linha' ? 0.8 : 0.9;
         
@@ -279,17 +254,6 @@ export function readMeasureConfigs(
         const referenceLineEnabledRaw = (measureConfig as any)?.referenceLine_enabled;
         const referenceLineEnabled = referenceLineEnabledRaw === true || referenceLineEnabledRaw === 'true' || referenceLineEnabledRaw === 1;
         
-        // Debug: log dos valores de linha de referência (usar console.log para garantir que apareça)
-        console.log(`[DEBUG] Measure ${measure.id} referenceLine:`, {
-            referenceLine_enabled: referenceLineEnabledRaw,
-            referenceLine_enabled_parsed: referenceLineEnabled,
-            referenceLine_value: (measureConfig as any)?.referenceLine_value,
-            referenceLine_color: (measureConfig as any)?.referenceLine_color,
-            referenceLine_style: (measureConfig as any)?.referenceLine_style,
-            allReferenceLineKeys: Object.keys(measureConfig).filter(k => k.startsWith('referenceLine_')),
-            measureConfigKeys: Object.keys(measureConfig).slice(0, 20), // Primeiras 20 chaves para debug
-        });
-        
         const referenceLine: MeasureConfig['referenceLine'] = referenceLineEnabled ? {
             enabled: true,
             value: ((measureConfig as any)?.referenceLine_value as number) ?? 0,
@@ -297,15 +261,6 @@ export function readMeasureConfigs(
             style: (((measureConfig as any)?.referenceLine_style as string) || 'sólida') as 'sólida' | 'tracejada' | 'pontilhada',
             showLabel: ((measureConfig as any)?.referenceLine_showLabel as boolean) !== false,
         } : undefined;
-        
-        // Debug adicional: verificar se referenceLine foi criado (usar console.log para garantir que apareça)
-        if (referenceLineEnabled && referenceLine) {
-            console.log(`[DEBUG] Measure ${measure.id} referenceLine criado:`, referenceLine);
-        } else if (referenceLineEnabled && !referenceLine) {
-            console.warn(`[DEBUG] Measure ${measure.id} referenceLineEnabled=true mas referenceLine é undefined!`);
-        } else if (!referenceLineEnabled) {
-            console.log(`[DEBUG] Measure ${measure.id} referenceLineEnabled=false, não criando referenceLine`);
-        }
         
         // Processar tooltip
         // Verificar se tooltip_enabled está explicitamente definido como false
@@ -328,18 +283,6 @@ export function readMeasureConfigs(
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
             layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
         };
-        
-        // Debug: log das configurações de tooltip
-        console.log(`[DEBUG] Measure ${measure.id} tooltip:`, {
-            tooltip_enabled: (measureConfig as any)?.tooltip_enabled,
-            tooltip_enabled_parsed: tooltipEnabled,
-            tooltip_format: tooltipFormatRaw,
-            tooltip_format_mapped: tooltipFormatMapped,
-            tooltip_backgroundColor: (measureConfig as any)?.tooltip_backgroundColor,
-            tooltip_layout: (measureConfig as any)?.tooltip_layout,
-            allTooltipKeys: Object.keys(measureConfig).filter(k => k.startsWith('tooltip_')),
-            finalTooltip: tooltip,
-        });
         
         return {
             measure,

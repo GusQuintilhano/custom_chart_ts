@@ -43,6 +43,19 @@ export function createChartHtmlStructure(
         : 'none';
     const viewBox = `0 0 ${chartWidth} ${chartHeight}`;
 
+    // Log de dimensões para debug do fitWidth
+    console.log('[FitWidth] Criando estrutura HTML:', {
+        fitWidth,
+        fitHeight,
+        chartWidth,
+        chartHeight,
+        svgWidth,
+        svgHeight,
+        preserveAspectRatio,
+        wrapperStyle,
+        containerStyle: containerStyle.substring(0, 100) + '...', // Truncar para não poluir
+    });
+
     return `
         <div style="${containerStyle}">
             <div style="${wrapperStyle}">

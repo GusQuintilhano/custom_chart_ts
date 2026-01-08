@@ -54,17 +54,7 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
     measureConfigs.forEach((measureConfig, measureIdx) => {
         const referenceLine = measureConfig.referenceLine;
         
-        // Debug: log detalhado
-        console.log(`[ReferenceLine] Measure ${measureIdx}:`, {
-            hasReferenceLine: !!referenceLine,
-            enabled: referenceLine?.enabled,
-            value: referenceLine?.value,
-            color: referenceLine?.color,
-            style: referenceLine?.style,
-        });
-        
         if (!referenceLine || !referenceLine.enabled) {
-            console.log(`[ReferenceLine] Measure ${measureIdx}: Skipping - no referenceLine or not enabled`);
             return;
         }
 
