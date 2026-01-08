@@ -84,21 +84,32 @@ if (!fs.existsSync(trellisDistPath)) {
 }
 
 // Servir Trellis Chart em /trellis
-app.use('/trellis', express.static(trellisDistPath));
+// IMPORTANTE: app.get deve vir ANTES de app.use para que a rota exata seja capturada primeiro
 app.get('/trellis', (req, res) => {
     const indexPath = path.join(trellisDistPath, 'index.html');
+    console.log(`Serving trellis index from: ${indexPath}`);
+    console.log(`File exists: ${fs.existsSync(indexPath)}`);
     res.sendFile(indexPath, (err) => {
         if (err) {
             console.error('Error serving trellis index:', err);
+            console.error('Error details:', {
+                code: err.code,
+                path: err.path,
+                syscall: err.syscall
+            });
             res.status(404).json({ error: 'Trellis chart not found', path: indexPath });
+        } else {
+            console.log('Trellis index served successfully');
         }
     });
 });
+// Servir arquivos estáticos do trellis (JS, CSS, etc) - deve vir depois da rota principal
+app.use('/trellis', express.static(trellisDistPath, { index: false }));
 
 // Servir Boxplot Chart em /boxplot
-app.use('/boxplot', express.static(boxplotDistPath));
 app.get('/boxplot', (req, res) => {
     const indexPath = path.join(boxplotDistPath, 'index.html');
+    console.log(`Serving boxplot index from: ${indexPath}`);
     res.sendFile(indexPath, (err) => {
         if (err) {
             console.error('Error serving boxplot index:', err);
@@ -106,6 +117,8 @@ app.get('/boxplot', (req, res) => {
         }
     });
 });
+// Servir arquivos estáticos do boxplot (JS, CSS, etc) - deve vir depois da rota principal
+app.use('/boxplot', express.static(boxplotDistPath, { index: false }));
 
 // API de analytics
 app.use('/api/analytics', analyticsRouter);
