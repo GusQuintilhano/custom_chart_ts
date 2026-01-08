@@ -5,13 +5,22 @@
 
 cd /app/app/charts-router 2>/dev/null || cd /app/charts-router
 
+# Tentar diferentes localizações possíveis
 if [ -f dist/server.js ]; then
-  exec /app/node/node dist/server.js
+  NODE_CMD="${NODE_CMD:-node}"
+  exec $NODE_CMD dist/server.js
+elif [ -f dist/src/server.js ]; then
+  NODE_CMD="${NODE_CMD:-node}"
+  exec $NODE_CMD dist/src/server.js
 elif [ -f dist/charts-router/src/server.js ]; then
-  exec /app/node/node dist/charts-router/src/server.js
+  NODE_CMD="${NODE_CMD:-node}"
+  exec $NODE_CMD dist/charts-router/src/server.js
 else
   echo "ERROR: server.js not found"
+  echo "Current directory: $(pwd)"
+  echo "Looking for server.js in:"
   find dist -name "server.js" 2>/dev/null || echo "No server.js found in dist/"
+  ls -la dist/ 2>/dev/null || echo "dist/ does not exist"
   exit 1
 fi
 
