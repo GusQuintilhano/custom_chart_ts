@@ -437,7 +437,10 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     wrapperDiv.style.marginLeft = '';
                     wrapperDiv.style.marginRight = '';
                 }
+                // Quando apenas fitWidth está ativo, o wrapper deve ter altura fixa para permitir scroll
+                // Quando fitHeight está ativo, o wrapper deve ter altura 100%
                 wrapperDiv.style.height = fitHeight ? '100%' : `${newChartHeight}px`;
+                wrapperDiv.style.flexShrink = '0';
             }
             
             // Garantir que o container também tenha width: 100% quando fitWidth está ativo
@@ -548,11 +551,12 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
                     svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
-                    // preserveAspectRatio: quando apenas fitWidth, usar 'none' para permitir escala independente na largura
+                    // preserveAspectRatio: quando apenas fitWidth, usar 'xMidYMin slice' para manter proporção na largura
+                    // mas permitir que a altura seja maior que o container (com scroll)
                     // quando apenas fitHeight, usar 'xMidYMid meet' para permitir escala na altura
                     // quando ambos, usar 'xMidYMid meet' para manter proporção
                     const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
-                        : fitWidth ? 'none' 
+                        : fitWidth ? 'xMidYMin slice' 
                         : fitHeight ? 'xMidYMid meet' 
                         : 'none';
                     svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);
