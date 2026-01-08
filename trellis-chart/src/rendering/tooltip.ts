@@ -277,10 +277,13 @@ export function setupTooltips(
             return;
         }
 
-        const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        // Mapear formato de português para inglês se necessário
+        const formatRaw = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        const format = (formatRaw === 'detalhado' || formatRaw === 'detailed') ? 'detailed' : 
+                      (formatRaw === 'simples' || formatRaw === 'simple') ? 'simple' : formatRaw;
         const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
         const customTemplate = tooltipConfig?.customTemplate || '';
-
+        
         rect.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
             const bbox = target.getBoundingClientRect();
@@ -290,10 +293,19 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
-            const content = format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            // Usar formatação customizada que aplica layout
+            let content: string;
+            if (customTemplate && customTemplate !== 'default' && customTemplate.trim() !== '') {
+                // Se há template personalizado, usar formatação padrão (sem layout customizado)
+                content = format === 'detailed'
+                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            } else {
+                // Usar formatação customizada que aplica layout
+                content = format === 'detailed'
+                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
+                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+            }
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
@@ -328,10 +340,13 @@ export function setupTooltips(
             return;
         }
 
-        const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        // Mapear formato de português para inglês se necessário
+        const formatRaw = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        const format = (formatRaw === 'detalhado' || formatRaw === 'detailed') ? 'detailed' : 
+                      (formatRaw === 'simples' || formatRaw === 'simple') ? 'simple' : formatRaw;
         const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
         const customTemplate = tooltipConfig?.customTemplate || '';
-
+        
         circle.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
             const bbox = target.getBoundingClientRect();
@@ -341,10 +356,19 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
-            const content = format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            // Usar formatação customizada que aplica layout
+            let content: string;
+            if (customTemplate && customTemplate !== 'default' && customTemplate.trim() !== '') {
+                // Se há template personalizado, usar formatação padrão (sem layout customizado)
+                content = format === 'detailed'
+                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            } else {
+                // Usar formatação customizada que aplica layout
+                content = format === 'detailed'
+                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
+                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+            }
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);

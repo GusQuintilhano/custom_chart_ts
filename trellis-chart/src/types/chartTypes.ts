@@ -98,7 +98,7 @@ export interface MeasureConfig {
     };
     tooltip?: {
         enabled: boolean;
-        format?: 'simples' | 'detalhado';
+        format?: 'simples' | 'detalhado' | 'simple' | 'detailed'; // Suporta ambos português e inglês
         backgroundColor?: string;
         layout?: 'vertical' | 'horizontal' | 'grade';
     };
