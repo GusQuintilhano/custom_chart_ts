@@ -56,11 +56,25 @@ export const renderChart = async (ctx: CustomChartContext) => {
                              chartElement.parentElement.getBoundingClientRect().height || 0;
         }
         
-        // Usar valores padrão se ainda não temos dimensões
-        const initialContainerWidth = containerWidth || 800;
-        const initialContainerHeight = containerHeight || 600;
-        
-        const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
+            // Usar valores padrão se ainda não temos dimensões
+            const initialContainerWidth = containerWidth || 800;
+            const initialContainerHeight = containerHeight || 600;
+            
+            // Log inicial de dimensões do container
+            console.log('[FitWidth] Dimensões iniciais do container:', {
+                chartElementClientWidth: chartElement.clientWidth,
+                chartElementOffsetWidth: chartElement.offsetWidth,
+                chartElementBoundingRect: chartElement.getBoundingClientRect().width,
+                containerWidth,
+                containerHeight,
+                initialContainerWidth,
+                initialContainerHeight,
+                parentElement: chartElement.parentElement?.tagName,
+                parentClientWidth: chartElement.parentElement?.clientWidth,
+                parentOffsetWidth: chartElement.parentElement?.offsetWidth,
+            });
+            
+            const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
         
         performanceMonitor.startRender(
             sessionId,
@@ -148,6 +162,19 @@ export const renderChart = async (ctx: CustomChartContext) => {
         barSpacing,
         measureLabelSpace,
     } = chartDimensions;
+    
+    // Log das dimensões calculadas
+    console.log('[FitWidth] Dimensões calculadas do gráfico:', {
+        fitWidth,
+        fitHeight,
+        containerWidth,
+        containerHeight,
+        chartWidth,
+        chartHeight,
+        plotAreaWidth,
+        barWidth,
+        barSpacing,
+    });
 
     // Calcular ranges (min/max) para cada medida (considerando minY/maxY das configurações)
     const measureRanges = calculateMeasureRanges(chartData, measureCols, measureConfigs);
