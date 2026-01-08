@@ -83,44 +83,50 @@ if (!fs.existsSync(trellisDistPath)) {
     }
 }
 
-// Servir Trellis Chart em /trellis
-// IMPORTANTE: app.get deve vir ANTES de app.use para que a rota exata seja capturada primeiro
+// Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
+// Isso permite que /trellis/assets/... funcione
+app.use('/trellis', express.static(trellisDistPath, { index: false }));
+
+// Servir assets do trellis também em /assets (para compatibilidade com index.html)
+// Isso resolve o problema de /assets/main-XXX.js não ser encontrado
+app.use('/assets', express.static(path.join(trellisDistPath, 'assets'), { index: false }));
+
+// IMPORTANTE: app.get deve vir DEPOIS de app.use para que os assets sejam servidos primeiro
 app.get('/trellis', (req, res) => {
     const indexPath = path.join(trellisDistPath, 'index.html');
     console.log(`Serving trellis index from: ${indexPath}`);
     console.log(`File exists: ${fs.existsSync(indexPath)}`);
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('Error serving trellis index:', err);
-            const errDetails = err as NodeJS.ErrnoException;
-            console.error('Error details:', {
-                code: errDetails.code,
-                path: errDetails.path,
-                syscall: errDetails.syscall,
-                message: err.message
-            });
-            res.status(404).json({ error: 'Trellis chart not found', path: indexPath });
-        } else {
-            console.log('Trellis index served successfully');
-        }
-    });
+    
+    // Ler o arquivo e modificar os caminhos dos assets se necessário
+    let htmlContent = fs.readFileSync(indexPath, 'utf8');
+    
+    // Substituir /assets/ por /trellis/assets/ para garantir que funcione
+    // Mas também manteremos /assets/ funcionando através do app.use acima
+    htmlContent = htmlContent.replace(/src="\/assets\//g, 'src="/trellis/assets/');
+    htmlContent = htmlContent.replace(/href="\/assets\//g, 'href="/trellis/assets/');
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(htmlContent);
 });
-// Servir arquivos estáticos do trellis (JS, CSS, etc) - deve vir depois da rota principal
-app.use('/trellis', express.static(trellisDistPath, { index: false }));
+
+// Servir arquivos estáticos do boxplot (JS, CSS, etc) - ANTES da rota principal
+app.use('/boxplot', express.static(boxplotDistPath, { index: false }));
 
 // Servir Boxplot Chart em /boxplot
 app.get('/boxplot', (req, res) => {
     const indexPath = path.join(boxplotDistPath, 'index.html');
     console.log(`Serving boxplot index from: ${indexPath}`);
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('Error serving boxplot index:', err);
-            res.status(404).json({ error: 'Boxplot chart not found', path: indexPath });
-        }
-    });
+    
+    // Ler o arquivo e modificar os caminhos dos assets se necessário
+    let htmlContent = fs.readFileSync(indexPath, 'utf8');
+    
+    // Substituir /assets/ por /boxplot/assets/
+    htmlContent = htmlContent.replace(/src="\/assets\//g, 'src="/boxplot/assets/');
+    htmlContent = htmlContent.replace(/href="\/assets\//g, 'href="/boxplot/assets/');
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(htmlContent);
 });
-// Servir arquivos estáticos do boxplot (JS, CSS, etc) - deve vir depois da rota principal
-app.use('/boxplot', express.static(boxplotDistPath, { index: false }));
 
 // API de analytics
 app.use('/api/analytics', analyticsRouter);
