@@ -51,6 +51,9 @@ railway.json
 .railway-deploy-summary.md
 nixpacks.toml
 deploy.sh
+Dockerfile.railway
+docker-compose.railway.yml
+RAILWAY.md
 
 
 
