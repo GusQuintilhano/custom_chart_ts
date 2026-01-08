@@ -240,6 +240,13 @@ export function readMeasureConfigs(
             showLabel: ((measureConfig as any)?.referenceLine_showLabel as boolean) !== false,
         } : undefined;
         
+        // Debug adicional: verificar se referenceLine foi criado
+        if (referenceLineEnabled && referenceLine) {
+            logger.debug(`[DEBUG] Measure ${measure.id} referenceLine criado:`, referenceLine);
+        } else if (referenceLineEnabled && !referenceLine) {
+            logger.warn(`[DEBUG] Measure ${measure.id} referenceLineEnabled=true mas referenceLine é undefined!`);
+        }
+        
         // Processar tooltip
         const tooltipEnabled = (measureConfig as any)?.tooltip_enabled !== false;
         // Mapear formato de português para inglês para compatibilidade
