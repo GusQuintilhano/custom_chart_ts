@@ -140,7 +140,10 @@ export function readMeasureConfigs(
         // Se chartType está em uma seção 'visualization', pode estar em configFromColumnVisualProps.visualization.chartType
         const visualizationSection = (configFromColumnVisualProps.visualization || {}) as Record<string, unknown>;
         const numberFormattingSection = (configFromColumnVisualProps.number_formatting || {}) as Record<string, unknown>;
-        const referenceLineSection = (configFromColumnVisualProps.referenceLine || {}) as Record<string, unknown>;
+        // O ThoughtSpot pode salvar referenceLine em diferentes seções: 'referenceLine', 'reference_line', ou no nível raiz
+        const referenceLineSection = (configFromColumnVisualProps.referenceLine || 
+                                     configFromColumnVisualProps.reference_line || 
+                                     {}) as Record<string, unknown>;
         const tooltipSection = (configFromColumnVisualProps.tooltip || {}) as Record<string, unknown>;
         
         // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
@@ -210,9 +213,12 @@ export function readMeasureConfigs(
             inMeasureConfigFlat: (measureConfigFlat as any).referenceLine_enabled,
             inConfigFromColumnVisualProps: (configFromColumnVisualProps as any).referenceLine_enabled,
             inReferenceLineSection: referenceLineSection.enabled ?? referenceLineSection.referenceLine_enabled,
+            inReferenceLineSection_reference_line: (configFromColumnVisualProps.reference_line as any)?.referenceLine_enabled,
             referenceLineEnabledFromSection,
             finalInMeasureConfig: (measureConfig as any).referenceLine_enabled,
             allKeysInMeasureConfigFlat: Object.keys(measureConfigFlat).filter(k => k.includes('reference') || k.includes('Reference')),
+            allKeysInConfigFromColumnVisualProps: Object.keys(configFromColumnVisualProps).filter(k => k.includes('reference') || k.includes('Reference')),
+            fullConfigFromColumnVisualProps: configFromColumnVisualProps, // Log completo para debug
         });
         
         // Debug: verificar valores
