@@ -40,37 +40,11 @@ export const renderChart = async (ctx: CustomChartContext) => {
         } = dataSetup;
 
         // Iniciar monitoramento de performance
-        // Obter dimensões do container para uso no cálculo inicial (especialmente importante para fitWidth)
-        // IMPORTANTE: Quando fitWidth está ativo, precisamos considerar que o containerDiv terá clientWidth menor
-        // que o chartElement devido ao padding/border. Mas como o containerDiv ainda não existe, precisamos
-        // estimar essa diferença baseado no padding do chartElement, ou usar uma abordagem mais conservadora.
-        // O dynamicResize vai re-renderizar com as dimensões corretas assim que o containerDiv estiver disponível.
+        // Obter dimensões do container para uso no cálculo inicial
+        // IMPORTANTE: Usar clientWidth (largura real do conteúdo) em vez de offsetWidth (que inclui padding)
+        // O SVG renderizado ocupa apenas o clientWidth, então o conteúdo deve ser redesenhado para essa largura
         let containerWidth = chartElement.clientWidth || chartElement.offsetWidth || 0;
         let containerHeight = chartElement.clientHeight || chartElement.offsetHeight || 0;
-        
-        // Quando fitWidth está ativo, tentar estimar a largura real do containerDiv
-        // O containerDiv geralmente tem clientWidth = offsetWidth - padding/border do chartElement
-        if (fitWidth && containerWidth > 0) {
-            const chartElementComputedStyle = window.getComputedStyle(chartElement);
-            const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
-            const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
-            const chartElementBorderLeft = parseFloat(chartElementComputedStyle.borderLeftWidth) || 0;
-            const chartElementBorderRight = parseFloat(chartElementComputedStyle.borderRightWidth) || 0;
-            const totalPaddingBorder = chartElementPaddingLeft + chartElementPaddingRight + 
-                                     chartElementBorderLeft + chartElementBorderRight;
-            
-            // Se há padding/border no chartElement, o containerDiv terá largura menor
-            if (totalPaddingBorder > 0) {
-                containerWidth = Math.max(0, containerWidth - totalPaddingBorder);
-                
-                console.log('[FitWidth] Estimando largura do containerDiv para renderização inicial:', {
-                    chartElementClientWidth: chartElement.clientWidth,
-                    chartElementOffsetWidth: chartElement.offsetWidth,
-                    totalPaddingBorder,
-                    estimatedContainerWidth: containerWidth,
-                });
-            }
-        }
         
         // Se não temos dimensões, tentar obter do elemento pai
         // Também usar clientWidth primeiro (largura real do conteúdo)
@@ -165,6 +139,31 @@ export const renderChart = async (ctx: CustomChartContext) => {
         tooltipBackgroundColor,
         tooltipCustomTemplate,
     } = options;
+
+    // Quando fitWidth está ativo, ajustar containerWidth para estimar a largura real do containerDiv
+    // O containerDiv geralmente tem clientWidth = chartElement.clientWidth - padding/border do chartElement
+    // Se houver diferença, o dynamicResize vai re-renderizar com as dimensões corretas
+    if (fitWidth && containerWidth > 0) {
+        const chartElementComputedStyle = window.getComputedStyle(chartElement);
+        const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
+        const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
+        const chartElementBorderLeft = parseFloat(chartElementComputedStyle.borderLeftWidth) || 0;
+        const chartElementBorderRight = parseFloat(chartElementComputedStyle.borderRightWidth) || 0;
+        const totalPaddingBorder = chartElementPaddingLeft + chartElementPaddingRight + 
+                                 chartElementBorderLeft + chartElementBorderRight;
+        
+        // Se há padding/border no chartElement, o containerDiv terá largura menor
+        if (totalPaddingBorder > 0) {
+            containerWidth = Math.max(0, containerWidth - totalPaddingBorder);
+            
+            console.log('[FitWidth] Estimando largura do containerDiv para renderização inicial:', {
+                chartElementClientWidth: chartElement.clientWidth,
+                chartElementOffsetWidth: chartElement.offsetWidth,
+                totalPaddingBorder,
+                estimatedContainerWidth: containerWidth,
+            });
+        }
+    }
 
     // Calcular dimensões do gráfico
     // (containerWidth e containerHeight já foram obtidos acima)
