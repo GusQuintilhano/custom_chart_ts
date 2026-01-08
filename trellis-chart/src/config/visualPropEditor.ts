@@ -658,81 +658,81 @@ export function createVisualPropEditorDefinition(
         
         logger.debug('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
         logger.debug('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
-    
-    // Ler valores salvos
-    const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
-    const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes, chartColorsStyle: savedChartColorsStyle, chartTooltip: savedChartTooltip } = readSavedValues(allSavedProps);
-    
-    // Criar seções do editor (passar allSavedProps para permitir condicionais dinâmicas)
-    const elements = createEditorSections(
-        savedChartVisual,
-        savedChartDimensions,
-        savedChartDividerLines,
-        savedChartOptions,
-        savedTextSizes,
-        savedChartColorsStyle,
-        savedChartTooltip,
-        allSavedProps
-    );
-    
-    // Criar configurações por coluna para aparecer na aba "Configure"
-    const columnsVizPropDefinition: any[] = [];
-    
-    if (measureColumns.length > 0) {
-        const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps);
-        if (Object.keys(measureColumnSettings).length > 0) {
-            columnsVizPropDefinition.push({
-                type: ColumnType.MEASURE,
-                columnSettingsDefinition: measureColumnSettings,
-            });
-        }
-    }
-    
-    if (dimensionColumns.length > 0) {
-        const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, currentVisualProps);
-        if (Object.keys(dimensionColumnSettings).length > 0) {
-            columnsVizPropDefinition.push({
-                type: ColumnType.ATTRIBUTE,
-                columnSettingsDefinition: dimensionColumnSettings,
-            });
-        }
-    }
-    
-    // Criar assinatura baseada nas colunas para forçar o ThoughtSpot a re-executar getDefaultChartConfig
-    const columnIds = columns.map(col => col.id).sort();
-    const columnSignature = columnIds.join(',');
-    const measureIds = measureColumns.map(m => m.id).sort();
-    const measureSignature = measureIds.join(',');
-    
-    logger.debug('===== ASSINATURA DAS COLUNAS =====');
-    logger.debug('Total de colunas:', columns.length);
-    logger.debug('Total de medidas:', measureColumns.length);
-    logger.debug('Total de dimensões:', dimensionColumns.length);
-    logger.debug('IDs das medidas:', measureIds);
-    logger.debug('Assinatura das colunas:', columnSignature);
-    logger.debug('Assinatura das medidas:', measureSignature);
-    
-    const result: VisualPropEditorDefinition = {
-        elements,
-        ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
-    };
-    
-    // Log resumido para evitar timeout (não fazer JSON.stringify de objetos grandes)
-    logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', {
-        elementsCount: elements.length,
-        hasColumnsVizProp: columnsVizPropDefinition.length > 0,
-        columnsVizPropCount: columnsVizPropDefinition.length,
-        measuresProcessed: measureColumns.length,
-    });
-    
-    if (columnsVizPropDefinition.length > 0) {
-        const measuresInConfig = Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}).length || 0;
-        logger.debug('🎨 [DEBUG] Medidas no columnsVizPropDefinition:', measuresInConfig);
         
-        if (measureColumns.length !== measuresInConfig) {
-            logger.debug(`DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
+        // Ler valores salvos
+        const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
+        const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes, chartColorsStyle: savedChartColorsStyle, chartTooltip: savedChartTooltip } = readSavedValues(allSavedProps);
+        
+        // Criar seções do editor (passar allSavedProps para permitir condicionais dinâmicas)
+        const elements = createEditorSections(
+            savedChartVisual,
+            savedChartDimensions,
+            savedChartDividerLines,
+            savedChartOptions,
+            savedTextSizes,
+            savedChartColorsStyle,
+            savedChartTooltip,
+            allSavedProps
+        );
+        
+        // Criar configurações por coluna para aparecer na aba "Configure"
+        const columnsVizPropDefinition: any[] = [];
+        
+        if (measureColumns.length > 0) {
+            const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps);
+            if (Object.keys(measureColumnSettings).length > 0) {
+                columnsVizPropDefinition.push({
+                    type: ColumnType.MEASURE,
+                    columnSettingsDefinition: measureColumnSettings,
+                });
+            }
         }
-    }
+        
+        if (dimensionColumns.length > 0) {
+            const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, currentVisualProps);
+            if (Object.keys(dimensionColumnSettings).length > 0) {
+                columnsVizPropDefinition.push({
+                    type: ColumnType.ATTRIBUTE,
+                    columnSettingsDefinition: dimensionColumnSettings,
+                });
+            }
+        }
+        
+        // Criar assinatura baseada nas colunas para forçar o ThoughtSpot a re-executar getDefaultChartConfig
+        const columnIds = columns.map(col => col.id).sort();
+        const columnSignature = columnIds.join(',');
+        const measureIds = measureColumns.map(m => m.id).sort();
+        const measureSignature = measureIds.join(',');
+        
+        logger.debug('===== ASSINATURA DAS COLUNAS =====');
+        logger.debug('Total de colunas:', columns.length);
+        logger.debug('Total de medidas:', measureColumns.length);
+        logger.debug('Total de dimensões:', dimensionColumns.length);
+        logger.debug('IDs das medidas:', measureIds);
+        logger.debug('Assinatura das colunas:', columnSignature);
+        logger.debug('Assinatura das medidas:', measureSignature);
+        
+        const result: VisualPropEditorDefinition = {
+            elements,
+            ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
+        };
+        
+        // Log resumido para evitar timeout (não fazer JSON.stringify de objetos grandes)
+        logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', {
+            elementsCount: elements.length,
+            hasColumnsVizProp: columnsVizPropDefinition.length > 0,
+            columnsVizPropCount: columnsVizPropDefinition.length,
+            measuresProcessed: measureColumns.length,
+        });
+        
+        if (columnsVizPropDefinition.length > 0) {
+            const measuresInConfig = Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}).length || 0;
+            logger.debug('🎨 [DEBUG] Medidas no columnsVizPropDefinition:', measuresInConfig);
+            
+            if (measureColumns.length !== measuresInConfig) {
+                logger.debug(`DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
+            }
+        }
         logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
         
         return result;
