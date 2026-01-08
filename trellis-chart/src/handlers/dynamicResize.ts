@@ -129,10 +129,16 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
     const adjustDimensions = () => {
         // Tentar obter dimensões do container de várias formas
-        let containerWidth = containerDiv.clientWidth;
-        let containerHeight = containerDiv.clientHeight;
+        // IMPORTANTE: Quando fitWidth está ativo, usar offsetWidth ou getBoundingClientRect
+        // em vez de clientWidth, pois clientWidth não inclui padding
+        let containerWidth = fitWidth 
+            ? (containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || containerDiv.clientWidth || 0)
+            : containerDiv.clientWidth;
+        let containerHeight = fitHeight
+            ? (containerDiv.offsetHeight || containerDiv.getBoundingClientRect().height || containerDiv.clientHeight || 0)
+            : containerDiv.clientHeight;
         
-        // Se clientWidth é 0, tentar offsetWidth ou getBoundingClientRect
+        // Se ainda não temos dimensões, tentar outras formas
         if (fitWidth && containerWidth === 0) {
             containerWidth = containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || 0;
         }
@@ -142,9 +148,10 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         
         // Se ainda não temos dimensões e fitWidth está ativo, tentar obter do elemento pai
         if (fitWidth && containerWidth === 0 && containerDiv.parentElement) {
-            const parentWidth = containerDiv.parentElement.clientWidth || 
-                              containerDiv.parentElement.offsetWidth || 
-                              containerDiv.parentElement.getBoundingClientRect().width || 0;
+            // Para o pai, também usar offsetWidth para incluir padding
+            const parentWidth = containerDiv.parentElement.offsetWidth || 
+                              containerDiv.parentElement.getBoundingClientRect().width ||
+                              containerDiv.parentElement.clientWidth || 0;
             if (parentWidth > 0) {
                 containerWidth = parentWidth;
                 
@@ -372,13 +379,49 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             if (fitWidth) {
                 containerDiv.style.width = '100%';
                 containerDiv.style.minWidth = '100%';
+                containerDiv.style.maxWidth = '100%';
+                containerDiv.style.boxSizing = 'border-box';
+                containerDiv.style.position = 'relative';
+                containerDiv.style.margin = '0';
+                containerDiv.style.padding = '0';
+                
+                // Se o container está menor que o pai, tentar compensar com margin negativo
+                const parentWidth = containerDiv.parentElement?.offsetWidth || 0;
+                const currentWidth = containerDiv.offsetWidth;
+                const computedStyle = window.getComputedStyle(containerDiv);
+                const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+                const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+                const marginLeft = parseFloat(computedStyle.marginLeft) || 0;
+                const marginRight = parseFloat(computedStyle.marginRight) || 0;
+                
+                // Se há diferença entre parentWidth e currentWidth, pode ser padding do pai
+                if (parentWidth > 0 && currentWidth < parentWidth) {
+                    const parentComputedStyle = window.getComputedStyle(containerDiv.parentElement!);
+                    const parentPaddingLeft = parseFloat(parentComputedStyle.paddingLeft) || 0;
+                    const parentPaddingRight = parseFloat(parentComputedStyle.paddingRight) || 0;
+                    
+                    // Tentar usar calc para compensar padding do pai
+                    if (parentPaddingLeft > 0 || parentPaddingRight > 0) {
+                        containerDiv.style.width = `calc(100% + ${parentPaddingLeft + parentPaddingRight}px)`;
+                        containerDiv.style.marginLeft = `-${parentPaddingLeft}px`;
+                        containerDiv.style.marginRight = `-${parentPaddingRight}px`;
+                    }
+                }
                 
                 console.log('[FitWidth] Aplicando estilos ao container:', {
                     width: containerDiv.style.width,
                     minWidth: containerDiv.style.minWidth,
+                    maxWidth: containerDiv.style.maxWidth,
+                    boxSizing: containerDiv.style.boxSizing,
                     computedWidth: window.getComputedStyle(containerDiv).width,
                     actualWidth: containerDiv.offsetWidth,
                     parentWidth: containerDiv.parentElement?.offsetWidth,
+                    parentPaddingLeft: parseFloat(window.getComputedStyle(containerDiv.parentElement!).paddingLeft) || 0,
+                    parentPaddingRight: parseFloat(window.getComputedStyle(containerDiv.parentElement!).paddingRight) || 0,
+                    paddingLeft,
+                    paddingRight,
+                    marginLeft,
+                    marginRight,
                 });
             }
 

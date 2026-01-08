@@ -29,7 +29,12 @@ export function createChartHtmlStructure(
         : `width: ${chartWidth}px; height: ${fitHeight ? '100%' : `${chartHeight}px`}; flex-shrink: 0;`;
     
     // Container style
-    const containerStyle = `padding: 0; margin: 0; width: 100%; height: 100%; ${containerOverflow} display: flex; align-items: flex-start; justify-content: flex-start;`;
+    // Quando fitWidth está ativo, garantir que o container ocupe 100% da largura disponível
+    // Usar box-sizing: border-box para incluir padding/margin no cálculo
+    // Usar margin negativo se necessário para compensar padding do elemento pai
+    const containerStyle = fitWidth 
+        ? `padding: 0; margin: 0; width: 100%; height: 100%; ${containerOverflow} display: flex; align-items: flex-start; justify-content: flex-start; box-sizing: border-box; position: relative;`
+        : `padding: 0; margin: 0; width: 100%; height: 100%; ${containerOverflow} display: flex; align-items: flex-start; justify-content: flex-start;`;
     
     // SVG dimensions
     const svgWidth = fitWidth ? '100%' : `${chartWidth}px`;
