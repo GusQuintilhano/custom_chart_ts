@@ -147,6 +147,13 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                               containerDiv.parentElement.getBoundingClientRect().width || 0;
             if (parentWidth > 0) {
                 containerWidth = parentWidth;
+                
+                // Log quando obtemos dimensões do pai
+                console.log('[FitWidth] Dimensões obtidas do elemento pai:', {
+                    containerWidth,
+                    parentWidth,
+                    parentElement: containerDiv.parentElement.tagName,
+                });
             }
         }
         
@@ -167,6 +174,18 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Isso garante que o gráfico seja ajustado corretamente na primeira renderização
             newChartWidth = containerWidth;
             shouldUpdate = true;
+            
+            console.log('[FitWidth] Ajustando largura:', {
+                fitWidth,
+                containerWidth,
+                chartWidth,
+                newChartWidth,
+                containerDivClientWidth: containerDiv.clientWidth,
+                containerDivOffsetWidth: containerDiv.offsetWidth,
+                containerDivBoundingRect: containerDiv.getBoundingClientRect().width,
+                wrapperDivClientWidth: wrapperDiv?.clientWidth,
+                wrapperDivOffsetWidth: wrapperDiv?.offsetWidth,
+            });
         } else if (!fitWidth) {
             const numBars = chartData.length;
             const totalBarWidth = barWidth * numBars;
@@ -333,6 +352,14 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     wrapperDiv.style.width = '100%';
                     wrapperDiv.style.minWidth = '100%';
                     wrapperDiv.style.maxWidth = '100%';
+                    
+                    console.log('[FitWidth] Aplicando estilos ao wrapper:', {
+                        width: wrapperDiv.style.width,
+                        minWidth: wrapperDiv.style.minWidth,
+                        maxWidth: wrapperDiv.style.maxWidth,
+                        computedWidth: window.getComputedStyle(wrapperDiv).width,
+                        actualWidth: wrapperDiv.offsetWidth,
+                    });
                 } else {
                     wrapperDiv.style.width = `${newChartWidth}px`;
                     wrapperDiv.style.minWidth = '';
@@ -345,6 +372,14 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             if (fitWidth) {
                 containerDiv.style.width = '100%';
                 containerDiv.style.minWidth = '100%';
+                
+                console.log('[FitWidth] Aplicando estilos ao container:', {
+                    width: containerDiv.style.width,
+                    minWidth: containerDiv.style.minWidth,
+                    computedWidth: window.getComputedStyle(containerDiv).width,
+                    actualWidth: containerDiv.offsetWidth,
+                    parentWidth: containerDiv.parentElement?.offsetWidth,
+                });
             }
 
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
@@ -365,6 +400,16 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         : fitHeight ? 'xMidYMid meet' 
                         : 'none';
                     svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);
+                    
+                    console.log('[FitWidth] Aplicando atributos ao SVG:', {
+                        width: svgElement.getAttribute('width'),
+                        height: svgElement.getAttribute('height'),
+                        viewBox: svgElement.getAttribute('viewBox'),
+                        preserveAspectRatio: svgElement.getAttribute('preserveAspectRatio'),
+                        computedWidth: window.getComputedStyle(svgElement).width,
+                        actualWidth: svgElement.clientWidth,
+                        actualBoundingRect: svgElement.getBoundingClientRect().width,
+                    });
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
