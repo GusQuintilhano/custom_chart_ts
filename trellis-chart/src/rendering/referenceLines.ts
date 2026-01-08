@@ -69,8 +69,17 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
         }
 
         const range = measureRanges[measureIdx];
-        const minValue = range.effectiveMin ?? range.min;
-        const maxValue = range.effectiveMax ?? range.max;
+        let minValue = range.effectiveMin ?? range.min;
+        let maxValue = range.effectiveMax ?? range.max;
+
+        // Ajustar o range para incluir o valor da linha de referência, se estiver fora
+        // Isso garante que a linha sempre apareça dentro da área visível
+        if (referenceLine.value < minValue) {
+            minValue = referenceLine.value;
+        }
+        if (referenceLine.value > maxValue) {
+            maxValue = referenceLine.value;
+        }
 
         const measureRowTop = calculateMeasureRowTop(
             measureIdx,
