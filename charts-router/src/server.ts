@@ -23,16 +23,46 @@ app.use(express.json());
 // Middleware de analytics (deve vir antes das rotas de gráficos)
 app.use(analyticsMiddleware);
 
+// Determinar caminho base do projeto
+// Se estamos em dist/charts-router/src/, subir para /app
+// Se estamos em dist/src/, subir para /app/charts-router
+let projectRoot: string;
+if (__dirname.includes('dist/charts-router/src')) {
+    // Código compilado em dist/charts-router/src/
+    projectRoot = path.resolve(__dirname, '../../../');
+} else if (__dirname.includes('dist/src')) {
+    // Código compilado em dist/src/
+    projectRoot = path.resolve(__dirname, '../../');
+} else {
+    // Desenvolvimento ou outra estrutura
+    projectRoot = path.resolve(__dirname, '../../');
+}
+
+const trellisDistPath = path.join(projectRoot, 'trellis-chart/dist');
+const boxplotDistPath = path.join(projectRoot, 'boxplot-chart/dist');
+
 // Servir Trellis Chart em /trellis
-app.use('/trellis', express.static(path.join(__dirname, '../../trellis-chart/dist')));
+app.use('/trellis', express.static(trellisDistPath));
 app.get('/trellis', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../trellis-chart/dist/index.html'));
+    const indexPath = path.join(trellisDistPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving trellis index:', err);
+            res.status(404).json({ error: 'Trellis chart not found', path: indexPath });
+        }
+    });
 });
 
 // Servir Boxplot Chart em /boxplot
-app.use('/boxplot', express.static(path.join(__dirname, '../../boxplot-chart/dist')));
+app.use('/boxplot', express.static(boxplotDistPath));
 app.get('/boxplot', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../boxplot-chart/dist/index.html'));
+    const indexPath = path.join(boxplotDistPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving boxplot index:', err);
+            res.status(404).json({ error: 'Boxplot chart not found', path: indexPath });
+        }
+    });
 });
 
 // API de analytics
