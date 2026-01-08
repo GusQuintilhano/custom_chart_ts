@@ -128,9 +128,28 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     }
 
     const adjustDimensions = () => {
-        const containerWidth = containerDiv.clientWidth;
-        const containerHeight = containerDiv.clientHeight;
-
+        // Tentar obter dimensões do container de várias formas
+        let containerWidth = containerDiv.clientWidth;
+        let containerHeight = containerDiv.clientHeight;
+        
+        // Se clientWidth é 0, tentar offsetWidth ou getBoundingClientRect
+        if (fitWidth && containerWidth === 0) {
+            containerWidth = containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || 0;
+        }
+        if (fitHeight && containerHeight === 0) {
+            containerHeight = containerDiv.offsetHeight || containerDiv.getBoundingClientRect().height || 0;
+        }
+        
+        // Se ainda não temos dimensões e fitWidth está ativo, tentar obter do elemento pai
+        if (fitWidth && containerWidth === 0 && containerDiv.parentElement) {
+            const parentWidth = containerDiv.parentElement.clientWidth || 
+                              containerDiv.parentElement.offsetWidth || 
+                              containerDiv.parentElement.getBoundingClientRect().width || 0;
+            if (parentWidth > 0) {
+                containerWidth = parentWidth;
+            }
+        }
+        
         // Se fitWidth está ativo mas o container ainda não tem dimensões, aguardar
         if (fitWidth && containerWidth === 0) {
             return;
@@ -321,14 +340,21 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
             if (svgElement) {
                 // SVG sempre usa viewBox para scaling responsivo
+                // IMPORTANTE: viewBox deve refletir as dimensões reais do gráfico
                 svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
+                
                 if (fitWidth) {
+                    // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
                     svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
+                    // Garantir que preserveAspectRatio está correto
+                    svgElement.setAttribute('preserveAspectRatio', fitHeight ? 'xMidYMid meet' : 'xMidYMin slice');
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
+                    svgElement.setAttribute('preserveAspectRatio', 'none');
                 }
+                
                 svgElement.innerHTML = newSecondaryXAxisLabelsHtml + newYAxesHtml + 
                     newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newSecondaryXAxisHtml + 
                     newAllChartElementsHtml + newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
@@ -336,7 +362,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         }
     };
 
-    // Ajustar imediatamente e também após um pequeno delay para garantir
+    // Ajustar imediatamente
     adjustDimensions();
     
     // Também observar mudanças no container
@@ -350,16 +376,26 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     // Isso é especialmente importante quando fitWidth está ativo
     setTimeout(() => {
         adjustDimensions();
+    }, 50);
+    
+    setTimeout(() => {
+        adjustDimensions();
     }, 100);
     
     // Se fitWidth está ativo, fazer mais tentativas para garantir que o ajuste seja feito
     if (fitWidth) {
         setTimeout(() => {
             adjustDimensions();
+        }, 200);
+        setTimeout(() => {
+            adjustDimensions();
         }, 300);
         setTimeout(() => {
             adjustDimensions();
         }, 500);
+        setTimeout(() => {
+            adjustDimensions();
+        }, 1000);
     }
 }
 
