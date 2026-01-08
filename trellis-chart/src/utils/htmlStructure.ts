@@ -45,13 +45,13 @@ export function createChartHtmlStructure(
     const svgWidth = fitWidth ? '100%' : `${chartWidth}px`;
     const svgHeight = fitHeight ? '100%' : fitWidth ? `${chartHeight}px` : `${chartHeight}px`;
     
-    // Quando apenas fitWidth está ativo, usar 'xMidYMin slice' para manter proporção na largura
-    // mas permitir que a altura seja maior que o container (com scroll)
-    // slice vai cortar a altura se necessário, mas mantém a proporção do conteúdo
+    // Quando apenas fitWidth está ativo, usar 'none' para permitir escala independente
+    // Isso evita comprimir o texto - o SVG vai escalar para ocupar 100% da largura
+    // sem manter proporção, permitindo que o conteúdo ocupe todo o espaço disponível
     // Quando apenas fitHeight está ativo, usar 'xMidYMid meet' para permitir escala na altura
     // Quando ambos estão ativos, usar 'xMidYMid meet' para manter proporção
     const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
-        : fitWidth ? 'xMidYMin slice' 
+        : fitWidth ? 'none' 
         : fitHeight ? 'xMidYMid meet' 
         : 'none';
     const viewBox = `0 0 ${chartWidth} ${chartHeight}`;
