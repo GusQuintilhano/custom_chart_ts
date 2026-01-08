@@ -587,7 +587,22 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     };
 
     // Ajustar imediatamente
+    // IMPORTANTE: Para fitWidth, garantir que ajustamos imediatamente após a renderização inicial
+    // para que o conteúdo seja redesenhado com as dimensões corretas desde o início
     adjustDimensions();
+    
+    // Se fitWidth está ativo, ajustar novamente imediatamente para garantir que
+    // as dimensões corretas do containerDiv sejam detectadas e o conteúdo seja redesenhado
+    if (fitWidth) {
+        // Aguardar um pouco para garantir que o DOM foi completamente atualizado
+        requestAnimationFrame(() => {
+            adjustDimensions();
+        });
+        
+        setTimeout(() => {
+            adjustDimensions();
+        }, 0);
+    }
     
     // Também observar mudanças no container
     const resizeObserver = new ResizeObserver(() => {
