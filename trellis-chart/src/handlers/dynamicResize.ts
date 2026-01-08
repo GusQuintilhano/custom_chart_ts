@@ -540,11 +540,11 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
                     svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
-                    // preserveAspectRatio: quando apenas fitWidth, usar 'xMidYMin slice' para permitir escala na largura
+                    // preserveAspectRatio: quando apenas fitWidth, usar 'none' para permitir escala independente na largura
                     // quando apenas fitHeight, usar 'xMidYMid meet' para permitir escala na altura
                     // quando ambos, usar 'xMidYMid meet' para manter proporção
                     const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
-                        : fitWidth ? 'xMidYMin slice' 
+                        : fitWidth ? 'none' 
                         : fitHeight ? 'xMidYMid meet' 
                         : 'none';
                     svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);

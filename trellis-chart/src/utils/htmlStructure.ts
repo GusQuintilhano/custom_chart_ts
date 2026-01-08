@@ -39,11 +39,11 @@ export function createChartHtmlStructure(
     // SVG dimensions
     const svgWidth = fitWidth ? '100%' : `${chartWidth}px`;
     const svgHeight = fitHeight ? '100%' : fitWidth ? `${chartHeight}px` : `${chartHeight}px`;
-    // Quando apenas fitWidth está ativo, usar 'xMidYMin slice' para permitir escala na largura
+    // Quando apenas fitWidth está ativo, usar 'none' para permitir escala independente na largura
     // Quando apenas fitHeight está ativo, usar 'xMidYMid meet' para permitir escala na altura
     // Quando ambos estão ativos, usar 'xMidYMid meet' para manter proporção
     const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
-        : fitWidth ? 'xMidYMin slice' 
+        : fitWidth ? 'none' 
         : fitHeight ? 'xMidYMid meet' 
         : 'none';
     const viewBox = `0 0 ${chartWidth} ${chartHeight}`;
