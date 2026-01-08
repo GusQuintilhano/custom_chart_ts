@@ -53,7 +53,18 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
 
     measureConfigs.forEach((measureConfig, measureIdx) => {
         const referenceLine = measureConfig.referenceLine;
+        
+        // Debug: log detalhado
+        console.log(`[ReferenceLine] Measure ${measureIdx}:`, {
+            hasReferenceLine: !!referenceLine,
+            enabled: referenceLine?.enabled,
+            value: referenceLine?.value,
+            color: referenceLine?.color,
+            style: referenceLine?.style,
+        });
+        
         if (!referenceLine || !referenceLine.enabled) {
+            console.log(`[ReferenceLine] Measure ${measureIdx}: Skipping - no referenceLine or not enabled`);
             return;
         }
 
@@ -81,6 +92,19 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
         const lineX2 = leftMargin + plotAreaWidth;
         const color = referenceLine.color || '#ef4444';
         const strokeDashArray = getStrokeDashArray(referenceLine.style || 'sólida');
+
+        // Debug: log da linha que será renderizada
+        console.log(`[ReferenceLine] Measure ${measureIdx}: Rendering line`, {
+            value: referenceLine.value,
+            minValue,
+            maxValue,
+            referenceY,
+            lineX1,
+            lineX2,
+            color,
+            strokeDashArray,
+            inRange: referenceLine.value >= minValue && referenceLine.value <= maxValue,
+        });
 
         // Renderizar linha
         html += `
