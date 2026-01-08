@@ -140,6 +140,8 @@ export function readMeasureConfigs(
         // Se chartType está em uma seção 'visualization', pode estar em configFromColumnVisualProps.visualization.chartType
         const visualizationSection = (configFromColumnVisualProps.visualization || {}) as Record<string, unknown>;
         const numberFormattingSection = (configFromColumnVisualProps.number_formatting || {}) as Record<string, unknown>;
+        const referenceLineSection = (configFromColumnVisualProps.referenceLine || {}) as Record<string, unknown>;
+        const tooltipSection = (configFromColumnVisualProps.tooltip || {}) as Record<string, unknown>;
         
         // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
         // Também mesclar valores de seções aninhadas (ex: visualization.chartType -> chartType, number_formatting.decimals -> decimals)
@@ -156,6 +158,19 @@ export function readMeasureConfigs(
         const formatFromNumberFormatting = numberFormattingSection.format;
         const useThousandsSeparatorFromNumberFormatting = numberFormattingSection.useThousandsSeparator;
         
+        // Extrair configurações de linha de referência de seções aninhadas
+        const referenceLineEnabledFromSection = referenceLineSection.enabled;
+        const referenceLineValueFromSection = referenceLineSection.value;
+        const referenceLineColorFromSection = referenceLineSection.color;
+        const referenceLineStyleFromSection = referenceLineSection.style;
+        const referenceLineShowLabelFromSection = referenceLineSection.showLabel;
+        
+        // Extrair configurações de tooltip de seções aninhadas
+        const tooltipEnabledFromSection = tooltipSection.enabled;
+        const tooltipFormatFromSection = tooltipSection.format;
+        const tooltipBackgroundColorFromSection = tooltipSection.backgroundColor;
+        const tooltipLayoutFromSection = tooltipSection.layout;
+        
         const measureConfig: Record<string, unknown> = {
             ...measureConfigFlat,
             ...(chartTypeFromVisualization ? { chartType: chartTypeFromVisualization } : {}), // Extrair chartType da seção visualization se existir
@@ -163,6 +178,17 @@ export function readMeasureConfigs(
             ...(decimalsFromNumberFormatting !== undefined ? { decimals: decimalsFromNumberFormatting } : {}), // Extrair decimals da seção number_formatting se existir
             ...(formatFromNumberFormatting ? { format: formatFromNumberFormatting } : {}), // Extrair format da seção number_formatting se existir
             ...(useThousandsSeparatorFromNumberFormatting !== undefined ? { useThousandsSeparator: useThousandsSeparatorFromNumberFormatting } : {}), // Extrair useThousandsSeparator da seção number_formatting se existir
+            // Extrair configurações de linha de referência de seções aninhadas
+            ...(referenceLineEnabledFromSection !== undefined ? { referenceLine_enabled: referenceLineEnabledFromSection } : {}),
+            ...(referenceLineValueFromSection !== undefined ? { referenceLine_value: referenceLineValueFromSection } : {}),
+            ...(referenceLineColorFromSection ? { referenceLine_color: referenceLineColorFromSection } : {}),
+            ...(referenceLineStyleFromSection ? { referenceLine_style: referenceLineStyleFromSection } : {}),
+            ...(referenceLineShowLabelFromSection !== undefined ? { referenceLine_showLabel: referenceLineShowLabelFromSection } : {}),
+            // Extrair configurações de tooltip de seções aninhadas
+            ...(tooltipEnabledFromSection !== undefined ? { tooltip_enabled: tooltipEnabledFromSection } : {}),
+            ...(tooltipFormatFromSection ? { tooltip_format: tooltipFormatFromSection } : {}),
+            ...(tooltipBackgroundColorFromSection ? { tooltip_backgroundColor: tooltipBackgroundColorFromSection } : {}),
+            ...(tooltipLayoutFromSection ? { tooltip_layout: tooltipLayoutFromSection } : {}),
         };
         
         // Debug: verificar valores
@@ -189,9 +215,12 @@ export function readMeasureConfigs(
         
         // Processar tooltip
         const tooltipEnabled = (measureConfig as any)?.tooltip_enabled !== false;
+        // Mapear formato de português para inglês para compatibilidade
+        const tooltipFormatRaw = ((measureConfig as any)?.tooltip_format as string) || 'simples';
+        const tooltipFormatMapped = tooltipFormatRaw === 'detalhado' ? 'detailed' : (tooltipFormatRaw === 'simples' ? 'simple' : tooltipFormatRaw);
         const tooltip: MeasureConfig['tooltip'] = tooltipEnabled ? {
             enabled: true,
-            format: (((measureConfig as any)?.tooltip_format as string) || 'simples') as 'simples' | 'detalhado',
+            format: tooltipFormatMapped as 'simple' | 'detailed',
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
             layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
         } : undefined;
