@@ -356,21 +356,45 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Quando fitWidth está ativo, wrapper deve ser 100% da largura
             if (wrapperDiv) {
                 if (fitWidth) {
-                    wrapperDiv.style.width = '100%';
+                    // Obter padding do container para compensar
+                    const containerComputedStyle = window.getComputedStyle(containerDiv);
+                    const containerPaddingLeft = parseFloat(containerComputedStyle.paddingLeft) || 0;
+                    const containerPaddingRight = parseFloat(containerComputedStyle.paddingRight) || 0;
+                    const totalPadding = containerPaddingLeft + containerPaddingRight;
+                    
+                    // Se há padding, usar calc para compensar
+                    if (totalPadding > 0) {
+                        wrapperDiv.style.width = `calc(100% + ${totalPadding}px)`;
+                        wrapperDiv.style.marginLeft = `-${containerPaddingLeft}px`;
+                        wrapperDiv.style.marginRight = `-${containerPaddingRight}px`;
+                    } else {
+                        wrapperDiv.style.width = '100%';
+                        wrapperDiv.style.marginLeft = '0';
+                        wrapperDiv.style.marginRight = '0';
+                    }
                     wrapperDiv.style.minWidth = '100%';
                     wrapperDiv.style.maxWidth = '100%';
+                    wrapperDiv.style.boxSizing = 'border-box';
                     
                     console.log('[FitWidth] Aplicando estilos ao wrapper:', {
                         width: wrapperDiv.style.width,
                         minWidth: wrapperDiv.style.minWidth,
                         maxWidth: wrapperDiv.style.maxWidth,
+                        marginLeft: wrapperDiv.style.marginLeft,
+                        marginRight: wrapperDiv.style.marginRight,
+                        boxSizing: wrapperDiv.style.boxSizing,
                         computedWidth: window.getComputedStyle(wrapperDiv).width,
                         actualWidth: wrapperDiv.offsetWidth,
+                        containerPaddingLeft,
+                        containerPaddingRight,
+                        totalPadding,
                     });
                 } else {
                     wrapperDiv.style.width = `${newChartWidth}px`;
                     wrapperDiv.style.minWidth = '';
                     wrapperDiv.style.maxWidth = '';
+                    wrapperDiv.style.marginLeft = '';
+                    wrapperDiv.style.marginRight = '';
                 }
                 wrapperDiv.style.height = fitHeight ? '100%' : `${newChartHeight}px`;
             }
