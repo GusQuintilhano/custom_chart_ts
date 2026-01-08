@@ -34,7 +34,9 @@ COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
 # Build de todos os projetos em um único comando
+# Verificar se o build foi bem-sucedido
 RUN cd charts-router && npm run build && \
+    test -f dist/server.js || (echo "ERROR: charts-router/dist/server.js not found" && exit 1) && \
     cd ../trellis-chart && npm run build && \
     cd ../boxplot-chart && npm run build
 
@@ -50,19 +52,26 @@ LABEL version="1.0.0"
 # Configurar diretório de trabalho
 WORKDIR /app
 
-# Copiar apenas os arquivos necessários do stage de build
-COPY --from=dist /app/charts-router/dist ./charts-router/dist
+# Copiar package.json primeiro para instalar dependências
 COPY --from=dist /app/charts-router/package*.json ./charts-router/
-COPY --from=dist /app/trellis-chart/dist ./trellis-chart/dist
 COPY --from=dist /app/trellis-chart/package*.json ./trellis-chart/
-COPY --from=dist /app/boxplot-chart/dist ./boxplot-chart/dist
 COPY --from=dist /app/boxplot-chart/package*.json ./boxplot-chart/
-COPY --from=dist /app/shared ./shared
+COPY --from=dist /app/shared/package*.json ./shared/
 
 # Instalar apenas dependências de produção
 RUN cd charts-router && npm ci --only=production && \
     cd ../trellis-chart && npm ci --only=production && \
-    cd ../boxplot-chart && npm install --only=production
+    cd ../boxplot-chart && npm install --only=production && \
+    cd ../shared && npm install --only=production || npm install --only=production
+
+# Copiar arquivos compilados e código compartilhado
+COPY --from=dist /app/charts-router/dist ./charts-router/dist
+COPY --from=dist /app/trellis-chart/dist ./trellis-chart/dist
+COPY --from=dist /app/boxplot-chart/dist ./boxplot-chart/dist
+COPY --from=dist /app/shared ./shared
+
+# Verificar se os arquivos foram copiados corretamente
+RUN test -f charts-router/dist/server.js || (echo "ERROR: charts-router/dist/server.js not found after copy" && ls -la charts-router/ && ls -la charts-router/dist/ 2>/dev/null || echo "dist directory does not exist" && exit 1)
 
 # Criar diretório para logs
 RUN mkdir -p /app/logs && chmod 755 /app/logs
