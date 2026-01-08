@@ -42,11 +42,11 @@ export function createChartHtmlStructure(
             <div style="${wrapperStyle}">
                 <svg width="${svgWidth}" height="${svgHeight}" viewBox="${viewBox}" style="overflow: visible;" preserveAspectRatio="${preserveAspectRatio}">
                     <rect width="100%" height="100%" fill="${backgroundColor}" />
-                    ${secondaryXAxisHtml}
                     ${secondaryXAxisLabelsHtml}
                     ${yAxesHtml}
                     ${dividerLinesBetweenMeasuresHtml}
                     ${dividerLinesBetweenBarsHtml}
+                    ${secondaryXAxisHtml}
                     ${allChartElementsHtml}
                     ${referenceLinesHtml}
                     ${xAxis}

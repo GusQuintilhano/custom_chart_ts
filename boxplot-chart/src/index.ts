@@ -24,7 +24,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
     
     try {
         const chartModel = ctx.getChartModel();
-        const chartElement = ctx.chartContainer;
+        const chartElement = document.getElementById('chart') as HTMLElement | null;
+        
+        if (!chartElement) {
+            logger.error('Elemento chart não encontrado');
+            return;
+        }
 
         // Validar dados
         const data = chartModel.data?.[0]?.data;
@@ -47,11 +52,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Usar primeira medida
         const measureColumn = measureColumns[0];
         
-        // Iniciar monitoramento de performance
+        // Calcular dimensões do container
         const containerWidth = chartElement.clientWidth || 800;
         const containerHeight = chartElement.clientHeight || 600;
         const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
         
+        // Iniciar monitoramento de performance
         performanceMonitor.startRender(
             sessionId,
             dataSize,
@@ -78,10 +84,6 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Ler opções
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
-
-        // Calcular dimensões
-        const containerWidth = chartElement.clientWidth || 800;
-        const containerHeight = chartElement.clientHeight || 600;
 
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
@@ -134,8 +136,10 @@ export const renderChart = async (ctx: CustomChartContext) => {
             sessionId,
         });
         logger.error('Erro ao renderizar Boxplot:', error);
-        const chartElement = ctx.chartContainer;
-        chartElement.innerHTML = `<div style="padding: 20px; color: #ef4444;">Erro ao renderizar Boxplot: ${error}</div>`;
+        const chartElement = document.getElementById('chart') as HTMLElement | null;
+        if (chartElement) {
+            chartElement.innerHTML = `<div style="padding: 20px; color: #ef4444;">Erro ao renderizar Boxplot: ${error}</div>`;
+        }
         ctx.emitEvent(ChartToTSEvent.RenderComplete);
     }
 };

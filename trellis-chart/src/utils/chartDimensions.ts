@@ -151,6 +151,7 @@ export function readMeasureConfigs(
         
         // Extrair valores de seções aninhadas para o nível superior
         const chartTypeFromVisualization = visualizationSection.chartType;
+        const colorFromVisualization = visualizationSection.color;
         const decimalsFromNumberFormatting = numberFormattingSection.decimals;
         const formatFromNumberFormatting = numberFormattingSection.format;
         const useThousandsSeparatorFromNumberFormatting = numberFormattingSection.useThousandsSeparator;
@@ -158,6 +159,7 @@ export function readMeasureConfigs(
         const measureConfig: Record<string, unknown> = {
             ...measureConfigFlat,
             ...(chartTypeFromVisualization ? { chartType: chartTypeFromVisualization } : {}), // Extrair chartType da seção visualization se existir
+            ...(colorFromVisualization ? { color: colorFromVisualization } : {}), // Extrair color da seção visualization se existir
             ...(decimalsFromNumberFormatting !== undefined ? { decimals: decimalsFromNumberFormatting } : {}), // Extrair decimals da seção number_formatting se existir
             ...(formatFromNumberFormatting ? { format: formatFromNumberFormatting } : {}), // Extrair format da seção number_formatting se existir
             ...(useThousandsSeparatorFromNumberFormatting !== undefined ? { useThousandsSeparator: useThousandsSeparatorFromNumberFormatting } : {}), // Extrair useThousandsSeparator da seção number_formatting se existir
