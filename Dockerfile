@@ -41,64 +41,15 @@ RUN cd charts-router && npm run build && \
     cd ../boxplot-chart && npm run build
 
 # Stage 2: Production stage
-# Usar imagem base pública como fallback (golden image do iFood requer acesso ao registry interno)
-FROM node:18-alpine AS production
+FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge AS production
 
-# Metadados
-LABEL maintainer="iFood Data Visualization Team"
-LABEL description="Custom Charts SDK - ThoughtSpot Chart SDK para visualização de dados"
-LABEL version="1.0.0"
+# Copiar apenas os arquivos necessários do stage de build
+COPY --from=dist /app /app/app
 
-# Configurar diretório de trabalho
-WORKDIR /app
-
-# Copiar package.json primeiro para instalar dependências
-COPY --from=dist /app/charts-router/package*.json ./charts-router/
-COPY --from=dist /app/trellis-chart/package*.json ./trellis-chart/
-COPY --from=dist /app/boxplot-chart/package*.json ./boxplot-chart/
-COPY --from=dist /app/shared/package*.json ./shared/
-
-# Instalar apenas dependências de produção
-RUN cd charts-router && npm ci --only=production && \
-    cd ../trellis-chart && npm ci --only=production && \
-    cd ../boxplot-chart && npm install --only=production && \
-    cd ../shared && npm install --only=production || npm install --only=production
-
-# Copiar arquivos compilados e código compartilhado
-COPY --from=dist /app/charts-router/dist ./charts-router/dist
-COPY --from=dist /app/trellis-chart/dist ./trellis-chart/dist
-COPY --from=dist /app/boxplot-chart/dist ./boxplot-chart/dist
-COPY --from=dist /app/shared ./shared
-
-# Verificar se os arquivos foram copiados corretamente
-RUN find charts-router/dist -name "server.js" -type f | head -1 | grep -q . || \
-    (echo "ERROR: server.js not found after copy" && find charts-router/dist -type f 2>/dev/null && ls -la charts-router/ && exit 1)
-
-# Criar diretório para logs
-RUN mkdir -p /app/logs && chmod 755 /app/logs
-
-# Criar usuário não-root
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
-
-USER nodejs
-
-# Expor porta
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# Usar script de entrada que encontra server.js em qualquer localização
+# O script já está incluído na cópia acima, apenas garantir permissão
+RUN chmod +x /app/app/charts-router/start.sh
 
-# Variáveis de ambiente padrão
-ENV NODE_ENV=production
-ENV PORT=8080
-
-# Copiar script de entrada
-COPY charts-router/start.sh ./charts-router/start.sh
-RUN chmod +x charts-router/start.sh
-
-# Comando de start
-WORKDIR /app/charts-router
-CMD ["./start.sh"]
+ENTRYPOINT [ "/executor", "/app/app/charts-router/start.sh" ]
