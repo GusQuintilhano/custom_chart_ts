@@ -126,6 +126,12 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     if (!containerDiv || !wrapperDiv) {
         return;
     }
+    
+    // Obter padding do chartElement (elemento raiz do ThoughtSpot) para compensar
+    const chartElementComputedStyle = window.getComputedStyle(chartElement);
+    const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
+    const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
+    const chartElementTotalPadding = chartElementPaddingLeft + chartElementPaddingRight;
 
     const adjustDimensions = () => {
         // Tentar obter dimensões do container de várias formas
@@ -356,17 +362,35 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Quando fitWidth está ativo, wrapper deve ser 100% da largura
             if (wrapperDiv) {
                 if (fitWidth) {
-                    // Obter padding do container para compensar
+                    // Calcular padding real usando a diferença entre offsetWidth e clientWidth
+                    // Isso detecta padding mesmo quando não está no computedStyle
+                    const containerOffsetWidth = containerDiv.offsetWidth;
+                    const containerClientWidth = containerDiv.clientWidth;
+                    const containerPaddingDiff = containerOffsetWidth - containerClientWidth;
+                    
+                    // Também verificar padding do chartElement
+                    const chartElementOffsetWidth = chartElement.offsetWidth;
+                    const chartElementClientWidth = chartElement.clientWidth;
+                    const chartElementPaddingDiff = chartElementOffsetWidth - chartElementClientWidth;
+                    
+                    // Obter padding do computedStyle também
                     const containerComputedStyle = window.getComputedStyle(containerDiv);
                     const containerPaddingLeft = parseFloat(containerComputedStyle.paddingLeft) || 0;
                     const containerPaddingRight = parseFloat(containerComputedStyle.paddingRight) || 0;
-                    const totalPadding = containerPaddingLeft + containerPaddingRight;
+                    const containerTotalPadding = containerPaddingLeft + containerPaddingRight;
+                    
+                    // Usar a maior diferença (offsetWidth - clientWidth) ou padding do computedStyle
+                    const totalPadding = Math.max(containerPaddingDiff, chartElementPaddingDiff, containerTotalPadding);
                     
                     // Se há padding, usar calc para compensar
                     if (totalPadding > 0) {
+                        // Dividir o padding igualmente entre left e right
+                        const paddingLeft = totalPadding / 2;
+                        const paddingRight = totalPadding / 2;
+                        
                         wrapperDiv.style.width = `calc(100% + ${totalPadding}px)`;
-                        wrapperDiv.style.marginLeft = `-${containerPaddingLeft}px`;
-                        wrapperDiv.style.marginRight = `-${containerPaddingRight}px`;
+                        wrapperDiv.style.marginLeft = `-${paddingLeft}px`;
+                        wrapperDiv.style.marginRight = `-${paddingRight}px`;
                     } else {
                         wrapperDiv.style.width = '100%';
                         wrapperDiv.style.marginLeft = '0';
@@ -385,8 +409,15 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         boxSizing: wrapperDiv.style.boxSizing,
                         computedWidth: window.getComputedStyle(wrapperDiv).width,
                         actualWidth: wrapperDiv.offsetWidth,
+                        containerOffsetWidth,
+                        containerClientWidth,
+                        containerPaddingDiff,
+                        chartElementOffsetWidth,
+                        chartElementClientWidth,
+                        chartElementPaddingDiff,
                         containerPaddingLeft,
                         containerPaddingRight,
+                        containerTotalPadding,
                         totalPadding,
                     });
                 } else {
