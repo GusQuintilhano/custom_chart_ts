@@ -28,9 +28,9 @@ app.use(analyticsMiddleware);
 // O servidor está em /app/charts-router/dist/charts-router/src/ ou /app/charts-router/dist/src/
 import fs from 'fs';
 
-let projectRoot: string;
-let trellisDistPath: string;
-let boxplotDistPath: string;
+let projectRoot: string = '/app';
+let trellisDistPath: string = '/app/trellis-chart/dist';
+let boxplotDistPath: string = '/app/boxplot-chart/dist';
 
 // Tentar diferentes caminhos possíveis
 const possibleRoots = [
@@ -51,8 +51,8 @@ for (const root of possibleRoots) {
     }
 }
 
-// Se não encontrou, usar caminho padrão
-if (!trellisDistPath) {
+// Se não encontrou, usar caminho padrão baseado em __dirname
+if (!fs.existsSync(trellisDistPath)) {
     if (__dirname.includes('dist/charts-router/src')) {
         projectRoot = path.resolve(__dirname, '../../../');
     } else if (__dirname.includes('dist/src')) {
