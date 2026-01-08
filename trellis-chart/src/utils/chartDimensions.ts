@@ -205,6 +205,16 @@ export function readMeasureConfigs(
             ...(tooltipLayoutFromSection ? { tooltip_layout: tooltipLayoutFromSection } : {}),
         };
         
+        // Debug: verificar se referenceLine_enabled está em measureConfigFlat (nível raiz)
+        console.log(`[DEBUG] Measure ${measure.id} - Verificando referenceLine_enabled:`, {
+            inMeasureConfigFlat: (measureConfigFlat as any).referenceLine_enabled,
+            inConfigFromColumnVisualProps: (configFromColumnVisualProps as any).referenceLine_enabled,
+            inReferenceLineSection: referenceLineSection.enabled ?? referenceLineSection.referenceLine_enabled,
+            referenceLineEnabledFromSection,
+            finalInMeasureConfig: (measureConfig as any).referenceLine_enabled,
+            allKeysInMeasureConfigFlat: Object.keys(measureConfigFlat).filter(k => k.includes('reference') || k.includes('Reference')),
+        });
+        
         // Debug: verificar valores
         logger.debug(`[DEBUG] Measure ${measure.id} chartType:`, {
             configNew: (configNew as any).chartType,
@@ -222,14 +232,15 @@ export function readMeasureConfigs(
         const referenceLineEnabledRaw = (measureConfig as any)?.referenceLine_enabled;
         const referenceLineEnabled = referenceLineEnabledRaw === true || referenceLineEnabledRaw === 'true' || referenceLineEnabledRaw === 1;
         
-        // Debug: log dos valores de linha de referência
-        logger.debug(`[DEBUG] Measure ${measure.id} referenceLine:`, {
+        // Debug: log dos valores de linha de referência (usar console.log para garantir que apareça)
+        console.log(`[DEBUG] Measure ${measure.id} referenceLine:`, {
             referenceLine_enabled: referenceLineEnabledRaw,
             referenceLine_enabled_parsed: referenceLineEnabled,
             referenceLine_value: (measureConfig as any)?.referenceLine_value,
             referenceLine_color: (measureConfig as any)?.referenceLine_color,
             referenceLine_style: (measureConfig as any)?.referenceLine_style,
             allReferenceLineKeys: Object.keys(measureConfig).filter(k => k.startsWith('referenceLine_')),
+            measureConfigKeys: Object.keys(measureConfig).slice(0, 20), // Primeiras 20 chaves para debug
         });
         
         const referenceLine: MeasureConfig['referenceLine'] = referenceLineEnabled ? {
@@ -240,11 +251,13 @@ export function readMeasureConfigs(
             showLabel: ((measureConfig as any)?.referenceLine_showLabel as boolean) !== false,
         } : undefined;
         
-        // Debug adicional: verificar se referenceLine foi criado
+        // Debug adicional: verificar se referenceLine foi criado (usar console.log para garantir que apareça)
         if (referenceLineEnabled && referenceLine) {
-            logger.debug(`[DEBUG] Measure ${measure.id} referenceLine criado:`, referenceLine);
+            console.log(`[DEBUG] Measure ${measure.id} referenceLine criado:`, referenceLine);
         } else if (referenceLineEnabled && !referenceLine) {
-            logger.warn(`[DEBUG] Measure ${measure.id} referenceLineEnabled=true mas referenceLine é undefined!`);
+            console.warn(`[DEBUG] Measure ${measure.id} referenceLineEnabled=true mas referenceLine é undefined!`);
+        } else if (!referenceLineEnabled) {
+            console.log(`[DEBUG] Measure ${measure.id} referenceLineEnabled=false, não criando referenceLine`);
         }
         
         // Processar tooltip
