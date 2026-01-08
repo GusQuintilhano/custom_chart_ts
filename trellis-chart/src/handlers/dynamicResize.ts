@@ -503,14 +503,24 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     }
                 }
                 
+                const containerComputedStyle = window.getComputedStyle(containerDiv);
                 console.log('[FitWidth] Aplicando estilos ao container:', {
                     width: containerDiv.style.width,
                     minWidth: containerDiv.style.minWidth,
                     maxWidth: containerDiv.style.maxWidth,
                     boxSizing: containerDiv.style.boxSizing,
-                    computedWidth: window.getComputedStyle(containerDiv).width,
+                    padding: containerDiv.style.padding,
+                    margin: containerDiv.style.margin,
+                    border: containerDiv.style.border,
+                    computedWidth: containerComputedStyle.width,
+                    computedPaddingLeft: containerComputedStyle.paddingLeft,
+                    computedPaddingRight: containerComputedStyle.paddingRight,
+                    computedBorderLeft: containerComputedStyle.borderLeftWidth,
+                    computedBorderRight: containerComputedStyle.borderRightWidth,
                     actualWidth: containerDiv.offsetWidth,
+                    clientWidth: containerDiv.clientWidth,
                     parentWidth: containerDiv.parentElement?.offsetWidth,
+                    parentClientWidth: containerDiv.parentElement?.clientWidth,
                     parentPaddingLeft: parseFloat(window.getComputedStyle(containerDiv.parentElement!).paddingLeft) || 0,
                     parentPaddingRight: parseFloat(window.getComputedStyle(containerDiv.parentElement!).paddingRight) || 0,
                     paddingLeft,
