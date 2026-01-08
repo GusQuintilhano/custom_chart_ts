@@ -247,6 +247,39 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureLabelSpace,
     });
 
+    // Garantir que o containerDiv também ocupe 100% da largura quando fitWidth está ativo
+    if (fitWidth) {
+        // Aguardar um pouco para garantir que o DOM foi atualizado
+        setTimeout(() => {
+            const containerDiv = chartElement.querySelector('div') as HTMLElement;
+            if (containerDiv) {
+                // Remover qualquer padding/margin que possa estar limitando a largura
+                containerDiv.style.width = '100%';
+                containerDiv.style.minWidth = '100%';
+                containerDiv.style.maxWidth = '100%';
+                containerDiv.style.boxSizing = 'border-box';
+                containerDiv.style.position = 'relative';
+                containerDiv.style.margin = '0';
+                containerDiv.style.padding = '0';
+                containerDiv.style.border = 'none';
+                containerDiv.style.display = 'block';
+                containerDiv.style.overflow = 'visible';
+
+                const containerComputedStyle = window.getComputedStyle(containerDiv);
+                console.log('[FitWidth] Aplicando estilos ao containerDiv após renderização:', {
+                    width: containerDiv.style.width,
+                    computedWidth: containerComputedStyle.width,
+                    computedPaddingLeft: containerComputedStyle.paddingLeft,
+                    computedPaddingRight: containerComputedStyle.paddingRight,
+                    actualWidth: containerDiv.offsetWidth,
+                    clientWidth: containerDiv.clientWidth,
+                    parentWidth: containerDiv.parentElement?.offsetWidth,
+                    parentClientWidth: containerDiv.parentElement?.clientWidth,
+                });
+            }
+        }, 0);
+    }
+
     // Configurar tooltips (configuração global como fallback, individual por medida tem prioridade)
     setupTooltips(
         chartElement,
