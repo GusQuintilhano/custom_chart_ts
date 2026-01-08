@@ -78,6 +78,9 @@ export function calculateChartDimensions(
         }
         
         // Usar dimensões do container se disponíveis, senão usar valor base
+        // IMPORTANTE: Quando fitWidth está ativo, precisamos garantir que o conteúdo seja redesenhado
+        // com base na largura do container. Se o containerWidth ainda não estiver disponível (0),
+        // usar um valor padrão razoável, mas o dynamicResize vai re-renderizar com as dimensões corretas
         const baseWidth = containerWidth > 0 ? containerWidth : 800;
         const plotAreaWidth = baseWidth - leftMargin - rightMargin;
         
@@ -85,11 +88,28 @@ export function calculateChartDimensions(
         measureRowHeight = fitHeight ? (chartHeight - topMargin - bottomMargin - (spacingBetweenMeasures * (measureCols.length - 1))) / measureCols.length : measureRowHeight;
         
         // Calcular espaçamento e largura das barras baseado no plotAreaWidth real
+        // IMPORTANTE: Quando fitWidth está ativo, essas dimensões vão ser recalculadas pelo dynamicResize
+        // quando o containerWidth real estiver disponível, mas precisamos ter valores iniciais corretos
         const barSpacing = showYAxis ? 20 : Math.max(15, plotAreaWidth / (numBars * 3));
         const totalSpacing = barSpacing * (numBars - 1);
         const barWidth = showYAxis ? 40 : Math.max(30, (plotAreaWidth - totalSpacing) / numBars);
         
         const chartWidth = baseWidth; // Usar largura do container diretamente
+        
+        // Log para debug quando fitWidth está ativo
+        if (fitWidth) {
+            console.log('[FitWidth] calculateChartDimensions - Renderização inicial:', {
+                containerWidth,
+                baseWidth,
+                chartWidth,
+                plotAreaWidth,
+                barWidth,
+                barSpacing,
+                info: containerWidth > 0 
+                    ? 'ContainerWidth disponível, conteúdo será redesenhado com dimensões corretas'
+                    : 'ContainerWidth não disponível (0), usando valor padrão (800px). DynamicResize vai re-renderizar com dimensões corretas.',
+            });
+        }
         
         return {
             leftMargin,
