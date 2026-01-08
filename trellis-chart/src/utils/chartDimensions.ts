@@ -223,9 +223,7 @@ export function readMeasureConfigs(
         };
         
         // Debug: verificar se referenceLine_enabled está em measureConfigFlat (nível raiz)
-        // Verificar se há uma seção 'reference_line' (com underscore) que pode conter as configurações
-        const referenceLineSectionUnderscore = (configFromColumnVisualProps.reference_line || {}) as Record<string, unknown>;
-        
+        // referenceLineSectionUnderscore já foi declarado acima
         console.log(`[DEBUG] Measure ${measure.id} - Verificando referenceLine_enabled:`, {
             inMeasureConfigFlat: (measureConfigFlat as any).referenceLine_enabled,
             inConfigFromColumnVisualProps: (configFromColumnVisualProps as any).referenceLine_enabled,
