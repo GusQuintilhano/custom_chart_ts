@@ -33,7 +33,8 @@ export function calculateChartDimensions(
     chartData: ChartDataPoint[],
     measureCols: ChartColumn[],
     hasSecondaryDimension: boolean,
-    allVisualProps: Record<string, unknown>
+    allVisualProps: Record<string, unknown>,
+    containerDimensions?: { width: number; height: number }
 ): ChartDimensions {
     const showYAxis = chartOptions.showYAxis !== false;
     const fitWidth = chartOptions.fitWidth || false;
@@ -67,17 +68,28 @@ export function calculateChartDimensions(
     const numBars = chartData.length;
     
     if (fitWidth) {
-        // Quando fitWidth está ativo, usar valores padrão que serão ajustados dinamicamente
-        const plotAreaWidth = 800; // Valor base, será ajustado pelo resize observer
-        chartHeight = fitHeight ? 500 : chartHeight; // Usar valor base se fitHeight também estiver ativo
+        // Quando fitWidth está ativo, tentar usar dimensões reais do container se disponíveis
+        let containerWidth = containerDimensions?.width || 0;
+        
+        // Se não temos dimensões do container, tentar obter de outras formas
+        if (containerWidth === 0 && typeof window !== 'undefined') {
+            // Tentar obter do elemento chartElement se disponível
+            // Isso será feito no index.ts antes de chamar esta função
+        }
+        
+        // Usar dimensões do container se disponíveis, senão usar valor base
+        const baseWidth = containerWidth > 0 ? containerWidth : 800;
+        const plotAreaWidth = baseWidth - leftMargin - rightMargin;
+        
+        chartHeight = fitHeight ? (containerDimensions?.height || 500) : chartHeight; // Usar altura do container se disponível
         measureRowHeight = fitHeight ? (chartHeight - topMargin - bottomMargin - (spacingBetweenMeasures * (measureCols.length - 1))) / measureCols.length : measureRowHeight;
         
-        // Calcular espaçamento e largura das barras baseado no plotAreaWidth (será ajustado depois)
+        // Calcular espaçamento e largura das barras baseado no plotAreaWidth real
         const barSpacing = showYAxis ? 20 : Math.max(15, plotAreaWidth / (numBars * 3));
         const totalSpacing = barSpacing * (numBars - 1);
         const barWidth = showYAxis ? 40 : Math.max(30, (plotAreaWidth - totalSpacing) / numBars);
         
-        const chartWidth = plotAreaWidth + leftMargin + rightMargin;
+        const chartWidth = baseWidth; // Usar largura do container diretamente
         
         return {
             leftMargin,
