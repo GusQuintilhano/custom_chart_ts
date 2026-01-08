@@ -127,7 +127,16 @@ app.use('/api/analytics', analyticsRouter);
 
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', charts: ['trellis', 'boxplot'] });
+    res.json({ 
+        status: 'ok', 
+        charts: ['trellis', 'boxplot'],
+        paths: {
+            trellisDistPath,
+            boxplotDistPath,
+            trellisIndexExists: fs.existsSync(path.join(trellisDistPath, 'index.html')),
+            boxplotIndexExists: fs.existsSync(path.join(boxplotDistPath, 'index.html'))
+        }
+    });
 });
 
 // Rota raiz - redirecionar ou servir índice
