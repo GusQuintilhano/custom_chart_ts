@@ -452,7 +452,15 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 containerDiv.style.padding = '0';
                 containerDiv.style.border = 'none';
                 containerDiv.style.display = 'block';
-                containerDiv.style.overflow = 'visible';
+                // Manter overflow correto: se apenas fitWidth, permitir scroll vertical
+                // Se ambos fitWidth e fitHeight, esconder overflow
+                // Se apenas fitHeight, permitir scroll horizontal
+                if (fitHeight) {
+                    containerDiv.style.overflow = 'hidden';
+                } else {
+                    containerDiv.style.overflowX = 'hidden';
+                    containerDiv.style.overflowY = 'auto';
+                }
                 
                 // Verificar se há diferença entre offsetWidth e clientWidth (indica padding/border)
                 const containerOffsetWidth = containerDiv.offsetWidth;
