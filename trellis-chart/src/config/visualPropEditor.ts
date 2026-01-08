@@ -150,6 +150,8 @@ function createMeasureColumnSettings(
             ? (currentConfig as any).referenceLine_enabled === true
             : ((savedConfig as any)?.referenceLine_enabled === true);
         
+        // Sempre incluir todos os campos - o toggle controla se a linha é renderizada, não se os campos devem aparecer
+        // Isso garante que o campo de valor sempre esteja disponível quando o usuário habilita o toggle
         const referenceLineChildren: any[] = [
             {
                 type: 'toggle',
@@ -157,39 +159,33 @@ function createMeasureColumnSettings(
                 label: 'Habilitar Linha de Referência',
                 defaultValue: referenceLineEnabled,
             },
+            {
+                type: 'number',
+                key: 'referenceLine_value',
+                label: 'Valor da Linha de Referência',
+                defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+            },
+            {
+                type: 'colorpicker',
+                key: 'referenceLine_color',
+                label: 'Cor da Linha de Referência',
+                selectorType: 'COLOR',
+                defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+            },
+            {
+                type: 'dropdown',
+                key: 'referenceLine_style',
+                label: 'Estilo da Linha',
+                defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
+                values: ['sólida', 'tracejada', 'pontilhada'],
+            },
+            {
+                type: 'toggle',
+                key: 'referenceLine_showLabel',
+                label: 'Exibir Label na Linha',
+                defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+            },
         ];
-        
-        // Mostrar opções somente se linha de referência estiver habilitada
-        if (referenceLineEnabled) {
-            referenceLineChildren.push(
-                {
-                    type: 'number',
-                    key: 'referenceLine_value',
-                    label: 'Valor da Linha de Referência',
-                    defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
-                },
-                {
-                    type: 'colorpicker',
-                    key: 'referenceLine_color',
-                    label: 'Cor da Linha de Referência',
-                    selectorType: 'COLOR',
-                    defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
-                },
-                {
-                    type: 'dropdown',
-                    key: 'referenceLine_style',
-                    label: 'Estilo da Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
-                    values: ['sólida', 'tracejada', 'pontilhada'],
-                },
-                {
-                    type: 'toggle',
-                    key: 'referenceLine_showLabel',
-                    label: 'Exibir Label na Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
-                }
-            );
-        }
         
         measureElements.push({
             type: 'section',

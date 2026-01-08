@@ -131,6 +131,11 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         const containerWidth = containerDiv.clientWidth;
         const containerHeight = containerDiv.clientHeight;
 
+        // Se fitWidth está ativo mas o container ainda não tem dimensões, aguardar
+        if (fitWidth && containerWidth === 0) {
+            return;
+        }
+
         let newChartWidth = chartWidth;
         let newChartHeight = chartHeight;
         let newMeasureRowHeight = measureRowHeight;
@@ -139,6 +144,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         // Ajustar largura se fitWidth está ativo
         // Quando fitWidth está ativo, SEMPRE usar containerWidth (ajustar independente do valor anterior)
         if (fitWidth && containerWidth > 0) {
+            // Sempre recalcular quando fitWidth está ativo, mesmo se o valor não mudou
+            // Isso garante que o gráfico seja ajustado corretamente na primeira renderização
             newChartWidth = containerWidth;
             shouldUpdate = true;
         } else if (!fitWidth) {
@@ -169,6 +176,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             newBarSpacing = showYAxis ? 20 : Math.max(15, newPlotAreaWidth / (chartData.length * 3));
             const newTotalSpacing = newBarSpacing * (chartData.length - 1);
             newBarWidth = showYAxis ? 40 : Math.max(30, (newPlotAreaWidth - newTotalSpacing) / chartData.length);
+            // Garantir que sempre atualizamos quando fitWidth está ativo
+            shouldUpdate = true;
         }
 
         // Se há mudanças (ou fitWidth está ativo e temos containerWidth), recalcular e atualizar
@@ -226,6 +235,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 spacingBetweenMeasures,
                 dividerLinesColor: dividerLinesBetweenBarsColor,
                 dividerLinesWidth: dividerLinesBetweenBarsWidth,
+                hasSecondaryDimension,
+                secondaryDateFormat,
             });
 
             const newAllChartElementsHtml = renderAllChartElements({
@@ -318,9 +329,9 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
                 }
-                svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + 
-                    newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newAllChartElementsHtml + 
-                    newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
+                svgElement.innerHTML = newSecondaryXAxisLabelsHtml + newYAxesHtml + 
+                    newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newSecondaryXAxisHtml + 
+                    newAllChartElementsHtml + newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
             }
         }
     };
@@ -335,9 +346,20 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     resizeObserver.observe(containerDiv);
     chartElement.__resizeObserver = resizeObserver;
     
-    // Ajustar novamente após um delay para casos onde o container ainda não tem dimensões finais
+    // Ajustar novamente após delays para casos onde o container ainda não tem dimensões finais
+    // Isso é especialmente importante quando fitWidth está ativo
     setTimeout(() => {
         adjustDimensions();
     }, 100);
+    
+    // Se fitWidth está ativo, fazer mais tentativas para garantir que o ajuste seja feito
+    if (fitWidth) {
+        setTimeout(() => {
+            adjustDimensions();
+        }, 300);
+        setTimeout(() => {
+            adjustDimensions();
+        }, 500);
+    }
 }
 

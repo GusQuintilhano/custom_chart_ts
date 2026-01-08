@@ -7,20 +7,20 @@ Charts desenvolvidos com ThoughtSpot Chart SDK para visualização de dados no T
 ### Trellis Chart
 
 - **Localização:** [`trellis-chart/`](./trellis-chart/)
-- **URL:** `https://ts-custom-charts-production.up.railway.app/trellis`
+- **URL:** `.../trellis`
 - **Tipo:** Chart SDK
 - **Descrição:** Chart que permite visualizar múltiplas medidas simultaneamente em formato "crosschart" (trellis)
 
 ### Boxplot Chart
 
 - **Localização:** [`boxplot-chart/`](./boxplot-chart/)
-- **URL:** `https://ts-custom-charts-production.up.railway.app/boxplot`
+- **URL:** `.../boxplot`
 - **Tipo:** Chart SDK
 - **Descrição:** Boxplot para visualização de distribuições estatísticas com quartis, mediana e outliers
 
 ## 🚀 Integração
 
-Estes charts são servidos via **Railway** usando roteamento por path e integrados com o ThoughtSpot.
+Estes charts são servidos usando roteamento por path e integrados com o ThoughtSpot.
 
 ### Estrutura de Roteamento
 
@@ -71,7 +71,7 @@ ANALYTICS_STORAGE_TYPE=file
 ANALYTICS_LOG_PATH=./logs/analytics.jsonl
 
 # URL do banco de dados (necessário se usar 'database' ou 'file+database')
-ANALYTICS_DB_URL=postgresql://user:pass@localhost:5432/analytics
+ANALYTICS_DB_URL=postgresql://user:pass@.../analytics
 ```
 
 #### Configuração no Cliente (Frontend)
@@ -80,7 +80,7 @@ Por padrão, o cliente usa `/api/analytics/event` como endpoint. Para customizar
 
 ```javascript
 // No console do navegador ou no código
-window.ANALYTICS_ENDPOINT = 'https://seu-servidor.com/api/analytics/event';
+window.ANALYTICS_ENDPOINT = '.../api/analytics/event';
 window.ANALYTICS_ENABLED = true; // ou false para desabilitar
 ```
 
@@ -290,16 +290,16 @@ Um sistema externo (ex: serviço de migração para banco de dados) pode consult
 
 ```bash
 # Buscar primeiros 1000 eventos
-curl "http://localhost:3000/api/analytics/events?limit=1000"
+curl ".../api/analytics/events?limit=1000"
 
 # Buscar próximos 1000 eventos
-curl "http://localhost:3000/api/analytics/events?offset=1000&limit=1000"
+curl ".../api/analytics/events?offset=1000&limit=1000"
 
 # Buscar apenas eventos de erro
-curl "http://localhost:3000/api/analytics/events?type=error"
+curl ".../api/analytics/events?type=error"
 
 # Buscar eventos de performance do Trellis Chart
-curl "http://localhost:3000/api/analytics/events?type=performance&chartType=trellis"
+curl ".../api/analytics/events?type=performance&chartType=trellis"
 ```
 
 O sistema externo pode usar a paginação (`offset` e `hasMore`) para processar todos os eventos em lotes.

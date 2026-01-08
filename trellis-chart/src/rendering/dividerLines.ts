@@ -5,6 +5,7 @@
 import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint } from '../types/chartTypes';
 import { calculateMeasureRowTop, calculateLastMeasureRowTop, calculateBarX } from '@shared/utils/calculations';
+import { groupDataBySecondaryDimension, sortGroupsByStartIndex } from '../utils/grouping';
 
 /**
  * Interface para parâmetros de renderização de linhas divisórias entre medidas
@@ -90,6 +91,8 @@ export interface RenderDividerLinesBetweenBarsParams {
     spacingBetweenMeasures: number;
     dividerLinesColor: string;
     dividerLinesWidth: number;
+    hasSecondaryDimension?: boolean;
+    secondaryDateFormat?: string;
 }
 
 /**
@@ -111,6 +114,8 @@ export function renderDividerLinesBetweenBars(
         spacingBetweenMeasures,
         dividerLinesColor,
         dividerLinesWidth,
+        hasSecondaryDimension = false,
+        secondaryDateFormat,
     } = params;
     
     if (!showGridLines || !dividerLinesBetweenBars || chartData.length <= 1) {
@@ -125,8 +130,27 @@ export function renderDividerLinesBetweenBars(
     );
     const dividerEndY = lastMeasureRowTop + measureRowHeight;
     
+    // Se há dimensão secundária, identificar posições onde há mudança de grupos
+    // para não renderizar divisores de barras nessas posições
+    const groupBoundaries = new Set<number>();
+    if (hasSecondaryDimension) {
+        const groups = groupDataBySecondaryDimension(chartData, 0, secondaryDateFormat);
+        const groupEntries = sortGroupsByStartIndex(groups);
+        groupEntries.forEach((group) => {
+            // Marcar a posição após o último item de cada grupo (exceto o último grupo)
+            if (group.endIdx < chartData.length - 1) {
+                groupBoundaries.add(group.endIdx);
+            }
+        });
+    }
+    
     let html = '';
     for (let barIdx = 0; barIdx < chartData.length - 1; barIdx++) {
+        // Não renderizar divisor de barras se há mudança de grupo nesta posição
+        if (hasSecondaryDimension && groupBoundaries.has(barIdx)) {
+            continue;
+        }
+        
         const barX = calculateBarX(barIdx, leftMargin, barWidth, barSpacing) + barWidth + barSpacing / 2;
         html += `
             <line 

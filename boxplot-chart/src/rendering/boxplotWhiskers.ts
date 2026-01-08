@@ -12,7 +12,9 @@ export function renderBoxplotWhiskers(
     config: BoxplotRenderConfig,
     orientation: 'vertical' | 'horizontal',
     color: string,
-    whiskerWidth: number
+    whiskerWidth: number,
+    globalMin: number,
+    globalMax: number
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
 
@@ -61,6 +63,7 @@ export function renderBoxplotWhiskers(
         `;
     } else {
         // Horizontal
+        const globalRange = globalMax - globalMin;
         const q1X = leftMargin + ((stats.q1 - globalMin) / globalRange) * plotAreaWidth;
         const q3X = leftMargin + ((stats.q3 - globalMin) / globalRange) * plotAreaWidth;
         const minX = leftMargin + ((stats.min - globalMin) / globalRange) * plotAreaWidth;
