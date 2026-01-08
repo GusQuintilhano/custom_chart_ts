@@ -141,6 +141,7 @@ export function readMeasureConfigs(
         const visualizationSection = (configFromColumnVisualProps.visualization || {}) as Record<string, unknown>;
         const numberFormattingSection = (configFromColumnVisualProps.number_formatting || {}) as Record<string, unknown>;
         // O ThoughtSpot pode salvar referenceLine em diferentes seções: 'referenceLine', 'reference_line', ou no nível raiz
+        // IMPORTANTE: Quando temos uma seção com key 'reference_line', o ThoughtSpot pode salvar dentro dessa seção
         const referenceLineSection = (configFromColumnVisualProps.referenceLine || 
                                      configFromColumnVisualProps.reference_line || 
                                      {}) as Record<string, unknown>;
@@ -166,20 +167,33 @@ export function readMeasureConfigs(
         // 1. No nível raiz: referenceLine_enabled, referenceLine_value, etc.
         // 2. Em seção aninhada: referenceLine.enabled, referenceLine.value, etc.
         // 3. Em seção aninhada com prefixo: referenceLine.referenceLine_enabled, etc.
+        // 4. Dentro da seção 'reference_line': reference_line.referenceLine_enabled, etc.
+        const referenceLineSectionUnderscore = (configFromColumnVisualProps.reference_line || {}) as Record<string, unknown>;
+        
         const referenceLineEnabledFromSection = referenceLineSection.enabled ?? 
                                                 referenceLineSection.referenceLine_enabled ??
+                                                referenceLineSectionUnderscore.referenceLine_enabled ??
+                                                referenceLineSectionUnderscore.enabled ??
                                                 (configFromColumnVisualProps as any).referenceLine_enabled;
         const referenceLineValueFromSection = referenceLineSection.value ?? 
                                               referenceLineSection.referenceLine_value ??
+                                              referenceLineSectionUnderscore.referenceLine_value ??
+                                              referenceLineSectionUnderscore.value ??
                                               (configFromColumnVisualProps as any).referenceLine_value;
         const referenceLineColorFromSection = referenceLineSection.color ?? 
                                              referenceLineSection.referenceLine_color ??
+                                             referenceLineSectionUnderscore.referenceLine_color ??
+                                             referenceLineSectionUnderscore.color ??
                                              (configFromColumnVisualProps as any).referenceLine_color;
         const referenceLineStyleFromSection = referenceLineSection.style ?? 
                                              referenceLineSection.referenceLine_style ??
+                                             referenceLineSectionUnderscore.referenceLine_style ??
+                                             referenceLineSectionUnderscore.style ??
                                              (configFromColumnVisualProps as any).referenceLine_style;
         const referenceLineShowLabelFromSection = referenceLineSection.showLabel ?? 
                                                   referenceLineSection.referenceLine_showLabel ??
+                                                  referenceLineSectionUnderscore.referenceLine_showLabel ??
+                                                  referenceLineSectionUnderscore.showLabel ??
                                                   (configFromColumnVisualProps as any).referenceLine_showLabel;
         
         // Extrair configurações de tooltip de seções aninhadas
@@ -209,17 +223,22 @@ export function readMeasureConfigs(
         };
         
         // Debug: verificar se referenceLine_enabled está em measureConfigFlat (nível raiz)
+        // Verificar se há uma seção 'reference_line' (com underscore) que pode conter as configurações
+        const referenceLineSectionUnderscore = (configFromColumnVisualProps.reference_line || {}) as Record<string, unknown>;
+        
         console.log(`[DEBUG] Measure ${measure.id} - Verificando referenceLine_enabled:`, {
             inMeasureConfigFlat: (measureConfigFlat as any).referenceLine_enabled,
             inConfigFromColumnVisualProps: (configFromColumnVisualProps as any).referenceLine_enabled,
             inReferenceLineSection: referenceLineSection.enabled ?? referenceLineSection.referenceLine_enabled,
-            inReferenceLineSection_reference_line: (configFromColumnVisualProps.reference_line as any)?.referenceLine_enabled,
+            inReferenceLineSection_reference_line: referenceLineSectionUnderscore.referenceLine_enabled ?? referenceLineSectionUnderscore.enabled,
             referenceLineEnabledFromSection,
             finalInMeasureConfig: (measureConfig as any).referenceLine_enabled,
             allKeysInMeasureConfigFlat: Object.keys(measureConfigFlat).filter(k => k.includes('reference') || k.includes('Reference')),
             allKeysInConfigFromColumnVisualProps: Object.keys(configFromColumnVisualProps).filter(k => k.includes('reference') || k.includes('Reference')),
-            fullConfigFromColumnVisualProps: configFromColumnVisualProps, // Log completo para debug
         });
+        
+        // Log completo de configFromColumnVisualProps (pode ser grande, mas necessário para debug)
+        console.log(`[DEBUG] Measure ${measure.id} - fullConfigFromColumnVisualProps:`, JSON.stringify(configFromColumnVisualProps, null, 2));
         
         // Debug: verificar valores
         logger.debug(`[DEBUG] Measure ${measure.id} chartType:`, {
