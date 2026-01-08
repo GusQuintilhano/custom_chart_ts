@@ -331,10 +331,20 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             if (wrapperDiv) {
                 if (fitWidth) {
                     wrapperDiv.style.width = '100%';
+                    wrapperDiv.style.minWidth = '100%';
+                    wrapperDiv.style.maxWidth = '100%';
                 } else {
                     wrapperDiv.style.width = `${newChartWidth}px`;
+                    wrapperDiv.style.minWidth = '';
+                    wrapperDiv.style.maxWidth = '';
                 }
                 wrapperDiv.style.height = fitHeight ? '100%' : `${newChartHeight}px`;
+            }
+            
+            // Garantir que o container também tenha width: 100% quando fitWidth está ativo
+            if (fitWidth) {
+                containerDiv.style.width = '100%';
+                containerDiv.style.minWidth = '100%';
             }
 
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
@@ -347,12 +357,18 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
                     svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
-                    // Garantir que preserveAspectRatio está correto
-                    svgElement.setAttribute('preserveAspectRatio', fitHeight ? 'xMidYMid meet' : 'xMidYMin slice');
+                    // preserveAspectRatio: quando apenas fitWidth, usar 'xMidYMin slice' para permitir escala na largura
+                    // quando apenas fitHeight, usar 'xMidYMid meet' para permitir escala na altura
+                    // quando ambos, usar 'xMidYMid meet' para manter proporção
+                    const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
+                        : fitWidth ? 'xMidYMin slice' 
+                        : fitHeight ? 'xMidYMid meet' 
+                        : 'none';
+                    svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
-                    svgElement.setAttribute('preserveAspectRatio', 'none');
+                    svgElement.setAttribute('preserveAspectRatio', fitHeight ? 'xMidYMid meet' : 'none');
                 }
                 
                 svgElement.innerHTML = newSecondaryXAxisLabelsHtml + newYAxesHtml + 
