@@ -31,6 +31,7 @@ COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
 # Build de todos os projetos em um único comando
+# O script fix-imports.js adiciona extensões .js aos imports para ES modules
 # Verificar se o build foi bem-sucedido (aceitar qualquer localização de server.js)
 RUN cd charts-router && npm run build && \
     (find dist -name "server.js" -type f | head -1 | grep -q . || (echo "ERROR: server.js not found after build" && find dist -type f && exit 1)) && \
