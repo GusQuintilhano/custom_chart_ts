@@ -105,13 +105,30 @@ export const renderChart = async (ctx: CustomChartContext) => {
         tooltipCustomTemplate,
     } = options;
 
+    // Obter dimensões do container para uso no cálculo inicial (especialmente importante para fitWidth)
+    let containerWidth = chartElement.clientWidth || chartElement.offsetWidth || 0;
+    let containerHeight = chartElement.clientHeight || chartElement.offsetHeight || 0;
+    
+    // Se não temos dimensões, tentar obter do elemento pai
+    if (containerWidth === 0 && chartElement.parentElement) {
+        containerWidth = chartElement.parentElement.clientWidth || 
+                         chartElement.parentElement.offsetWidth || 
+                         chartElement.parentElement.getBoundingClientRect().width || 0;
+    }
+    if (containerHeight === 0 && chartElement.parentElement) {
+        containerHeight = chartElement.parentElement.clientHeight || 
+                         chartElement.parentElement.offsetHeight || 
+                         chartElement.parentElement.getBoundingClientRect().height || 0;
+    }
+    
     // Calcular dimensões do gráfico
     const chartDimensions = calculateChartDimensions(
         chartOptions,
         chartData,
         measureCols,
         hasSecondaryDimension,
-        allVisualProps
+        allVisualProps,
+        containerWidth > 0 || containerHeight > 0 ? { width: containerWidth, height: containerHeight } : undefined
     );
 
     const {
