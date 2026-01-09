@@ -145,22 +145,22 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
     const adjustDimensions = () => {
         // Tentar obter dimensões do container de várias formas
-        // IMPORTANTE: Quando fitWidth está ativo, usar offsetWidth para ocupar todo o espaço disponível
-        // Mesmo que haja padding/border que não conseguimos remover, queremos ocupar todo o espaço
-        // O SVG com width: 100% vai escalar para ocupar a largura total do container
+        // IMPORTANTE: Quando fitWidth está ativo, usar clientWidth (espaço útil) como prioridade
+        // Isso garante que o SVG seja calculado para o espaço útil disponível, sem criar barra de rolagem
+        // O SVG com width: 100% vai escalar para ocupar exatamente o espaço útil do container
         let containerWidth = fitWidth 
-            ? (containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || containerDiv.clientWidth || 0)
+            ? (containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0)
             : containerDiv.clientWidth;
         let containerHeight = fitHeight
-            ? (containerDiv.offsetHeight || containerDiv.getBoundingClientRect().height || containerDiv.clientHeight || 0)
+            ? (containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0)
             : containerDiv.clientHeight;
         
         // Se ainda não temos dimensões, tentar outras formas
         if (fitWidth && containerWidth === 0) {
-            containerWidth = containerDiv.offsetWidth || containerDiv.getBoundingClientRect().width || containerDiv.clientWidth || 0;
+            containerWidth = containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0;
         }
         if (fitHeight && containerHeight === 0) {
-            containerHeight = containerDiv.offsetHeight || containerDiv.getBoundingClientRect().height || containerDiv.clientHeight || 0;
+            containerHeight = containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0;
         }
         
         // Se ainda não temos dimensões e fitWidth está ativo, tentar obter do elemento pai
