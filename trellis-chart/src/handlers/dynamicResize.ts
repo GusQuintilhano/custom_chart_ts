@@ -213,11 +213,24 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
         // Ajustar largura se fitWidth está ativo
         if (fitWidth && containerWidth > 0) {
-            newChartWidth = containerWidth;
+            // Usar o clientWidth do wrapper (espaço real disponível para o SVG)
+            // O wrapper é o elemento que realmente contém o SVG e define o espaço disponível
+            let actualWidth = containerWidth;
+            if (wrapperDiv) {
+                // Primeiro garantir que o wrapper está com width: 100%
+                wrapperDiv.style.width = '100%';
+                // Depois obter o clientWidth real do wrapper
+                const wrapperClientWidth = wrapperDiv.clientWidth || wrapperDiv.getBoundingClientRect().width || containerWidth;
+                actualWidth = wrapperClientWidth;
+            }
+            newChartWidth = actualWidth;
             shouldUpdate = true;
             
             console.log('[FitWidth] adjustDimensions: Ajustando largura do gráfico', {
                 containerWidth,
+                wrapperClientWidth: wrapperDiv?.clientWidth,
+                wrapperBoundingRect: wrapperDiv?.getBoundingClientRect().width,
+                actualWidth,
                 chartWidth,
                 newChartWidth,
                 lastContainerWidth,
