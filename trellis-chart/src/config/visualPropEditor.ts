@@ -196,55 +196,65 @@ function createMeasureColumnSettings(
         });
         
         // Seção 5: Dica de Contexto (Tooltip)
-        // Ler valor atual (se disponível) ou valor salvo
-        const currentConfigTooltip = (currentVisualProps.visualProps as any)?.[measure.id] || savedConfig;
-        const tooltipEnabledMeasure = (currentConfigTooltip as any)?.tooltip_enabled !== undefined
-            ? (currentConfigTooltip as any).tooltip_enabled !== false
-            : ((savedConfig as any)?.tooltip_enabled !== false);
+        // IMPORTANTE: Só mostrar esta seção se o tooltip estiver habilitado no nível do gráfico
+        // Verificar se tooltip está habilitado no nível global (chart_tooltip.enabled)
+        const chartTooltipConfig = (currentVisualProps.visualProps as any)?.chart_tooltip || {};
+        const tooltipEnabledGlobal = chartTooltipConfig.enabled === true || 
+            ((currentVisualProps.visualProps as any)?.chart_tooltip?.enabled === true);
         
-        const tooltipChildrenMeasure: any[] = [
-            {
-                type: 'toggle',
-                key: 'tooltip_enabled',
-                label: 'Habilitar Dica de Contexto',
-                defaultValue: tooltipEnabledMeasure,
-            },
-        ];
-        
-        // Mostrar opções somente se tooltip estiver habilitado
-        if (tooltipEnabledMeasure) {
-            tooltipChildrenMeasure.push(
+        // Se o tooltip global estiver habilitado, mostrar configurações por medida
+        if (tooltipEnabledGlobal) {
+            // Ler valor atual (se disponível) ou valor salvo
+            const currentConfigTooltip = (currentVisualProps.visualProps as any)?.[measure.id] || savedConfig;
+            const tooltipEnabledMeasure = (currentConfigTooltip as any)?.tooltip_enabled !== undefined
+                ? (currentConfigTooltip as any).tooltip_enabled !== false
+                : ((savedConfig as any)?.tooltip_enabled !== false);
+            
+            const tooltipChildrenMeasure: any[] = [
                 {
-                    type: 'dropdown',
-                    key: 'tooltip_format',
-                    label: 'Formato da Dica',
-                    defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
-                    values: ['simples', 'detalhado'],
+                    type: 'toggle',
+                    key: 'tooltip_enabled',
+                    label: 'Habilitar Dica de Contexto',
+                    defaultValue: tooltipEnabledMeasure,
                 },
-                {
-                    type: 'colorpicker',
-                    key: 'tooltip_backgroundColor',
-                    label: 'Cor de Fundo da Dica',
-                    selectorType: 'COLOR',
-                    defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
-                },
-                {
-                    type: 'dropdown',
-                    key: 'tooltip_layout',
-                    label: 'Layout da Dica de Contexto',
-                    defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
-                    values: ['vertical', 'horizontal', 'grade'],
-                }
-            );
+            ];
+            
+            // Mostrar opções somente se tooltip estiver habilitado na medida
+            if (tooltipEnabledMeasure) {
+                tooltipChildrenMeasure.push(
+                    {
+                        type: 'dropdown',
+                        key: 'tooltip_format',
+                        label: 'Formato da Dica',
+                        defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
+                        values: ['simples', 'detalhado'],
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'tooltip_backgroundColor',
+                        label: 'Cor de Fundo da Dica',
+                        selectorType: 'COLOR',
+                        defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
+                    },
+                    {
+                        type: 'dropdown',
+                        key: 'tooltip_layout',
+                        label: 'Layout da Dica de Contexto',
+                        defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
+                        values: ['vertical', 'horizontal', 'grade'],
+                    }
+                );
+            }
+            
+            measureElements.push({
+                type: 'section',
+                key: 'tooltip',
+                label: 'Dica de Contexto',
+                isAccordianExpanded: false,
+                children: tooltipChildrenMeasure,
+            });
         }
-        
-        measureElements.push({
-            type: 'section',
-            key: 'tooltip',
-            label: 'Dica de Contexto',
-            isAccordianExpanded: false,
-            children: tooltipChildrenMeasure,
-        });
+        // Se tooltip global não estiver habilitado, não mostrar seção de tooltip nas medidas
         
         measureColumnSettings[measure.id] = {
             elements: measureElements,
