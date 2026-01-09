@@ -179,11 +179,15 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
         // Verificar se as dimensões mudaram significativamente (diferença maior que 1px)
         // Isso evita re-renderizações desnecessárias quando há apenas pequenas variações
+        // IMPORTANTE: Sempre renderizar na primeira vez (lastContainerWidth === 0)
+        const isFirstRender = lastContainerWidth === 0;
         const widthChanged = Math.abs(containerWidth - lastContainerWidth) > 1;
         const heightChanged = Math.abs(containerHeight - lastContainerHeight) > 1;
+        const chartSizeChanged = lastChartWidth !== chartWidth || lastChartHeight !== chartHeight;
         
         // Se não houve mudança significativa e já renderizamos com essas dimensões, não atualizar
-        if (!widthChanged && !heightChanged && lastChartWidth === chartWidth && lastChartHeight === chartHeight && lastContainerWidth > 0) {
+        // MAS sempre renderizar na primeira vez (isFirstRender)
+        if (!isFirstRender && !widthChanged && !heightChanged && !chartSizeChanged) {
             return;
         }
 
@@ -436,28 +440,25 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         }
     };
 
-    // Ajustar imediatamente
+    // Ajustar imediatamente (primeira renderização)
+    // A função adjustDimensions verifica internamente se o container tem dimensões
+    // Se não tiver, retorna sem fazer nada e tentamos novamente após o DOM ser atualizado
     adjustDimensions();
     
-    // Também observar mudanças no container
+    // Se fitWidth está ativo, garantir que ajustamos novamente quando o DOM estiver completamente estável
+    // Isso é importante porque na primeira renderização o container pode ainda não ter dimensões finais
+    if (fitWidth) {
+        // Usar requestAnimationFrame para garantir que o DOM foi atualizado antes de tentar novamente
+        requestAnimationFrame(() => {
+            adjustDimensions();
+        });
+    }
+    
+    // Também observar mudanças no container para ajustes futuros
     const resizeObserver = new ResizeObserver(() => {
         adjustDimensions();
     });
     resizeObserver.observe(containerDiv);
     chartElement.__resizeObserver = resizeObserver;
-    
-    // Ajustar novamente após delay para casos onde o container ainda não tem dimensões finais
-    // Isso é especialmente importante quando fitWidth está ativo
-    if (fitWidth) {
-        // Usar requestAnimationFrame para garantir que o DOM foi atualizado
-        requestAnimationFrame(() => {
-            adjustDimensions();
-        });
-        
-        // Um único setTimeout adicional para casos onde o DOM ainda não está completamente estável
-        setTimeout(() => {
-            adjustDimensions();
-        }, 100);
-    }
 }
 

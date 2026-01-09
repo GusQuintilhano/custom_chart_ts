@@ -275,58 +275,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         measureLabelSpace,
     });
 
-    // Garantir que o containerDiv também ocupe 100% da largura quando fitWidth está ativo
-    // IMPORTANTE: Quando fitWidth está ativo, aguardar que o DOM seja atualizado e então
-    // verificar se há diferença entre as dimensões usadas na renderização inicial e as dimensões reais do containerDiv
-    // Se houver diferença, o dynamicResize vai re-renderizar o conteúdo com as dimensões corretas
-    if (fitWidth) {
-        // Aguardar um pouco para garantir que o DOM foi atualizado
-        setTimeout(() => {
-            const containerDiv = chartElement.querySelector('div') as HTMLElement;
-            if (containerDiv) {
-                // Remover qualquer padding/margin que possa estar limitando a largura
-                containerDiv.style.width = '100%';
-                containerDiv.style.minWidth = '100%';
-                containerDiv.style.maxWidth = '100%';
-                containerDiv.style.boxSizing = 'border-box';
-                containerDiv.style.position = 'relative';
-                containerDiv.style.margin = '0';
-                containerDiv.style.padding = '0';
-                containerDiv.style.border = 'none';
-                containerDiv.style.display = 'block';
-                containerDiv.style.overflow = 'visible';
-                
-                // Remover border explicitamente também
-                containerDiv.style.borderLeft = 'none';
-                containerDiv.style.borderRight = 'none';
-                containerDiv.style.borderTop = 'none';
-                containerDiv.style.borderBottom = 'none';
-
-                const containerComputedStyle = window.getComputedStyle(containerDiv);
-                const actualClientWidth = containerDiv.clientWidth;
-                const actualOffsetWidth = containerDiv.offsetWidth;
-                
-                console.log('[FitWidth] Aplicando estilos ao containerDiv após renderização:', {
-                    width: containerDiv.style.width,
-                    computedWidth: containerComputedStyle.width,
-                    computedPaddingLeft: containerComputedStyle.paddingLeft,
-                    computedPaddingRight: containerComputedStyle.paddingRight,
-                    computedBorderLeft: containerComputedStyle.borderLeftWidth,
-                    computedBorderRight: containerComputedStyle.borderRightWidth,
-                    actualWidth: actualOffsetWidth,
-                    clientWidth: actualClientWidth,
-                    diff: actualOffsetWidth - actualClientWidth,
-                    parentWidth: containerDiv.parentElement?.offsetWidth,
-                    parentClientWidth: containerDiv.parentElement?.clientWidth,
-                    chartWidthUsed: chartWidth,
-                    needsRerender: actualClientWidth !== chartWidth && actualClientWidth > 0,
-                    info: actualClientWidth !== chartWidth && actualClientWidth > 0 
-                        ? `ContainerDiv tem clientWidth=${actualClientWidth}px mas conteúdo foi desenhado para ${chartWidth}px. DynamicResize vai re-renderizar com dimensões corretas.`
-                        : 'Dimensões estão corretas.',
-                });
-            }
-        }, 0);
-    }
+    // O setupDynamicResize já aplica os estilos necessários ao containerDiv
+    // Não precisamos aplicar estilos aqui, pois isso seria feito após o DOM ser atualizado
+    // e pode causar atrasos desnecessários na renderização inicial
 
     // Configurar tooltips (configuração global como fallback, individual por medida tem prioridade)
     setupTooltips(
