@@ -646,52 +646,62 @@ function createEditorSections(
     
     // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
+    const savedFitHeight = getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true;
     const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
+    
+    // Construir array de children sem usar spread operator (ThoughtSpot SDK não aceita)
+    const dimensionsChildren: any[] = [
+        {
+            type: 'toggle',
+            key: 'fitWidth',
+            label: 'Ajustar a 100% da Largura',
+            defaultValue: savedFitWidth,
+        },
+        {
+            type: 'toggle',
+            key: 'fitHeight',
+            label: 'Ajustar a 100% da Altura',
+            defaultValue: savedFitHeight,
+        },
+        {
+            type: 'number',
+            key: 'measureLabelSpace',
+            label: 'Espaço das Labels das Medidas (px)',
+            defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60) ?? (savedShowYAxis ? 120 : 60),
+        },
+    ];
+    
+    // Adicionar campos condicionalmente sem usar spread operator
+    if (!savedFitWidth) {
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'barWidth',
+            label: 'Largura da Barra (px)',
+            defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40) ?? 40,
+        });
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'barSpacing',
+            label: 'Espaçamento Entre Barras (px)',
+            defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15) ?? (savedShowYAxis ? 20 : 15),
+        });
+    }
+    
+    if (!savedFitHeight) {
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'measureRowHeight',
+            label: 'Altura da Linha (px)',
+            defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50) ?? 50,
+        });
+    }
+    
     elements.push({
         type: 'section',
         key: 'chart_dimensions',
         label: 'Dimensões e Espaçamento',
         isAccordianExpanded: false,
-        children: [
-            {
-                type: 'toggle',
-                key: 'fitWidth',
-                label: 'Ajustar a 100% da Largura',
-                defaultValue: savedFitWidth,
-            },
-            {
-                type: 'toggle',
-                key: 'fitHeight',
-                label: 'Ajustar a 100% da Altura',
-                defaultValue: getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true,
-            },
-            {
-                type: 'number',
-                key: 'measureLabelSpace',
-                label: 'Espaço das Labels das Medidas (px)',
-                defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60),
-            },
-            // Campo de largura da barra - só aparece se fitWidth não está ativo
-            ...(savedFitWidth ? [] : [{
-                type: 'number',
-                key: 'barWidth',
-                label: 'Largura da Barra (px)',
-                defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40),
-            },
-            {
-                type: 'number',
-                key: 'barSpacing',
-                label: 'Espaçamento Entre Barras (px)',
-                defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15),
-            }]),
-            // Campo de altura da linha - só aparece se fitHeight não está ativo
-            ...(getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true ? [] : [{
-                type: 'number',
-                key: 'measureRowHeight',
-                label: 'Altura da Linha (px)',
-                defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50),
-            }]),
-        ],
+        children: dimensionsChildren,
     });
     
     
