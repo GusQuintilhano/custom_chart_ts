@@ -645,45 +645,55 @@ function createEditorSections(
     */
     
     // Seção 4: Dimensões e Espaçamento
+    // TEMPORARIAMENTE SIMPLIFICADA - apenas campos básicos sem condicionais
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
     const savedFitHeight = getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true;
     const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
     
-    // Construir array de children sem usar spread operator (ThoughtSpot SDK não aceita)
+    // Garantir valores numéricos válidos - SEMPRE retornar número, nunca undefined/null
+    const measureLabelSpaceDefault = savedShowYAxis ? 120 : 60;
+    const measureLabelSpaceSaved = getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, measureLabelSpaceDefault);
+    const measureLabelSpaceValue = typeof measureLabelSpaceSaved === 'number' 
+        ? measureLabelSpaceSaved 
+        : (typeof measureLabelSpaceSaved === 'string' ? (parseFloat(measureLabelSpaceSaved) || measureLabelSpaceDefault) : measureLabelSpaceDefault);
+    
+    // Construir array de children SIMPLIFICADO - apenas campos sempre presentes
     const dimensionsChildren: any[] = [
         {
             type: 'toggle',
             key: 'fitWidth',
             label: 'Ajustar a 100% da Largura',
-            defaultValue: savedFitWidth,
+            defaultValue: Boolean(savedFitWidth),
         },
         {
             type: 'toggle',
             key: 'fitHeight',
             label: 'Ajustar a 100% da Altura',
-            defaultValue: savedFitHeight,
+            defaultValue: Boolean(savedFitHeight),
         },
         {
             type: 'number',
             key: 'measureLabelSpace',
             label: 'Espaço das Labels das Medidas (px)',
-            defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60) ?? (savedShowYAxis ? 120 : 60),
+            defaultValue: Number(measureLabelSpaceValue),
         },
     ];
     
-    // Adicionar campos condicionalmente sem usar spread operator
+    // TEMPORARIAMENTE REMOVIDOS os campos condicionais para identificar o problema
+    // Se o erro desaparecer, o problema estava nos campos condicionais
+    /*
     if (!savedFitWidth) {
         dimensionsChildren.push({
             type: 'number',
             key: 'barWidth',
             label: 'Largura da Barra (px)',
-            defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40) ?? 40,
+            defaultValue: Number(barWidthValue) || 40,
         });
         dimensionsChildren.push({
             type: 'number',
             key: 'barSpacing',
             label: 'Espaçamento Entre Barras (px)',
-            defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15) ?? (savedShowYAxis ? 20 : 15),
+            defaultValue: Number(barSpacingValue) || (savedShowYAxis ? 20 : 15),
         });
     }
     
@@ -692,9 +702,10 @@ function createEditorSections(
             type: 'number',
             key: 'measureRowHeight',
             label: 'Altura da Linha (px)',
-            defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50) ?? 50,
+            defaultValue: Number(measureRowHeightValue) || 50,
         });
     }
+    */
     
     elements.push({
         type: 'section',
