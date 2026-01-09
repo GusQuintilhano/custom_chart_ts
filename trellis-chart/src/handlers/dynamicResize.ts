@@ -443,8 +443,6 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         width: svgElement.getAttribute('width'),
                         height: svgElement.getAttribute('height'),
                         preserveAspectRatio: svgElement.getAttribute('preserveAspectRatio'),
-                        svgClientWidth: svgElement.clientWidth,
-                        svgOffsetWidth: svgElement.offsetWidth,
                         svgBoundingRect: svgElement.getBoundingClientRect().width,
                         wrapperClientWidth: wrapperDiv?.clientWidth,
                         wrapperOffsetWidth: wrapperDiv?.offsetWidth,
