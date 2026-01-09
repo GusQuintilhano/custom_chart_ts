@@ -576,6 +576,17 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
+    // Garantir que todos os valores padrão sejam válidos (não undefined/null)
+    const labelFontSizeValue = savedTextSizes?.labelFontSize ?? 10;
+    const measureTitleFontSizeValue = savedTextSizes?.measureTitleFontSize ?? 10;
+    const valueLabelFontSizeValue = savedTextSizes?.valueLabelFontSize ?? 9;
+    const measureNameRotationValue = (savedTextSizes as any).measureNameRotation !== undefined
+        ? String((savedTextSizes as any).measureNameRotation)
+        : String(getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90') ?? '-90');
+    const forceLabelsValue = (savedTextSizes as any).forceLabels !== undefined
+        ? Boolean((savedTextSizes as any).forceLabels)
+        : Boolean(getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) ?? false);
+    
     elements.push({
         type: 'section',
         key: 'text_sizes',
@@ -586,36 +597,32 @@ function createEditorSections(
                 type: 'number',
                 key: 'labelFontSize',
                 label: 'Tamanho da Dimensão (px)',
-                defaultValue: savedTextSizes?.labelFontSize ?? 10,
+                defaultValue: Number(labelFontSizeValue) || 10,
             },
             {
                 type: 'number',
                 key: 'measureTitleFontSize',
                 label: 'Tamanho das Medidas (px)',
-                defaultValue: savedTextSizes?.measureTitleFontSize ?? 10,
+                defaultValue: Number(measureTitleFontSizeValue) || 10,
             },
             {
                 type: 'number',
                 key: 'valueLabelFontSize',
                 label: 'Tamanho dos Valores (px)',
-                defaultValue: savedTextSizes?.valueLabelFontSize ?? 9,
+                defaultValue: Number(valueLabelFontSizeValue) || 9,
             },
             {
                 type: 'dropdown',
                 key: 'measureNameRotation',
                 label: 'Rotação do Nome da Medida',
-                defaultValue: String((savedTextSizes as any).measureNameRotation !== undefined
-                    ? (savedTextSizes as any).measureNameRotation
-                    : getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90')),
+                defaultValue: measureNameRotationValue,
                 values: ['-90', '0', '45', '-45', '90'],
             },
             {
                 type: 'toggle',
                 key: 'forceLabels',
                 label: 'Forçar Exibição de Labels',
-                defaultValue: (savedTextSizes as any).forceLabels !== undefined
-                    ? (savedTextSizes as any).forceLabels === true
-                    : getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
+                defaultValue: forceLabelsValue,
             },
         ],
     });
