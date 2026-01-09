@@ -434,13 +434,34 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     // Calcular diferença entre offsetWidth e clientWidth para compensar padding/border
                     const containerOffsetWidth = containerDiv.offsetWidth;
                     const containerClientWidth = containerDiv.clientWidth;
-                    const diff = containerOffsetWidth - containerClientWidth;
+                    const containerDiff = containerOffsetWidth - containerClientWidth;
                     
-                    if (diff > 0) {
+                    // Também verificar se há padding no chartElement (elemento pai do containerDiv)
+                    const chartElementComputedStyle = window.getComputedStyle(chartElement);
+                    const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
+                    const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
+                    const chartElementBorderLeft = parseFloat(chartElementComputedStyle.borderLeftWidth) || 0;
+                    const chartElementBorderRight = parseFloat(chartElementComputedStyle.borderRightWidth) || 0;
+                    const chartElementTotalPadding = chartElementPaddingLeft + chartElementPaddingRight + 
+                                                   chartElementBorderLeft + chartElementBorderRight;
+                    
+                    // Usar a maior diferença (container ou chartElement)
+                    const totalDiff = Math.max(containerDiff, chartElementTotalPadding);
+                    
+                    if (totalDiff > 0) {
                         // Se há diferença, usar calc para compensar e ocupar todo o espaço
-                        wrapperDiv.style.width = `calc(100% + ${diff}px)`;
-                        wrapperDiv.style.marginLeft = `-${diff / 2}px`;
-                        wrapperDiv.style.marginRight = `-${diff / 2}px`;
+                        wrapperDiv.style.width = `calc(100% + ${totalDiff}px)`;
+                        wrapperDiv.style.marginLeft = `-${totalDiff / 2}px`;
+                        wrapperDiv.style.marginRight = `-${totalDiff / 2}px`;
+                        
+                        console.log('[FitWidth] adjustDimensions: Ajustando wrapper para compensar diferença', {
+                            containerDiff,
+                            chartElementTotalPadding,
+                            totalDiff,
+                            wrapperWidth: wrapperDiv.style.width,
+                            marginLeft: wrapperDiv.style.marginLeft,
+                            marginRight: wrapperDiv.style.marginRight,
+                        });
                     } else {
                         wrapperDiv.style.width = '100%';
                         wrapperDiv.style.marginLeft = '0';
