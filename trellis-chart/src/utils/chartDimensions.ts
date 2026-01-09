@@ -336,6 +336,77 @@ export function readMeasureConfigs(
             layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
         };
         
+        // Processar coloração condicional
+        const conditionalColorSection = (configFromColumnVisualProps.conditionalColor || {}) as Record<string, unknown>;
+        const conditionalColorEnabledRaw = conditionalColorSection.enabled ?? 
+                                         (measureConfig as any)?.conditionalColor_enabled;
+        const conditionalColorEnabled = conditionalColorEnabledRaw === true || conditionalColorEnabledRaw === 'true' || conditionalColorEnabledRaw === 1;
+        
+        let conditionalColor: MeasureConfig['conditionalColor'] = undefined;
+        if (conditionalColorEnabled) {
+            const conditionalColorType = (conditionalColorSection.type ?? 
+                                         (measureConfig as any)?.conditionalColor_type ?? 
+                                         'conditional') as 'conditional' | 'dimension';
+            
+            if (conditionalColorType === 'conditional') {
+                const conditionSection = (conditionalColorSection.condition || {}) as Record<string, unknown>;
+                const operator = (conditionSection.operator ?? 
+                                 (measureConfig as any)?.conditionalColor_condition_operator ?? 
+                                 '>') as '>' | '<' | '>=' | '<=' | '==' | '!=';
+                const value = (conditionSection.value ?? 
+                             (measureConfig as any)?.conditionalColor_condition_value ?? 
+                             0.4) as number;
+                const trueColor = (conditionSection.trueColor ?? 
+                                 (measureConfig as any)?.conditionalColor_condition_trueColor ?? 
+                                 '#10b981') as string;
+                const falseColor = (conditionSection.falseColor ?? 
+                                  (measureConfig as any)?.conditionalColor_condition_falseColor) as string | undefined;
+                
+                conditionalColor = {
+                    enabled: true,
+                    type: 'conditional',
+                    condition: {
+                        operator,
+                        value,
+                        trueColor,
+                        falseColor,
+                    },
+                };
+            } else if (conditionalColorType === 'dimension') {
+                const dimensionId = (conditionalColorSection.dimensionId ?? 
+                                   (measureConfig as any)?.conditionalColor_dimensionId ?? 
+                                   '') as string;
+                const dimensionColorMap = (conditionalColorSection.dimensionColorMap || {}) as Record<string, string>;
+                
+                conditionalColor = {
+                    enabled: true,
+                    type: 'dimension',
+                    dimensionId,
+                    dimensionColorMap: Object.keys(dimensionColorMap).length > 0 ? dimensionColorMap : undefined,
+                };
+            }
+        }
+        
+        // Processar cálculo de porcentagem do total
+        const percentageOfTotalSection = (configFromColumnVisualProps.percentageOfTotal || {}) as Record<string, unknown>;
+        const percentageOfTotalEnabledRaw = percentageOfTotalSection.enabled ?? 
+                                           (measureConfig as any)?.percentageOfTotal_enabled;
+        const percentageOfTotalEnabled = percentageOfTotalEnabledRaw === true || 
+                                        percentageOfTotalEnabledRaw === 'true' || 
+                                        percentageOfTotalEnabledRaw === 1;
+        
+        let percentageOfTotal: MeasureConfig['percentageOfTotal'] = undefined;
+        if (percentageOfTotalEnabled) {
+            const dimensionId = (percentageOfTotalSection.dimensionId ?? 
+                               (measureConfig as any)?.percentageOfTotal_dimensionId ?? 
+                               '') as string | undefined;
+            
+            percentageOfTotal = {
+                enabled: true,
+                dimensionId: dimensionId || undefined,
+            };
+        }
+        
         return {
             measure,
             color: (measureConfig?.color as string) || defaultColors[measureIdx % defaultColors.length],
@@ -355,6 +426,8 @@ export function readMeasureConfigs(
             valueFormat: ((measureConfig as any)?.valueFormat as 'normal' | 'compacto') || 'normal',
             referenceLine,
             tooltip,
+            conditionalColor,
+            percentageOfTotal,
         };
     });
 }

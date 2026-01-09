@@ -16,6 +16,7 @@ import { setupChartOptions } from './utils/chartOptions';
 import { setupDynamicResize } from './handlers/dynamicResize';
 import { renderCompleteChart } from './rendering/chartRenderer';
 import { setupTooltips } from './rendering/tooltip';
+import { applyPercentageOfTotalToAllMeasures } from './utils/percentageCalculation';
 import { initializeChartSDK, emitRenderComplete } from './config/init';
 
 export const renderChart = async (ctx: CustomChartContext) => {
@@ -140,6 +141,16 @@ export const renderChart = async (ctx: CustomChartContext) => {
         tooltipCustomTemplate,
     } = options;
 
+    // Aplicar cálculo de porcentagem do total se configurado
+    // Isso deve ser feito ANTES de calcular dimensões e ranges, pois pode alterar os valores
+    const processedChartData = applyPercentageOfTotalToAllMeasures(
+        chartData,
+        measureCols,
+        measureConfigs,
+        primaryDimension,
+        secondaryDimensions
+    );
+
     // Quando fitWidth está ativo, ajustar containerWidth para estimar a largura real do containerDiv
     // O containerDiv geralmente tem clientWidth = chartElement.clientWidth - padding/border do chartElement
     // Se houver diferença, o dynamicResize vai re-renderizar com as dimensões corretas
@@ -167,9 +178,10 @@ export const renderChart = async (ctx: CustomChartContext) => {
 
     // Calcular dimensões do gráfico
     // (containerWidth e containerHeight já foram obtidos acima)
+    // Usar processedChartData para cálculos de dimensões
     const chartDimensions = calculateChartDimensions(
         chartOptions,
-        chartData,
+        processedChartData,
         measureCols,
         hasSecondaryDimension,
         allVisualProps,
@@ -205,7 +217,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
     });
 
     // Calcular ranges (min/max) para cada medida (considerando minY/maxY das configurações)
-    const measureRanges = calculateMeasureRanges(chartData, measureCols, measureConfigs);
+    // Usar processedChartData para cálculo de ranges
+    const measureRanges = calculateMeasureRanges(processedChartData, measureCols, measureConfigs);
 
     // Garantir que o chartElement ocupe 100% da largura quando fitWidth está ativo
     if (fitWidth) {
@@ -260,12 +273,14 @@ export const renderChart = async (ctx: CustomChartContext) => {
     }
 
     // Renderizar gráfico completo
+    // Usar processedChartData que já tem porcentagens calculadas se necessário
     chartElement.innerHTML = renderCompleteChart({
-        chartData,
+        chartData: processedChartData,
         measureCols,
         measureRanges,
         measureConfigs,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         fitWidth,
         fitHeight,
@@ -346,7 +361,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         dividerLinesBetweenBarsColor,
         dividerLinesBetweenBarsWidth,
         forceLabels,
-        chartData,
+        chartData: processedChartData,
         measureCols,
         measureRanges,
         measureConfigs,
@@ -368,6 +383,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         primaryDateFormat,
         secondaryDateFormat,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         measureLabelSpace,
         yAxisColor,

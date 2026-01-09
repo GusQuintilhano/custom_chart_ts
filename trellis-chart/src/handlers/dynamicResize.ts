@@ -52,6 +52,7 @@ export interface DynamicResizeParams {
     primaryDateFormat: string;
     secondaryDateFormat: string;
     hasSecondaryDimension: boolean;
+    primaryDimension: ChartColumn;
     secondaryDimensions: ChartColumn[];
     measureLabelSpace: number;
     yAxisColor: string;
@@ -103,6 +104,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         primaryDateFormat,
         secondaryDateFormat,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         measureLabelSpace,
         yAxisColor,
@@ -383,6 +385,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 measureCols,
                 measureRanges,
                 measureConfigs,
+                primaryDimension,
+                secondaryDimensions,
                 leftMargin,
                 barWidth: newBarWidth,
                 barSpacing: newBarSpacing,
