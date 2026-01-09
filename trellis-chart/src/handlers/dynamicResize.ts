@@ -528,7 +528,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
                     
                     // Forçar reflow para obter o tamanho real do SVG
-                    void svgElement.offsetWidth;
+                    // SVGSVGElement não tem offsetWidth, usar getBoundingClientRect() diretamente
+                    void svgElement.getBoundingClientRect();
                     
                     // Obter o tamanho real do SVG após renderização
                     const svgRect = svgElement.getBoundingClientRect();
