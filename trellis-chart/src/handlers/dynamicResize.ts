@@ -431,42 +431,11 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Quando fitWidth está ativo, wrapper deve ser 100% da largura
             if (wrapperDiv) {
                 if (fitWidth) {
-                    // Calcular diferença entre offsetWidth e clientWidth para compensar padding/border
-                    const containerOffsetWidth = containerDiv.offsetWidth;
-                    const containerClientWidth = containerDiv.clientWidth;
-                    const containerDiff = containerOffsetWidth - containerClientWidth;
-                    
-                    // Também verificar se há padding no chartElement (elemento pai do containerDiv)
-                    const chartElementComputedStyle = window.getComputedStyle(chartElement);
-                    const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
-                    const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
-                    const chartElementBorderLeft = parseFloat(chartElementComputedStyle.borderLeftWidth) || 0;
-                    const chartElementBorderRight = parseFloat(chartElementComputedStyle.borderRightWidth) || 0;
-                    const chartElementTotalPadding = chartElementPaddingLeft + chartElementPaddingRight + 
-                                                   chartElementBorderLeft + chartElementBorderRight;
-                    
-                    // Usar a maior diferença (container ou chartElement)
-                    const totalDiff = Math.max(containerDiff, chartElementTotalPadding);
-                    
-                    if (totalDiff > 0) {
-                        // Se há diferença, usar calc para compensar e ocupar todo o espaço
-                        wrapperDiv.style.width = `calc(100% + ${totalDiff}px)`;
-                        wrapperDiv.style.marginLeft = `-${totalDiff / 2}px`;
-                        wrapperDiv.style.marginRight = `-${totalDiff / 2}px`;
-                        
-                        console.log('[FitWidth] adjustDimensions: Ajustando wrapper para compensar diferença', {
-                            containerDiff,
-                            chartElementTotalPadding,
-                            totalDiff,
-                            wrapperWidth: wrapperDiv.style.width,
-                            marginLeft: wrapperDiv.style.marginLeft,
-                            marginRight: wrapperDiv.style.marginRight,
-                        });
-                    } else {
-                        wrapperDiv.style.width = '100%';
-                        wrapperDiv.style.marginLeft = '0';
-                        wrapperDiv.style.marginRight = '0';
-                    }
+                    // Usar clientWidth (espaço útil) em vez de offsetWidth para evitar barra de rolagem
+                    // O wrapper deve ocupar 100% do container, sem margens negativas
+                    wrapperDiv.style.width = '100%';
+                    wrapperDiv.style.marginLeft = '0';
+                    wrapperDiv.style.marginRight = '0';
                     wrapperDiv.style.minWidth = '100%';
                     wrapperDiv.style.maxWidth = '100%';
                     wrapperDiv.style.boxSizing = 'border-box';
@@ -539,11 +508,10 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
                 
                 if (fitWidth) {
-                    // Quando fitWidth está ativo, SVG deve ocupar exatamente o offsetWidth do container
-                    // Não usar 100% do wrapper, mas sim o offsetWidth real do container
-                    const containerOffsetWidth = containerDiv.offsetWidth;
-                    const svgWidth = `${containerOffsetWidth}px`;
-                    svgElement.setAttribute('width', svgWidth);
+                    // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
+                    // Usar clientWidth do container para evitar barra de rolagem horizontal
+                    // O SVG vai escalar para ocupar todo o espaço útil disponível
+                    svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
                     // preserveAspectRatio: quando apenas fitWidth, usar 'none' para permitir escala independente
                     // Isso evita comprimir o texto - o SVG vai escalar para ocupar 100% da largura
@@ -567,7 +535,6 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         containerClientWidth: containerDiv.clientWidth,
                         containerOffsetWidth: containerDiv.offsetWidth,
                         newChartWidth,
-                        svgWidth,
                     });
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
