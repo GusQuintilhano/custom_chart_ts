@@ -577,15 +577,31 @@ function createEditorSections(
     
     // Seção 3: Tipografia e Textos
     // Garantir que todos os valores padrão sejam válidos (não undefined/null)
-    const labelFontSizeValue = savedTextSizes?.labelFontSize ?? 10;
-    const measureTitleFontSizeValue = savedTextSizes?.measureTitleFontSize ?? 10;
-    const valueLabelFontSizeValue = savedTextSizes?.valueLabelFontSize ?? 9;
-    const measureNameRotationValue = (savedTextSizes as any).measureNameRotation !== undefined
-        ? String((savedTextSizes as any).measureNameRotation)
-        : String(getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90') ?? '-90');
-    const forceLabelsValue = (savedTextSizes as any).forceLabels !== undefined
-        ? Boolean((savedTextSizes as any).forceLabels)
-        : Boolean(getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) ?? false);
+    const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 10;
+    const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 10;
+    const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 9;
+    
+    // Para measureNameRotation, garantir que seja sempre uma string válida
+    let measureNameRotationValue = '-90';
+    if ((savedTextSizes as any)?.measureNameRotation !== undefined) {
+        measureNameRotationValue = String((savedTextSizes as any).measureNameRotation);
+    } else {
+        const savedValue = getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90');
+        measureNameRotationValue = savedValue !== undefined && savedValue !== null ? String(savedValue) : '-90';
+    }
+    // Validar que o valor está na lista permitida
+    if (!['-90', '0', '45', '-45', '90'].includes(measureNameRotationValue)) {
+        measureNameRotationValue = '-90';
+    }
+    
+    // Para forceLabels, garantir que seja sempre um boolean
+    let forceLabelsValue = false;
+    if ((savedTextSizes as any)?.forceLabels !== undefined) {
+        forceLabelsValue = Boolean((savedTextSizes as any).forceLabels);
+    } else {
+        const savedValue = getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false);
+        forceLabelsValue = savedValue !== undefined && savedValue !== null ? Boolean(savedValue) : false;
+    }
     
     elements.push({
         type: 'section',
@@ -597,19 +613,19 @@ function createEditorSections(
                 type: 'number',
                 key: 'labelFontSize',
                 label: 'Tamanho da Dimensão (px)',
-                defaultValue: Number(labelFontSizeValue) || 10,
+                defaultValue: labelFontSizeValue,
             },
             {
                 type: 'number',
                 key: 'measureTitleFontSize',
                 label: 'Tamanho das Medidas (px)',
-                defaultValue: Number(measureTitleFontSizeValue) || 10,
+                defaultValue: measureTitleFontSizeValue,
             },
             {
                 type: 'number',
                 key: 'valueLabelFontSize',
                 label: 'Tamanho dos Valores (px)',
-                defaultValue: Number(valueLabelFontSizeValue) || 9,
+                defaultValue: valueLabelFontSizeValue,
             },
             {
                 type: 'dropdown',
