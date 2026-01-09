@@ -522,21 +522,175 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
             if (svgElement) {
-                // SVG sempre usa viewBox para scaling responsivo
-                // IMPORTANTE: viewBox deve refletir as dimensões reais do gráfico
-                svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
-                
                 if (fitWidth) {
-                    // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
-                    // Usar clientWidth do container para evitar barra de rolagem horizontal
-                    // O SVG vai escalar para ocupar todo o espaço útil disponível
+                    // Quando fitWidth está ativo, primeiro definir width: 100% para obter o tamanho real
                     svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
+                    
+                    // Forçar reflow para obter o tamanho real do SVG
+                    void svgElement.offsetWidth;
+                    
+                    // Obter o tamanho real do SVG após renderização
+                    const svgRect = svgElement.getBoundingClientRect();
+                    const actualSvgWidth = svgRect.width || svgElement.clientWidth || newChartWidth;
+                    
+                    // Ajustar newChartWidth para corresponder ao tamanho real do SVG
+                    // Isso garante que o viewBox e o conteúdo sejam renderizados no mesmo tamanho
+                    if (Math.abs(actualSvgWidth - newChartWidth) > 1) {
+                        newChartWidth = actualSvgWidth;
+                        // Recalcular plotAreaWidth e barWidth/barSpacing com o tamanho real
+                        const newPlotAreaWidth = newChartWidth - leftMargin - rightMargin;
+                        const numBars = chartData.length;
+                        
+                        if (numBars > 1) {
+                            const minBarSpacing = 2;
+                            const totalSpacing = minBarSpacing * (numBars - 1);
+                            const availableWidthForBars = newPlotAreaWidth - totalSpacing;
+                            newBarWidth = availableWidthForBars > 0 ? availableWidthForBars / numBars : Math.max(1, newPlotAreaWidth / (numBars * 2));
+                            newBarSpacing = minBarSpacing;
+                            
+                            // Ajuste fino para garantir que a soma seja exatamente newPlotAreaWidth
+                            const calculatedTotal = (newBarWidth * numBars) + (newBarSpacing * (numBars - 1));
+                            const diff = newPlotAreaWidth - calculatedTotal;
+                            if (Math.abs(diff) > 0.01) {
+                                newBarWidth += diff / numBars;
+                            }
+                        } else if (numBars === 1) {
+                            newBarWidth = newPlotAreaWidth;
+                            newBarSpacing = 0;
+                        }
+                        
+                        // Re-renderizar todos os elementos com o tamanho correto
+                        const lastMeasureRowTop = calculateLastMeasureRowTop(
+                            measureCols.length,
+                            topMargin,
+                            newMeasureRowHeight,
+                            spacingBetweenMeasures
+                        );
+                        
+                        const newYAxesHtml = renderYAxes(
+                            measureRanges,
+                            measureCols,
+                            measureConfigs,
+                            topMargin,
+                            newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            leftMargin,
+                            measureLabelSpace,
+                            measureTitleFontSize,
+                            measureNameRotation,
+                            showYAxis,
+                            yAxisColor,
+                            axisStrokeWidth,
+                            valueLabelFontSize
+                        );
+                        
+                        const newDividerLinesBetweenMeasuresHtml = renderDividerLinesBetweenMeasures({
+                            showGridLines,
+                            dividerLinesBetweenMeasures,
+                            measureCols,
+                            topMargin,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            leftMargin,
+                            plotAreaWidth: newPlotAreaWidth,
+                            dividerLinesColor: dividerLinesBetweenMeasuresColor,
+                            dividerLinesWidth: dividerLinesBetweenMeasuresWidth,
+                            measureLabelSpace,
+                        });
+                        
+                        const newDividerLinesBetweenBarsHtml = renderDividerLinesBetweenBars({
+                            showGridLines,
+                            dividerLinesBetweenBars,
+                            chartData,
+                            leftMargin,
+                            barWidth: newBarWidth,
+                            barSpacing: newBarSpacing,
+                            topMargin,
+                            measureCols,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            dividerLinesColor: dividerLinesBetweenBarsColor,
+                            dividerLinesWidth: dividerLinesBetweenBarsWidth,
+                            hasSecondaryDimension,
+                            secondaryDateFormat,
+                        });
+                        
+                        const newAllChartElementsHtml = renderAllChartElements({
+                            chartData,
+                            measureCols,
+                            measureRanges,
+                            measureConfigs,
+                            leftMargin,
+                            barWidth: newBarWidth,
+                            barSpacing: newBarSpacing,
+                            topMargin,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            valueLabelFontSize,
+                            forceLabels,
+                        });
+                        
+                        const newReferenceLinesHtml = renderReferenceLines({
+                            measureConfigs,
+                            measureRanges,
+                            measureColsCount: measureCols.length,
+                            topMargin,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            leftMargin,
+                            plotAreaWidth: newPlotAreaWidth,
+                            valueLabelFontSize,
+                        });
+                        
+                        let newSecondaryXAxisHtml = '';
+                        let newSecondaryXAxisLabelsHtml = '';
+                        if (hasSecondaryDimension && secondaryDimensions.length >= 1) {
+                            const secondaryAxisResult = renderSecondaryXAxis(
+                                chartData,
+                                leftMargin,
+                                newBarWidth,
+                                newBarSpacing,
+                                measureCols,
+                                topMargin,
+                                newMeasureRowHeight,
+                                spacingBetweenMeasures,
+                                labelFontSize,
+                                dividerLinesBetweenGroupsColor,
+                                dividerLinesBetweenGroupsWidth,
+                                showGridLines,
+                                dividerLinesBetweenGroups,
+                                secondaryDateFormat
+                            );
+                            newSecondaryXAxisHtml = secondaryAxisResult.axisHtml;
+                            newSecondaryXAxisLabelsHtml = secondaryAxisResult.labelsHtml;
+                        }
+                        
+                        const { xAxisLabels: newXAxisLabels, xAxis: newXAxis } = renderXAxis({
+                            chartData,
+                            primaryDateFormat,
+                            formatDimension,
+                            leftMargin,
+                            barWidth: newBarWidth,
+                            barSpacing: newBarSpacing,
+                            lastMeasureRowTop,
+                            measureRowHeight: newMeasureRowHeight,
+                            labelFontSize,
+                            plotAreaWidth: newPlotAreaWidth,
+                            xAxisColor,
+                            axisStrokeWidth,
+                        });
+                        
+                        svgElement.innerHTML = newSecondaryXAxisLabelsHtml + newYAxesHtml + 
+                            newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newSecondaryXAxisHtml + 
+                            newAllChartElementsHtml + newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
+                    }
+                    
+                    // SVG sempre usa viewBox para scaling responsivo
+                    // IMPORTANTE: viewBox deve refletir as dimensões reais do gráfico (tamanho real do SVG)
+                    svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
+                    
                     // preserveAspectRatio: quando apenas fitWidth, usar 'none' para permitir escala independente
-                    // Isso evita comprimir o texto - o SVG vai escalar para ocupar 100% da largura
-                    // sem manter proporção, permitindo que o conteúdo ocupe todo o espaço disponível
-                    // quando apenas fitHeight, usar 'xMidYMid meet' para permitir escala na altura
-                    // quando ambos, usar 'xMidYMid meet' para manter proporção
                     const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
                         : fitWidth ? 'none' 
                         : fitHeight ? 'xMidYMid meet' 
@@ -549,13 +703,20 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         height: svgElement.getAttribute('height'),
                         preserveAspectRatio: svgElement.getAttribute('preserveAspectRatio'),
                         svgBoundingRect: svgElement.getBoundingClientRect().width,
+                        actualSvgWidth,
                         wrapperClientWidth: wrapperDiv?.clientWidth,
                         wrapperOffsetWidth: wrapperDiv?.offsetWidth,
                         containerClientWidth: containerDiv.clientWidth,
                         containerOffsetWidth: containerDiv.offsetWidth,
                         newChartWidth,
+                        newPlotAreaWidth: newChartWidth - leftMargin - rightMargin,
+                        newBarWidth,
+                        newBarSpacing,
                     });
                 } else {
+                    // SVG sempre usa viewBox para scaling responsivo
+                    // IMPORTANTE: viewBox deve refletir as dimensões reais do gráfico
+                    svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
                     svgElement.setAttribute('preserveAspectRatio', fitHeight ? 'xMidYMid meet' : 'none');
