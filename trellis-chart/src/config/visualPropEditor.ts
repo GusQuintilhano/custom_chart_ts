@@ -576,12 +576,14 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
-    // Garantir que todos os valores padrão sejam válidos (não undefined/null)
+    // TEMPORARIAMENTE COMENTADA PARA DEBUG - verificar se o erro desaparece
+    // Se o erro desaparecer, o problema está nesta seção
+    // Se o erro persistir, o problema está em outra seção (elements[2] pode ser outra coisa)
+    /*
     const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 10;
     const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 10;
     const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 9;
     
-    // Para measureNameRotation, garantir que seja sempre uma string válida
     let measureNameRotationValue = '-90';
     if ((savedTextSizes as any)?.measureNameRotation !== undefined) {
         measureNameRotationValue = String((savedTextSizes as any).measureNameRotation);
@@ -589,12 +591,10 @@ function createEditorSections(
         const savedValue = getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90');
         measureNameRotationValue = savedValue !== undefined && savedValue !== null ? String(savedValue) : '-90';
     }
-    // Validar que o valor está na lista permitida
     if (!['-90', '0', '45', '-45', '90'].includes(measureNameRotationValue)) {
         measureNameRotationValue = '-90';
     }
     
-    // Para forceLabels, garantir que seja sempre um boolean
     let forceLabelsValue = false;
     if ((savedTextSizes as any)?.forceLabels !== undefined) {
         forceLabelsValue = Boolean((savedTextSizes as any).forceLabels);
@@ -642,6 +642,7 @@ function createEditorSections(
             },
         ],
     });
+    */
     
     // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
