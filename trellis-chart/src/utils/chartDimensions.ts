@@ -88,11 +88,43 @@ export function calculateChartDimensions(
         measureRowHeight = fitHeight ? (chartHeight - topMargin - bottomMargin - (spacingBetweenMeasures * (measureCols.length - 1))) / measureCols.length : measureRowHeight;
         
         // Calcular espaçamento e largura das barras baseado no plotAreaWidth real
-        // IMPORTANTE: Quando fitWidth está ativo, essas dimensões vão ser recalculadas pelo dynamicResize
-        // quando o containerWidth real estiver disponível, mas precisamos ter valores iniciais corretos
-        const barSpacing = showYAxis ? 20 : Math.max(15, plotAreaWidth / (numBars * 3));
-        const totalSpacing = barSpacing * (numBars - 1);
-        const barWidth = showYAxis ? 40 : Math.max(30, (plotAreaWidth - totalSpacing) / numBars);
+        // IMPORTANTE: Quando fitWidth está ativo, IGNORAR configurações de largura de barras
+        // e calcular para que o gráfico caiba exatamente na largura disponível
+        // Estratégia: usar espaçamento mínimo fixo e distribuir o restante entre as barras
+        let barWidth: number;
+        let barSpacing: number;
+        
+        if (numBars === 0) {
+            barWidth = 0;
+            barSpacing = 0;
+        } else if (numBars === 1) {
+            // Se há apenas uma barra, usar toda a largura disponível
+            barWidth = plotAreaWidth;
+            barSpacing = 0;
+        } else {
+            // Usar espaçamento mínimo fixo (2px) e distribuir o restante entre as barras
+            // Isso garante que o gráfico caiba exatamente na largura disponível
+            const minBarSpacing = 2;
+            const totalSpacing = minBarSpacing * (numBars - 1);
+            const availableWidthForBars = plotAreaWidth - totalSpacing;
+            
+            if (availableWidthForBars <= 0) {
+                // Se não há espaço suficiente, usar espaçamento mínimo e dividir o restante
+                barSpacing = minBarSpacing;
+                barWidth = Math.max(1, plotAreaWidth / (numBars * 2)); // Dividir espaço igualmente
+            } else {
+                barSpacing = minBarSpacing;
+                barWidth = availableWidthForBars / numBars;
+            }
+            
+            // Garantir que a soma seja exatamente plotAreaWidth (ajuste fino)
+            const calculatedTotal = (barWidth * numBars) + (barSpacing * (numBars - 1));
+            const diff = plotAreaWidth - calculatedTotal;
+            if (Math.abs(diff) > 0.01) {
+                // Ajustar barWidth para compensar qualquer diferença
+                barWidth += diff / numBars;
+            }
+        }
         
         const chartWidth = baseWidth; // Usar largura do container diretamente
         
