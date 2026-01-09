@@ -248,13 +248,56 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         let newBarSpacing = barSpacing;
 
         // Quando fitWidth está ativo, SEMPRE recalcular barWidth e barSpacing baseado no novo tamanho
+        // IGNORAR configurações de largura de barras e calcular para que ocupe exatamente a largura disponível
+        // Estratégia: usar espaçamento mínimo fixo e distribuir o restante entre as barras
         if (fitWidth && containerWidth > 0) {
             const newPlotAreaWidth = newChartWidth - leftMargin - rightMargin;
-            newBarSpacing = showYAxis ? 20 : Math.max(15, newPlotAreaWidth / (chartData.length * 3));
-            const newTotalSpacing = newBarSpacing * (chartData.length - 1);
-            newBarWidth = showYAxis ? 40 : Math.max(30, (newPlotAreaWidth - newTotalSpacing) / chartData.length);
+            const numBars = chartData.length;
+            
+            if (numBars === 0) {
+                newBarWidth = 0;
+                newBarSpacing = 0;
+            } else if (numBars === 1) {
+                // Se há apenas uma barra, usar toda a largura disponível
+                newBarWidth = newPlotAreaWidth;
+                newBarSpacing = 0;
+            } else {
+                // Usar espaçamento mínimo fixo (2px) e distribuir o restante entre as barras
+                // Isso garante que o gráfico caiba exatamente na largura disponível
+                const minBarSpacing = 2;
+                const totalSpacing = minBarSpacing * (numBars - 1);
+                const availableWidthForBars = newPlotAreaWidth - totalSpacing;
+                
+                if (availableWidthForBars <= 0) {
+                    // Se não há espaço suficiente, usar espaçamento mínimo e dividir o restante
+                    newBarSpacing = minBarSpacing;
+                    newBarWidth = Math.max(1, newPlotAreaWidth / (numBars * 2)); // Dividir espaço igualmente
+                } else {
+                    newBarSpacing = minBarSpacing;
+                    newBarWidth = availableWidthForBars / numBars;
+                }
+                
+                // Garantir que a soma seja exatamente newPlotAreaWidth (ajuste fino)
+                const calculatedTotal = (newBarWidth * numBars) + (newBarSpacing * (numBars - 1));
+                const diff = newPlotAreaWidth - calculatedTotal;
+                if (Math.abs(diff) > 0.01) {
+                    // Ajustar barWidth para compensar qualquer diferença
+                    newBarWidth += diff / numBars;
+                }
+            }
+            
             // Garantir que sempre atualizamos quando fitWidth está ativo
             shouldUpdate = true;
+            
+            console.log('[FitWidth] adjustDimensions: Recalculando barWidth e barSpacing para fitWidth', {
+                newPlotAreaWidth,
+                numBars,
+                newBarWidth,
+                newBarSpacing,
+                calculatedTotal: (newBarWidth * numBars) + (newBarSpacing * (numBars - 1)),
+                shouldEqual: newPlotAreaWidth,
+                diff: newPlotAreaWidth - ((newBarWidth * numBars) + (newBarSpacing * (numBars - 1))),
+            });
         }
 
         // Se há mudanças (ou fitWidth está ativo e temos containerWidth), recalcular e atualizar
