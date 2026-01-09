@@ -19,6 +19,7 @@ export interface ChartRenderParams {
     measureRanges: MeasureRange[];
     measureConfigs: MeasureConfig[];
     hasSecondaryDimension: boolean;
+    primaryDimension: ChartColumn;
     secondaryDimensions: ChartColumn[];
     // Opções
     fitWidth: boolean;
@@ -71,6 +72,7 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         measureRanges,
         measureConfigs,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         fitWidth,
         fitHeight,
@@ -115,6 +117,8 @@ export function renderCompleteChart(params: ChartRenderParams): string {
         measureCols,
         measureRanges,
         measureConfigs,
+        primaryDimension,
+        secondaryDimensions,
         leftMargin,
         barWidth,
         barSpacing,
