@@ -6,9 +6,78 @@ import type { BoxplotData, BoxplotRenderConfig } from '../types/boxplotTypes';
 import type { BoxplotOptions } from '../utils/boxplotOptions';
 import { renderBoxplotBox } from './boxplotBox';
 import { renderBoxplotWhiskers } from './boxplotWhiskers';
-import { renderBoxplotMedian } from './boxplotMedian';
+import { renderBoxplotMedian, renderBoxplotMean } from './boxplotMedian';
 import { renderOutliers } from './outliers';
 import { formatValue } from '@shared/utils/formatters';
+import type { GridLinesConfig } from '../types/boxplotTypes';
+
+/**
+ * Renderiza linhas de grade de fundo
+ */
+function renderGridLines(
+    config: BoxplotRenderConfig,
+    options: BoxplotOptions,
+    globalMin: number,
+    globalMax: number
+): string {
+    if (!options.gridLines?.show) {
+        return '';
+    }
+
+    const gridLines = options.gridLines as GridLinesConfig;
+    const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin } = config;
+    const { orientation } = options;
+
+    const color = gridLines.color || '#e5e7eb';
+    const strokeWidth = gridLines.strokeWidth || 1;
+    const strokeDash = gridLines.strokeDasharray || 'none';
+    const dashAttr = strokeDash !== 'none' ? `stroke-dasharray="${strokeDash}"` : '';
+
+    const numLines = 5; // Número de linhas de grade
+    const lines: string[] = [];
+
+    if (orientation === 'vertical') {
+        // Linhas horizontais para orientação vertical
+        for (let i = 0; i <= numLines; i++) {
+            const value = globalMin + (globalMax - globalMin) * (i / numLines);
+            const y = topMargin + plotAreaHeight - (i / numLines) * plotAreaHeight;
+            
+            lines.push(`
+                <line
+                    x1="${leftMargin}"
+                    y1="${y}"
+                    x2="${leftMargin + plotAreaWidth}"
+                    y2="${y}"
+                    stroke="${color}"
+                    stroke-width="${strokeWidth}"
+                    ${dashAttr}
+                    opacity="0.5"
+                />
+            `);
+        }
+    } else {
+        // Linhas verticais para orientação horizontal
+        for (let i = 0; i <= numLines; i++) {
+            const value = globalMin + (globalMax - globalMin) * (i / numLines);
+            const x = leftMargin + (i / numLines) * plotAreaWidth;
+            
+            lines.push(`
+                <line
+                    x1="${x}"
+                    y1="${topMargin}"
+                    x2="${x}"
+                    y2="${topMargin + plotAreaHeight}"
+                    stroke="${color}"
+                    stroke-width="${strokeWidth}"
+                    ${dashAttr}
+                    opacity="0.5"
+                />
+            `);
+        }
+    }
+
+    return `<g class="grid-lines">${lines.join('')}</g>`;
+}
 
 export function renderBoxplot(
     boxplotData: BoxplotData,
@@ -18,12 +87,14 @@ export function renderBoxplot(
     const { groups } = boxplotData;
     const { 
         orientation, 
-        color, 
-        opacity, 
-        showOutliers, 
-        whiskerWidth,
+        boxStyle,
+        medianStyle,
+        whiskerStyle,
+        outlierStyle,
+        showMean,
         labelFontSize,
         valueLabelFontSize,
+        gridLines,
     } = options;
 
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin, bottomMargin, groupSpacing } = config;
@@ -31,6 +102,9 @@ export function renderBoxplot(
     // Calcular range global para coordenadas
     const globalMin = boxplotData.globalStats.whiskerLower;
     const globalMax = boxplotData.globalStats.whiskerUpper;
+
+    // Renderizar linhas de grade primeiro (vão para trás)
+    const gridLinesHtml = renderGridLines(config, options, globalMin, globalMax);
 
     // Calcular posição base (centro da área de plotagem)
     const baseCenterX = leftMargin + plotAreaWidth / 2;
@@ -48,11 +122,17 @@ export function renderBoxplot(
             ? baseCenterY
             : topMargin + (index + 0.5) * (plotAreaHeight / groups.length);
 
-        // Renderizar elementos do boxplot
-        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, color, opacity, globalMin, globalMax);
-        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, color, whiskerWidth, globalMin, globalMax);
-        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, globalMin, globalMax, '#000000');
-        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, color, showOutliers, globalMin, globalMax);
+        // Renderizar elementos do boxplot usando as novas configurações
+        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax);
+        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, whiskerStyle, globalMin, globalMax);
+        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, boxStyle.boxWidth, globalMin, globalMax);
+        
+        // Renderizar média se habilitado
+        const meanHtml = showMean && group.stats.mean !== undefined
+            ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, boxStyle.boxWidth, globalMin, globalMax)
+            : '';
+        
+        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax);
 
         // Label da dimensão
         const labelY = orientation === 'vertical' 
@@ -71,13 +151,14 @@ export function renderBoxplot(
                 ${boxHtml}
                 ${whiskersHtml}
                 ${medianHtml}
+                ${meanHtml}
                 ${outliersHtml}
                 ${labelHtml}
             </g>
         `;
     }).join('');
 
-    return boxesHtml;
+    return gridLinesHtml + boxesHtml;
 }
 
 export function renderYAxis(

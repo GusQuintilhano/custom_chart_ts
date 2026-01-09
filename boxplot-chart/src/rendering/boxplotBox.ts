@@ -3,26 +3,50 @@
  */
 
 import type { BoxplotStatistics } from '@shared/utils/statistical';
-import type { BoxplotRenderConfig } from '../types/boxplotTypes';
+import type { BoxplotRenderConfig, BoxStyle, BoxplotOrientation } from '../types/boxplotTypes';
 
 export function renderBoxplotBox(
     stats: BoxplotStatistics,
     centerX: number,
     centerY: number,
     config: BoxplotRenderConfig,
-    orientation: 'vertical' | 'horizontal',
-    color: string,
-    opacity: number,
+    orientation: BoxplotOrientation,
+    boxStyle: BoxStyle,
     globalMin: number,
     globalMax: number
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
     const globalRange = globalMax - globalMin;
 
+    // Usar configurações do boxStyle
+    const fill = boxStyle.fill;
+    const stroke = boxStyle.stroke;
+    const strokeWidth = boxStyle.strokeWidth;
+    const opacity = boxStyle.opacity;
+    const borderRadius = boxStyle.borderRadius || 0;
+
     if (orientation === 'vertical') {
         const boxHeight = (stats.q3 - stats.q1) / (stats.whiskerUpper - stats.whiskerLower) * plotAreaHeight;
         const boxTop = centerY - boxHeight / 2;
         const boxLeft = centerX - boxWidth / 2;
+
+        // Se borderRadius > 0, usar rounded rectangle
+        if (borderRadius > 0) {
+            return `
+                <rect
+                    x="${boxLeft}"
+                    y="${boxTop}"
+                    width="${boxWidth}"
+                    height="${boxHeight}"
+                    rx="${Math.min(borderRadius, boxWidth / 2, boxHeight / 2)}"
+                    ry="${Math.min(borderRadius, boxWidth / 2, boxHeight / 2)}"
+                    fill="${fill}"
+                    fill-opacity="${opacity}"
+                    stroke="${stroke}"
+                    stroke-width="${strokeWidth}"
+                />
+            `;
+        }
 
         return `
             <rect
@@ -30,10 +54,10 @@ export function renderBoxplotBox(
                 y="${boxTop}"
                 width="${boxWidth}"
                 height="${boxHeight}"
-                fill="${color}"
+                fill="${fill}"
                 fill-opacity="${opacity}"
-                stroke="#374151"
-                stroke-width="1.5"
+                stroke="${stroke}"
+                stroke-width="${strokeWidth}"
             />
         `;
     } else {
@@ -45,16 +69,33 @@ export function renderBoxplotBox(
         const boxHeight = boxWidth;
         const boxTop = centerY - boxHeight / 2;
 
+        if (borderRadius > 0) {
+            return `
+                <rect
+                    x="${boxLeft}"
+                    y="${boxTop}"
+                    width="${boxLength}"
+                    height="${boxHeight}"
+                    rx="${Math.min(borderRadius, boxLength / 2, boxHeight / 2)}"
+                    ry="${Math.min(borderRadius, boxLength / 2, boxHeight / 2)}"
+                    fill="${fill}"
+                    fill-opacity="${opacity}"
+                    stroke="${stroke}"
+                    stroke-width="${strokeWidth}"
+                />
+            `;
+        }
+
         return `
             <rect
                 x="${boxLeft}"
                 y="${boxTop}"
                 width="${boxLength}"
                 height="${boxHeight}"
-                fill="${color}"
+                fill="${fill}"
                 fill-opacity="${opacity}"
-                stroke="#374151"
-                stroke-width="1.5"
+                stroke="${stroke}"
+                stroke-width="${strokeWidth}"
             />
         `;
     }
