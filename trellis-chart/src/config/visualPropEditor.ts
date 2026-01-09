@@ -576,6 +576,10 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
+    // TEMPORARIAMENTE REMOVIDA PARA DEBUG - verificar se erro desaparece
+    // Se o erro desaparecer, o problema está nesta seção (provavelmente no dropdown measureNameRotation)
+    // Se o erro persistir em elements[2], o problema está em outra seção
+    /*
     const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 10;
     const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 10;
     const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 9;
@@ -638,6 +642,7 @@ function createEditorSections(
             },
         ],
     });
+    */
     
     // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
@@ -842,6 +847,18 @@ export function createVisualPropEditorDefinition(
             savedChartTooltip,
             allSavedProps
         );
+        
+        // Log de debug para identificar qual elemento está causando problema
+        if (elements.length > 2) {
+            logger.debug('🎨 [DEBUG] elements[2]:', JSON.stringify({
+                type: elements[2]?.type,
+                key: elements[2]?.key,
+                label: elements[2]?.label,
+                hasChildren: !!elements[2]?.children,
+                childrenLength: elements[2]?.children?.length,
+                childrenTypes: elements[2]?.children?.map((c: any) => c?.type),
+            }));
+        }
         
         // Criar configurações por coluna para aparecer na aba "Configure"
         const columnsVizPropDefinition: any[] = [];
