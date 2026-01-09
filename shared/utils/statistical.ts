@@ -131,12 +131,12 @@ function calculateQuartilesByMethod(sorted: number[], method: CalculationMethod)
     }
 
     const n = sorted.length;
+    const mid = Math.floor(n / 2);
 
     switch (method) {
         case 'tukey':
         case 'auto': // Usar Tukey como padrão
             // Método de Tukey (método mais comum): usar a mediana da metade inferior/superior
-            const mid = Math.floor(n / 2);
             const lowerHalf = sorted.slice(0, mid);
             const upperHalf = n % 2 === 0 ? sorted.slice(mid) : sorted.slice(mid + 1);
             
