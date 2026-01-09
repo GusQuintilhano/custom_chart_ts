@@ -41,7 +41,8 @@ function isDateColumn(column: ChartColumn): boolean {
  */
 function createMeasureColumnSettings(
     measureColumns: ChartColumn[],
-    currentVisualProps: ChartModel
+    currentVisualProps: ChartModel,
+    dimensionColumns: ChartColumn[] = []
 ): { [columnId: string]: { elements: any[] } } {
     const measureColumnSettings: { [columnId: string]: { elements: any[] } } = {};
     
@@ -255,6 +256,134 @@ function createMeasureColumnSettings(
             });
         }
         // Se tooltip global não estiver habilitado, não mostrar seção de tooltip nas medidas
+        
+        // Seção 6: Coloração Condicional
+        const conditionalColorConfig = (savedConfig as any)?.conditionalColor || {};
+        const conditionalColorEnabled = conditionalColorConfig.enabled === true;
+        const conditionalColorType = conditionalColorConfig.type || 'conditional';
+        
+        const conditionalColorChildren: any[] = [
+            {
+                type: 'toggle',
+                key: 'conditionalColor_enabled',
+                label: 'Habilitar Coloração Condicional',
+                defaultValue: conditionalColorEnabled,
+            },
+        ];
+        
+        if (conditionalColorEnabled) {
+            conditionalColorChildren.push(
+                {
+                    type: 'dropdown',
+                    key: 'conditionalColor_type',
+                    label: 'Tipo de Coloração',
+                    defaultValue: conditionalColorType,
+                    values: ['conditional', 'dimension'],
+                }
+            );
+            
+            if (conditionalColorType === 'conditional') {
+                // Configuração para coloração condicional (ex: >0.4)
+                const condition = conditionalColorConfig.condition || {};
+                conditionalColorChildren.push(
+                    {
+                        type: 'dropdown',
+                        key: 'conditionalColor_condition_operator',
+                        label: 'Operador',
+                        defaultValue: condition.operator || '>',
+                        values: ['>', '<', '>=', '<=', '==', '!='],
+                    },
+                    {
+                        type: 'number',
+                        key: 'conditionalColor_condition_value',
+                        label: 'Valor de Comparação',
+                        defaultValue: condition.value ?? 0.4,
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'conditionalColor_condition_trueColor',
+                        label: 'Cor quando Verdadeiro',
+                        selectorType: 'COLOR',
+                        defaultValue: condition.trueColor || '#10b981',
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'conditionalColor_condition_falseColor',
+                        label: 'Cor quando Falso (opcional)',
+                        selectorType: 'COLOR',
+                        defaultValue: condition.falseColor || defaultColor,
+                    }
+                );
+            } else if (conditionalColorType === 'dimension') {
+                // Configuração para coloração por dimensão
+                const dimensionOptions = dimensionColumns.map(d => ({
+                    value: d.id,
+                    label: d.name || d.id,
+                }));
+                
+                conditionalColorChildren.push(
+                    {
+                        type: 'dropdown',
+                        key: 'conditionalColor_dimensionId',
+                        label: 'Dimensão para Coloração',
+                        defaultValue: conditionalColorConfig.dimensionId || (dimensionOptions[0]?.value || ''),
+                        values: dimensionOptions.map(d => d.value),
+                        valueLabels: dimensionOptions.map(d => d.label),
+                    }
+                );
+                
+                // Para coloração por dimensão, o usuário pode definir cores para valores específicos
+                // Por enquanto, vamos usar cores padrão baseadas nos valores únicos da dimensão
+                // (Isso pode ser expandido no futuro para permitir edição manual)
+            }
+        }
+        
+        measureElements.push({
+            type: 'section',
+            key: 'conditionalColor',
+            label: 'Coloração Condicional',
+            isAccordianExpanded: false,
+            children: conditionalColorChildren,
+        });
+        
+        // Seção 7: Cálculo de Porcentagem do Total
+        const percentageOfTotalConfig = (savedConfig as any)?.percentageOfTotal || {};
+        const percentageOfTotalEnabled = percentageOfTotalConfig.enabled === true;
+        
+        const percentageOfTotalChildren: any[] = [
+            {
+                type: 'toggle',
+                key: 'percentageOfTotal_enabled',
+                label: 'Calcular como % do Total',
+                defaultValue: percentageOfTotalEnabled,
+            },
+        ];
+        
+        if (percentageOfTotalEnabled) {
+            const dimensionOptions = dimensionColumns.map(d => ({
+                value: d.id,
+                label: d.name || d.id,
+            }));
+            
+            percentageOfTotalChildren.push(
+                {
+                    type: 'dropdown',
+                    key: 'percentageOfTotal_dimensionId',
+                    label: 'Dimensão para Agrupamento (opcional)',
+                    defaultValue: percentageOfTotalConfig.dimensionId || '',
+                    values: ['', ...dimensionOptions.map(d => d.value)],
+                    valueLabels: ['Total Geral', ...dimensionOptions.map(d => d.label)],
+                }
+            );
+        }
+        
+        measureElements.push({
+            type: 'section',
+            key: 'percentageOfTotal',
+            label: 'Cálculo de Porcentagem',
+            isAccordianExpanded: false,
+            children: percentageOfTotalChildren,
+        });
         
         measureColumnSettings[measure.id] = {
             elements: measureElements,
@@ -689,7 +818,7 @@ export function createVisualPropEditorDefinition(
         const columnsVizPropDefinition: any[] = [];
         
         if (measureColumns.length > 0) {
-            const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps);
+            const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps, dimensionColumns);
             if (Object.keys(measureColumnSettings).length > 0) {
                 columnsVizPropDefinition.push({
                     type: ColumnType.MEASURE,

@@ -69,6 +69,33 @@ export interface ChartDataPoint {
 }
 
 /**
+ * Configuração de coloração condicional
+ */
+export interface ConditionalColorConfig {
+    enabled: boolean;
+    type: 'conditional' | 'dimension'; // Tipo: condicional (ex: >0.4) ou por dimensão
+    // Para tipo 'conditional'
+    condition?: {
+        operator: '>' | '<' | '>=' | '<=' | '==' | '!=';
+        value: number;
+        trueColor: string; // Cor quando condição é verdadeira
+        falseColor?: string; // Cor quando condição é falsa (opcional, usa cor padrão se não definida)
+    };
+    // Para tipo 'dimension'
+    dimensionId?: string; // ID da dimensão para coloração
+    dimensionColorMap?: Record<string, string>; // Mapeamento de valores da dimensão para cores
+}
+
+/**
+ * Configuração de cálculo de porcentagem do total
+ */
+export interface PercentageOfTotalConfig {
+    enabled: boolean;
+    dimensionId?: string; // ID da dimensão para calcular o total (ex: "Almoço" ou "Jantar")
+    // Se não especificado, calcula % do total geral
+}
+
+/**
  * Configuração de medida
  */
 export interface MeasureConfig {
@@ -102,6 +129,8 @@ export interface MeasureConfig {
         backgroundColor?: string;
         layout?: 'vertical' | 'horizontal' | 'grade';
     };
+    conditionalColor?: ConditionalColorConfig; // Configuração de coloração condicional ou por dimensão
+    percentageOfTotal?: PercentageOfTotalConfig; // Configuração de cálculo de % do total
 }
 
 /**

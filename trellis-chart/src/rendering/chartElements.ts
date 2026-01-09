@@ -6,6 +6,7 @@ import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { ChartDataPoint, MeasureConfig } from '../types/chartTypes';
 import { formatValue } from '@shared/utils/formatters';
 import { valueToY, calculateBarX, calculateBarCenterX } from '@shared/utils/calculations';
+import { calculateBarColor } from '../utils/conditionalColor';
 
 /**
  * Renderiza um gráfico de linha para uma medida
@@ -129,6 +130,8 @@ export function renderBars(
     barWidth: number,
     barSpacing: number,
     measureConfig: MeasureConfig,
+    primaryDimension: ChartColumn,
+    secondaryDimensions: ChartColumn[],
     valueLabelFontSize: number,
     forceLabels: boolean
 ): string {
@@ -141,10 +144,22 @@ export function renderBars(
     const showZeroValues = measureConfig.showZeroValues !== false;
     const format = measureConfig.format || 'decimal';
     const decimals = measureConfig.decimals ?? 2;
+    const defaultColor = measureConfig.color || '#3b82f6';
     
     const barsHtml = chartData.map((item, itemIdx) => {
         const value = item.values[measureIdx] || 0;
         const barX = calculateBarX(itemIdx, leftMargin, barWidth, barSpacing);
+        
+        // Calcular cor dinamicamente baseado em coloração condicional ou dimensão
+        const barColor = calculateBarColor(
+            item,
+            measureIdx,
+            value,
+            measureConfig,
+            primaryDimension,
+            secondaryDimensions,
+            defaultColor
+        );
         
         // Posição Y do valor (topo da barra se positivo, fundo se negativo)
         const valueY = valueToY(value, minValue, maxValue, measureRowTop, measureRowHeight);
@@ -193,7 +208,7 @@ export function renderBars(
                     y="${barY}" 
                     width="${barWidth}" 
                     height="${barHeight}"
-                    fill="${measureConfig.color || '#3b82f6'}"
+                    fill="${barColor}"
                     opacity="${opacity}"
                     data-measure-index="${measureIdx}"
                     data-data-index="${itemIdx}"
@@ -224,6 +239,8 @@ export interface RenderChartElementsParams {
     measureCols: ChartColumn[];
     measureRanges: Array<{ min: number; max: number }>;
     measureConfigs: MeasureConfig[];
+    primaryDimension: ChartColumn;
+    secondaryDimensions: ChartColumn[];
     leftMargin: number;
     barWidth: number;
     barSpacing: number;
@@ -243,6 +260,8 @@ export function renderAllChartElements(params: RenderChartElementsParams): strin
         measureCols,
         measureRanges,
         measureConfigs,
+        primaryDimension,
+        secondaryDimensions,
         leftMargin,
         barWidth,
         barSpacing,
@@ -289,6 +308,8 @@ export function renderAllChartElements(params: RenderChartElementsParams): strin
                 barWidth,
                 barSpacing,
                 measureConfig,
+                primaryDimension,
+                secondaryDimensions,
                 valueLabelFontSize,
                 forceLabels
             );
