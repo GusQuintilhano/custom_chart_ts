@@ -626,6 +626,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                             measureCols,
                             measureRanges,
                             measureConfigs,
+                            primaryDimension,
+                            secondaryDimensions,
                             leftMargin,
                             barWidth: newBarWidth,
                             barSpacing: newBarSpacing,
