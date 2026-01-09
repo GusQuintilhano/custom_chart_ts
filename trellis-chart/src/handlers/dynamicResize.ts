@@ -137,53 +137,53 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         return;
     }
     
-    // Obter padding do chartElement (elemento raiz do ThoughtSpot) para compensar
-    const chartElementComputedStyle = window.getComputedStyle(chartElement);
-    const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
-    const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
-    const chartElementTotalPadding = chartElementPaddingLeft + chartElementPaddingRight;
+    // Armazenar as últimas dimensões para evitar re-renderizações desnecessárias
+    let lastContainerWidth = 0;
+    let lastContainerHeight = 0;
+    let lastChartWidth = chartWidth;
+    let lastChartHeight = chartHeight;
 
     const adjustDimensions = () => {
         // Tentar obter dimensões do container de várias formas
-        // IMPORTANTE: Quando fitWidth está ativo, precisamos usar a largura REAL do SVG (clientWidth)
-        // não a largura do container (offsetWidth), pois offsetWidth inclui padding que não afeta o SVG
+        // IMPORTANTE: Quando fitWidth está ativo, usar SEMPRE clientWidth (largura real do conteúdo)
+        // offsetWidth inclui padding/border que não afeta o SVG renderizado
         // O SVG renderizado ocupa apenas o clientWidth do container
         let containerWidth = fitWidth 
-            ? (containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0)
+            ? (containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || 0)
             : containerDiv.clientWidth;
         let containerHeight = fitHeight
-            ? (containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0)
+            ? (containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || 0)
             : containerDiv.clientHeight;
         
         // Se ainda não temos dimensões, tentar outras formas
         if (fitWidth && containerWidth === 0) {
-            // Tentar clientWidth primeiro (largura real do conteúdo)
-            containerWidth = containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0;
+            containerWidth = containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || 0;
         }
         if (fitHeight && containerHeight === 0) {
-            containerHeight = containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0;
+            containerHeight = containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || 0;
         }
         
         // Se ainda não temos dimensões e fitWidth está ativo, tentar obter do elemento pai
         if (fitWidth && containerWidth === 0 && containerDiv.parentElement) {
-            // Para o pai, usar clientWidth (largura real do conteúdo, sem padding)
             const parentWidth = containerDiv.parentElement.clientWidth || 
-                              containerDiv.parentElement.getBoundingClientRect().width ||
-                              containerDiv.parentElement.offsetWidth || 0;
+                              containerDiv.parentElement.getBoundingClientRect().width || 0;
             if (parentWidth > 0) {
                 containerWidth = parentWidth;
-                
-                // Log quando obtemos dimensões do pai
-                console.log('[FitWidth] Dimensões obtidas do elemento pai:', {
-                    containerWidth,
-                    parentWidth,
-                    parentElement: containerDiv.parentElement.tagName,
-                });
             }
         }
         
         // Se fitWidth está ativo mas o container ainda não tem dimensões, aguardar
         if (fitWidth && containerWidth === 0) {
+            return;
+        }
+
+        // Verificar se as dimensões mudaram significativamente (diferença maior que 1px)
+        // Isso evita re-renderizações desnecessárias quando há apenas pequenas variações
+        const widthChanged = Math.abs(containerWidth - lastContainerWidth) > 1;
+        const heightChanged = Math.abs(containerHeight - lastContainerHeight) > 1;
+        
+        // Se não houve mudança significativa e já renderizamos com essas dimensões, não atualizar
+        if (!widthChanged && !heightChanged && lastChartWidth === chartWidth && lastChartHeight === chartHeight && lastContainerWidth > 0) {
             return;
         }
 
@@ -193,24 +193,9 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         let shouldUpdate = false;
 
         // Ajustar largura se fitWidth está ativo
-        // Quando fitWidth está ativo, SEMPRE usar containerWidth (ajustar independente do valor anterior)
         if (fitWidth && containerWidth > 0) {
-            // Sempre recalcular quando fitWidth está ativo, mesmo se o valor não mudou
-            // Isso garante que o gráfico seja ajustado corretamente na primeira renderização
             newChartWidth = containerWidth;
             shouldUpdate = true;
-            
-            console.log('[FitWidth] Ajustando largura:', {
-                fitWidth,
-                containerWidth,
-                chartWidth,
-                newChartWidth,
-                containerDivClientWidth: containerDiv.clientWidth,
-                containerDivOffsetWidth: containerDiv.offsetWidth,
-                containerDivBoundingRect: containerDiv.getBoundingClientRect().width,
-                wrapperDivClientWidth: wrapperDiv?.clientWidth,
-                wrapperDivOffsetWidth: wrapperDiv?.offsetWidth,
-            });
         } else if (!fitWidth) {
             const numBars = chartData.length;
             const totalBarWidth = barWidth * numBars;
@@ -374,64 +359,14 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Quando fitWidth está ativo, wrapper deve ser 100% da largura
             if (wrapperDiv) {
                 if (fitWidth) {
-                    // Calcular padding real usando a diferença entre offsetWidth e clientWidth
-                    // Isso detecta padding mesmo quando não está no computedStyle
-                    const containerOffsetWidth = containerDiv.offsetWidth;
-                    const containerClientWidth = containerDiv.clientWidth;
-                    const containerPaddingDiff = containerOffsetWidth - containerClientWidth;
-                    
-                    // Também verificar padding do chartElement
-                    const chartElementOffsetWidth = chartElement.offsetWidth;
-                    const chartElementClientWidth = chartElement.clientWidth;
-                    const chartElementPaddingDiff = chartElementOffsetWidth - chartElementClientWidth;
-                    
-                    // Obter padding do computedStyle também
-                    const containerComputedStyle = window.getComputedStyle(containerDiv);
-                    const containerPaddingLeft = parseFloat(containerComputedStyle.paddingLeft) || 0;
-                    const containerPaddingRight = parseFloat(containerComputedStyle.paddingRight) || 0;
-                    const containerTotalPadding = containerPaddingLeft + containerPaddingRight;
-                    
-                    // Usar a maior diferença (offsetWidth - clientWidth) ou padding do computedStyle
-                    const totalPadding = Math.max(containerPaddingDiff, chartElementPaddingDiff, containerTotalPadding);
-                    
-                    // Se há padding, usar calc para compensar
-                    if (totalPadding > 0) {
-                        // Dividir o padding igualmente entre left e right
-                        const paddingLeft = totalPadding / 2;
-                        const paddingRight = totalPadding / 2;
-                        
-                        wrapperDiv.style.width = `calc(100% + ${totalPadding}px)`;
-                        wrapperDiv.style.marginLeft = `-${paddingLeft}px`;
-                        wrapperDiv.style.marginRight = `-${paddingRight}px`;
-                    } else {
-                        wrapperDiv.style.width = '100%';
-                        wrapperDiv.style.marginLeft = '0';
-                        wrapperDiv.style.marginRight = '0';
-                    }
+                    // Usar clientWidth como referência - é a largura real do conteúdo
+                    // Aceitar que pode haver uma pequena diferença com offsetWidth (devido a bordas invisíveis)
+                    wrapperDiv.style.width = '100%';
                     wrapperDiv.style.minWidth = '100%';
                     wrapperDiv.style.maxWidth = '100%';
+                    wrapperDiv.style.marginLeft = '0';
+                    wrapperDiv.style.marginRight = '0';
                     wrapperDiv.style.boxSizing = 'border-box';
-                    
-                    console.log('[FitWidth] Aplicando estilos ao wrapper:', {
-                        width: wrapperDiv.style.width,
-                        minWidth: wrapperDiv.style.minWidth,
-                        maxWidth: wrapperDiv.style.maxWidth,
-                        marginLeft: wrapperDiv.style.marginLeft,
-                        marginRight: wrapperDiv.style.marginRight,
-                        boxSizing: wrapperDiv.style.boxSizing,
-                        computedWidth: window.getComputedStyle(wrapperDiv).width,
-                        actualWidth: wrapperDiv.offsetWidth,
-                        containerOffsetWidth,
-                        containerClientWidth,
-                        containerPaddingDiff,
-                        chartElementOffsetWidth,
-                        chartElementClientWidth,
-                        chartElementPaddingDiff,
-                        containerPaddingLeft,
-                        containerPaddingRight,
-                        containerTotalPadding,
-                        totalPadding,
-                    });
                 } else {
                     wrapperDiv.style.width = `${newChartWidth}px`;
                     wrapperDiv.style.minWidth = '';
@@ -459,88 +394,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 containerDiv.style.display = 'block';
                 // Manter overflow correto: se apenas fitWidth, permitir scroll vertical
                 // Se ambos fitWidth e fitHeight, esconder overflow
-                // Se apenas fitHeight, permitir scroll horizontal
-                if (fitHeight) {
-                    containerDiv.style.overflow = 'hidden';
-                } else {
-                    containerDiv.style.overflowX = 'hidden';
-                    containerDiv.style.overflowY = 'auto';
-                }
-                
-                // Verificar se há diferença entre offsetWidth e clientWidth (indica padding/border)
-                const containerOffsetWidth = containerDiv.offsetWidth;
-                const containerClientWidth = containerDiv.clientWidth;
-                const containerPaddingDiff = containerOffsetWidth - containerClientWidth;
-                
-                // Se há diferença, pode ser border ou padding que não foi removido
-                if (containerPaddingDiff > 0) {
-                    // Tentar remover border explicitamente
-                    containerDiv.style.borderLeft = 'none';
-                    containerDiv.style.borderRight = 'none';
-                    containerDiv.style.borderTop = 'none';
-                    containerDiv.style.borderBottom = 'none';
-                    
-                    // Log para debug
-                    const computedStyle = window.getComputedStyle(containerDiv);
-                    console.log('[FitWidth] ContainerDiv tem diferença entre offsetWidth e clientWidth:', {
-                        offsetWidth: containerOffsetWidth,
-                        clientWidth: containerClientWidth,
-                        diff: containerPaddingDiff,
-                        computedPaddingLeft: computedStyle.paddingLeft,
-                        computedPaddingRight: computedStyle.paddingRight,
-                        computedBorderLeft: computedStyle.borderLeftWidth,
-                        computedBorderRight: computedStyle.borderRightWidth,
-                    });
-                }
-                
-                // Se o container está menor que o pai, tentar compensar com margin negativo
-                const parentWidth = containerDiv.parentElement?.offsetWidth || 0;
-                const currentWidth = containerDiv.offsetWidth;
-                const computedStyle = window.getComputedStyle(containerDiv);
-                const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-                const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
-                const marginLeft = parseFloat(computedStyle.marginLeft) || 0;
-                const marginRight = parseFloat(computedStyle.marginRight) || 0;
-                
-                // Se há diferença entre parentWidth e currentWidth, pode ser padding do pai
-                if (parentWidth > 0 && currentWidth < parentWidth) {
-                    const parentComputedStyle = window.getComputedStyle(containerDiv.parentElement!);
-                    const parentPaddingLeft = parseFloat(parentComputedStyle.paddingLeft) || 0;
-                    const parentPaddingRight = parseFloat(parentComputedStyle.paddingRight) || 0;
-                    
-                    // Tentar usar calc para compensar padding do pai
-                    if (parentPaddingLeft > 0 || parentPaddingRight > 0) {
-                        containerDiv.style.width = `calc(100% + ${parentPaddingLeft + parentPaddingRight}px)`;
-                        containerDiv.style.marginLeft = `-${parentPaddingLeft}px`;
-                        containerDiv.style.marginRight = `-${parentPaddingRight}px`;
-                    }
-                }
-                
-                const containerComputedStyle = window.getComputedStyle(containerDiv);
-                console.log('[FitWidth] Aplicando estilos ao container:', {
-                    width: containerDiv.style.width,
-                    minWidth: containerDiv.style.minWidth,
-                    maxWidth: containerDiv.style.maxWidth,
-                    boxSizing: containerDiv.style.boxSizing,
-                    padding: containerDiv.style.padding,
-                    margin: containerDiv.style.margin,
-                    border: containerDiv.style.border,
-                    computedWidth: containerComputedStyle.width,
-                    computedPaddingLeft: containerComputedStyle.paddingLeft,
-                    computedPaddingRight: containerComputedStyle.paddingRight,
-                    computedBorderLeft: containerComputedStyle.borderLeftWidth,
-                    computedBorderRight: containerComputedStyle.borderRightWidth,
-                    actualWidth: containerDiv.offsetWidth,
-                    clientWidth: containerDiv.clientWidth,
-                    parentWidth: containerDiv.parentElement?.offsetWidth,
-                    parentClientWidth: containerDiv.parentElement?.clientWidth,
-                    parentPaddingLeft: parseFloat(window.getComputedStyle(containerDiv.parentElement!).paddingLeft) || 0,
-                    parentPaddingRight: parseFloat(window.getComputedStyle(containerDiv.parentElement!).paddingRight) || 0,
-                    paddingLeft,
-                    paddingRight,
-                    marginLeft,
-                    marginRight,
-                });
+                containerDiv.style.overflow = fitHeight ? 'hidden' : 'auto';
             }
 
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
@@ -563,16 +417,6 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         : fitHeight ? 'xMidYMid meet' 
                         : 'none';
                     svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);
-                    
-                    console.log('[FitWidth] Aplicando atributos ao SVG:', {
-                        width: svgElement.getAttribute('width'),
-                        height: svgElement.getAttribute('height'),
-                        viewBox: svgElement.getAttribute('viewBox'),
-                        preserveAspectRatio: svgElement.getAttribute('preserveAspectRatio'),
-                        computedWidth: window.getComputedStyle(svgElement).width,
-                        actualWidth: svgElement.clientWidth,
-                        actualBoundingRect: svgElement.getBoundingClientRect().width,
-                    });
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
@@ -583,26 +427,17 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                     newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newSecondaryXAxisHtml + 
                     newAllChartElementsHtml + newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
             }
+            
+            // Atualizar variáveis de controle para evitar re-renderizações desnecessárias
+            lastContainerWidth = containerWidth;
+            lastContainerHeight = containerHeight;
+            lastChartWidth = newChartWidth;
+            lastChartHeight = newChartHeight;
         }
     };
 
     // Ajustar imediatamente
-    // IMPORTANTE: Para fitWidth, garantir que ajustamos imediatamente após a renderização inicial
-    // para que o conteúdo seja redesenhado com as dimensões corretas desde o início
     adjustDimensions();
-    
-    // Se fitWidth está ativo, ajustar novamente imediatamente para garantir que
-    // as dimensões corretas do containerDiv sejam detectadas e o conteúdo seja redesenhado
-    if (fitWidth) {
-        // Aguardar um pouco para garantir que o DOM foi completamente atualizado
-        requestAnimationFrame(() => {
-            adjustDimensions();
-        });
-        
-        setTimeout(() => {
-            adjustDimensions();
-        }, 0);
-    }
     
     // Também observar mudanças no container
     const resizeObserver = new ResizeObserver(() => {
@@ -611,30 +446,18 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     resizeObserver.observe(containerDiv);
     chartElement.__resizeObserver = resizeObserver;
     
-    // Ajustar novamente após delays para casos onde o container ainda não tem dimensões finais
+    // Ajustar novamente após delay para casos onde o container ainda não tem dimensões finais
     // Isso é especialmente importante quando fitWidth está ativo
-    setTimeout(() => {
-        adjustDimensions();
-    }, 50);
-    
-    setTimeout(() => {
-        adjustDimensions();
-    }, 100);
-    
-    // Se fitWidth está ativo, fazer mais tentativas para garantir que o ajuste seja feito
     if (fitWidth) {
+        // Usar requestAnimationFrame para garantir que o DOM foi atualizado
+        requestAnimationFrame(() => {
+            adjustDimensions();
+        });
+        
+        // Um único setTimeout adicional para casos onde o DOM ainda não está completamente estável
         setTimeout(() => {
             adjustDimensions();
-        }, 200);
-        setTimeout(() => {
-            adjustDimensions();
-        }, 300);
-        setTimeout(() => {
-            adjustDimensions();
-        }, 500);
-        setTimeout(() => {
-            adjustDimensions();
-        }, 1000);
+        }, 100);
     }
 }
 
