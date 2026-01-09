@@ -604,9 +604,9 @@ function createEditorSections(
                 type: 'dropdown',
                 key: 'measureNameRotation',
                 label: 'Rotação do Nome da Medida',
-                defaultValue: (savedTextSizes as any).measureNameRotation !== undefined
+                defaultValue: String((savedTextSizes as any).measureNameRotation !== undefined
                     ? (savedTextSizes as any).measureNameRotation
-                    : getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
+                    : getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90')),
                 values: ['-90', '0', '45', '-45', '90'],
             },
             {
