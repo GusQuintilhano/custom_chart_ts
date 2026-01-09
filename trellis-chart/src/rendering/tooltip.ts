@@ -339,18 +339,22 @@ export function setupTooltips(
             return;
         }
 
+        // IMPORTANTE: Se tooltipConfig for null, significa que tooltip está desabilitado no nível global
+        // Neste caso, não mostrar tooltip mesmo que a medida tenha configuração individual
+        if (!tooltipConfig || tooltipConfig.enabled === false) {
+            return;
+        }
+        
         // Usar configuração da medida se disponível, senão usar configuração global
         const measureTooltipConfig = measureConfig.tooltip;
         // Verificar se tooltip está habilitado para esta medida específica
         // Se measureTooltipConfig existe e enabled é false, desabilitar para esta medida
-        // Se measureTooltipConfig não existe, usar configuração global
+        // Se measureTooltipConfig não existe, usar configuração global (que já sabemos que está habilitada)
         const measureEnabled = measureTooltipConfig !== undefined 
             ? measureTooltipConfig.enabled !== false 
-            : (tooltipConfig?.enabled !== false);
-        const globalEnabled = tooltipConfig?.enabled !== false;
-        const enabled = measureEnabled && globalEnabled;
+            : true; // Se não há configuração individual, usar global (que já está habilitada)
         
-        if (!enabled) {
+        if (!measureEnabled) {
             return;
         }
 
