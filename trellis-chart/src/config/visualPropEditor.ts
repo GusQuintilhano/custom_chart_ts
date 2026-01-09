@@ -576,10 +576,6 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
-    // TEMPORARIAMENTE COMENTADA PARA DEBUG - verificar se o erro desaparece
-    // Se o erro desaparecer, o problema está nesta seção
-    // Se o erro persistir, o problema está em outra seção (elements[2] pode ser outra coisa)
-    /*
     const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 10;
     const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 10;
     const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 9;
@@ -642,7 +638,6 @@ function createEditorSections(
             },
         ],
     });
-    */
     
     // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
