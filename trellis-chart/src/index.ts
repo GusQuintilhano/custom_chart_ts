@@ -215,16 +215,47 @@ export const renderChart = async (ctx: CustomChartContext) => {
         chartElement.style.boxSizing = 'border-box';
         chartElement.style.margin = '0';
         chartElement.style.padding = '0';
+        chartElement.style.paddingLeft = '0';
+        chartElement.style.paddingRight = '0';
+        chartElement.style.paddingTop = '0';
+        chartElement.style.paddingBottom = '0';
+        chartElement.style.border = 'none';
+        chartElement.style.borderLeft = 'none';
+        chartElement.style.borderRight = 'none';
+        chartElement.style.borderTop = 'none';
+        chartElement.style.borderBottom = 'none';
         
+        // Verificar se há padding no elemento pai
+        if (chartElement.parentElement) {
+            const parentComputedStyle = window.getComputedStyle(chartElement.parentElement);
+            const parentPaddingLeft = parseFloat(parentComputedStyle.paddingLeft) || 0;
+            const parentPaddingRight = parseFloat(parentComputedStyle.paddingRight) || 0;
+            
+            if (parentPaddingLeft > 0 || parentPaddingRight > 0) {
+                // Se há padding no pai, usar calc para compensar
+                chartElement.style.width = `calc(100% + ${parentPaddingLeft + parentPaddingRight}px)`;
+                chartElement.style.marginLeft = `-${parentPaddingLeft}px`;
+                chartElement.style.marginRight = `-${parentPaddingRight}px`;
+            }
+        }
+        
+        const computedStyle = window.getComputedStyle(chartElement);
         console.log('[FitWidth] Aplicando estilos ao chartElement:', {
             width: chartElement.style.width,
             minWidth: chartElement.style.minWidth,
             maxWidth: chartElement.style.maxWidth,
             boxSizing: chartElement.style.boxSizing,
-            computedWidth: window.getComputedStyle(chartElement).width,
+            computedWidth: computedStyle.width,
+            computedPaddingLeft: computedStyle.paddingLeft,
+            computedPaddingRight: computedStyle.paddingRight,
+            computedBorderLeft: computedStyle.borderLeftWidth,
+            computedBorderRight: computedStyle.borderRightWidth,
             actualWidth: chartElement.offsetWidth,
             clientWidth: chartElement.clientWidth,
             parentWidth: chartElement.parentElement?.offsetWidth,
+            parentClientWidth: chartElement.parentElement?.clientWidth,
+            parentPaddingLeft: chartElement.parentElement ? parseFloat(window.getComputedStyle(chartElement.parentElement).paddingLeft) || 0 : 0,
+            parentPaddingRight: chartElement.parentElement ? parseFloat(window.getComputedStyle(chartElement.parentElement).paddingRight) || 0 : 0,
         });
     }
 
