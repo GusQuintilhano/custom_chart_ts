@@ -125,11 +125,11 @@ export function renderBoxplot(
         // Renderizar elementos do boxplot usando as novas configurações
         const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax);
         const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, whiskerStyle, globalMin, globalMax);
-        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, boxStyle.boxWidth, globalMin, globalMax);
+        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, config.boxWidth, globalMin, globalMax);
         
         // Renderizar média se habilitado
         const meanHtml = showMean && group.stats.mean !== undefined
-            ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, boxStyle.boxWidth, globalMin, globalMax)
+            ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, config.boxWidth, globalMin, globalMax)
             : '';
         
         const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax);
