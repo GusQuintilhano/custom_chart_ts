@@ -2,9 +2,10 @@
  * Cálculos específicos para Boxplot Chart
  */
 
-import { calculateBoxplotStats, type BoxplotStatistics } from '@shared/utils/statistical';
+import { calculateBoxplotStats, type BoxplotStatistics, type CalculationMethod, type WhiskerType } from '@shared/utils/statistical';
 import type { BoxplotDataGroup, BoxplotData } from '../types/boxplotTypes';
 import type { ChartColumn, ChartModel, DataPointsArray } from '@thoughtspot/ts-chart-sdk';
+import type { BoxplotOptions } from './boxplotOptions';
 
 /**
  * Converte valores do ThoughtSpot para números
@@ -33,7 +34,8 @@ function extractValue(value: unknown): number {
 export function calculateBoxplotData(
     chartModel: ChartModel,
     measureColumn: ChartColumn,
-    dimensionColumns: ChartColumn[]
+    dimensionColumns: ChartColumn[],
+    options?: BoxplotOptions
 ): BoxplotData | null {
     const data = chartModel.data?.[0]?.data;
     if (!data || !data.dataValue || data.dataValue.length === 0) {
@@ -67,18 +69,24 @@ export function calculateBoxplotData(
         }
     }
 
+    // Obter configurações de cálculo
+    const calculationMethod: CalculationMethod = options?.calculationMethod || 'auto';
+    const whiskerType: WhiskerType = options?.whiskerType || 'iqr_1_5';
+    const includeMean = options?.showMean || false;
+
     // Calcular estatísticas para cada grupo
     const groups: BoxplotDataGroup[] = [];
     let allValues: number[] = [];
 
     for (const [dimensionKey, values] of groupsMap.entries()) {
-        const stats = calculateBoxplotStats(values, true);
+        const stats = calculateBoxplotStats(values, includeMean, calculationMethod, whiskerType);
         allValues = allValues.concat(values);
         
         groups.push({
             dimensionValue: dimensionKey.split('|')[0], // Usar primeira dimensão como label principal
             values,
             stats,
+            mean: includeMean ? stats.mean : undefined,
         });
     }
 
@@ -96,7 +104,7 @@ export function calculateBoxplotData(
     });
 
     // Calcular estatísticas globais
-    const globalStats = calculateBoxplotStats(allValues, true);
+    const globalStats = calculateBoxplotStats(allValues, includeMean, calculationMethod, whiskerType);
 
     return {
         measure: measureColumn,

@@ -16,57 +16,236 @@ function createMeasureColumnSettings(
 ): { [columnId: string]: { elements: any[] } } {
     const savedConfig = (currentVisualProps.visualProps as any)?.[measureColumn.id] || {};
     const visualization = (savedConfig.visualization || {}) as Record<string, unknown>;
+    const boxStyle = (savedConfig.boxStyle || {}) as Record<string, unknown>;
+    const medianStyle = (savedConfig.medianStyle || {}) as Record<string, unknown>;
+    const whiskerStyle = (savedConfig.whiskerStyle || {}) as Record<string, unknown>;
+    const outlierStyle = (savedConfig.outlierStyle || {}) as Record<string, unknown>;
+    const dataConfig = (savedConfig.dataConfig || {}) as Record<string, unknown>;
+
+    const measureElements: any[] = [];
+
+    // Seção 1: Configurações de Dados
+    measureElements.push({
+        type: 'section',
+        key: 'dataConfig',
+        label: 'Configurações de Dados',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'dropdown',
+                key: 'calculationMethod',
+                label: 'Método de Cálculo',
+                defaultValue: String(dataConfig.calculationMethod || 'auto'),
+                values: ['auto', 'tukey', 'exclusive', 'inclusive'],
+            },
+            {
+                type: 'dropdown',
+                key: 'whiskerType',
+                label: 'Tipo de Bigode',
+                defaultValue: String(savedConfig.whiskerType || 'iqr_1_5'),
+                values: ['data_extremes', 'iqr_1_5', 'iqr_3', 'percentile_5_95', 'min_max'],
+            },
+        ],
+    });
+
+    // Seção 2: Estilo do Box
+    const boxFill = typeof boxStyle.fill === 'string' ? boxStyle.fill : (visualization.color || defaultColors[0]);
+    const boxStroke = typeof boxStyle.stroke === 'string' ? boxStyle.stroke : '#374151';
+    const boxStrokeWidth = typeof boxStyle.strokeWidth === 'number' ? boxStyle.strokeWidth : 1;
+    const boxOpacity = typeof savedConfig.opacity === 'number' ? savedConfig.opacity : 0.8;
+    const boxBorderRadius = typeof boxStyle.borderRadius === 'number' ? boxStyle.borderRadius : 0;
+
+    measureElements.push({
+        type: 'section',
+        key: 'boxStyle',
+        label: 'Estilo da Caixa',
+        isAccordianExpanded: true,
+        children: [
+            {
+                type: 'colorpicker',
+                key: 'fill',
+                label: 'Cor de Preenchimento',
+                selectorType: 'COLOR',
+                defaultValue: String(boxFill),
+            },
+            {
+                type: 'colorpicker',
+                key: 'stroke',
+                label: 'Cor da Borda',
+                selectorType: 'COLOR',
+                defaultValue: String(boxStroke),
+            },
+            {
+                type: 'number',
+                key: 'strokeWidth',
+                label: 'Espessura da Borda (px)',
+                defaultValue: Number(boxStrokeWidth) || 1,
+            },
+            {
+                type: 'number',
+                key: 'opacity',
+                label: 'Opacidade (0-1)',
+                defaultValue: Number(boxOpacity) || 0.8,
+            },
+            {
+                type: 'number',
+                key: 'boxWidth',
+                label: 'Largura da Caixa (px)',
+                defaultValue: typeof savedConfig.boxWidth === 'number' ? savedConfig.boxWidth : 60,
+            },
+            {
+                type: 'number',
+                key: 'borderRadius',
+                label: 'Raio da Borda (px)',
+                defaultValue: Number(boxBorderRadius) || 0,
+            },
+        ],
+    });
+
+    // Seção 3: Elementos Internos e Whiskers
+    const medianColor = typeof medianStyle.color === 'string' ? medianStyle.color : '#000000';
+    const medianStrokeWidth = typeof medianStyle.strokeWidth === 'number' ? medianStyle.strokeWidth : 2;
+    const whiskerColor = typeof whiskerStyle.color === 'string' ? whiskerStyle.color : (visualization.color || defaultColors[0]);
+    const whiskerStrokeWidth = typeof whiskerStyle.strokeWidth === 'number' ? whiskerStyle.strokeWidth : 1;
+    const whiskerCapWidth = typeof whiskerStyle.capWidth === 'number' ? whiskerStyle.capWidth : (typeof savedConfig.whiskerWidth === 'number' ? savedConfig.whiskerWidth : 40);
+
+    measureElements.push({
+        type: 'section',
+        key: 'medianWhiskers',
+        label: 'Mediana e Bigodes',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'colorpicker',
+                key: 'medianColor',
+                label: 'Cor da Mediana',
+                selectorType: 'COLOR',
+                defaultValue: String(medianColor),
+            },
+            {
+                type: 'number',
+                key: 'medianStrokeWidth',
+                label: 'Espessura da Mediana (px)',
+                defaultValue: Number(medianStrokeWidth) || 2,
+            },
+            {
+                type: 'dropdown',
+                key: 'medianStrokeDash',
+                label: 'Estilo da Mediana',
+                defaultValue: String(medianStyle.strokeDasharray || 'none'),
+                values: ['none', '5,5', '10,5', '3,3'],
+            },
+            {
+                type: 'toggle',
+                key: 'showMean',
+                label: 'Mostrar Média',
+                defaultValue: savedConfig.showMean === true,
+            },
+            {
+                type: 'colorpicker',
+                key: 'whiskerColor',
+                label: 'Cor dos Bigodes',
+                selectorType: 'COLOR',
+                defaultValue: String(whiskerColor),
+            },
+            {
+                type: 'number',
+                key: 'whiskerStrokeWidth',
+                label: 'Espessura dos Bigodes (px)',
+                defaultValue: Number(whiskerStrokeWidth) || 1,
+            },
+            {
+                type: 'number',
+                key: 'whiskerCapWidth',
+                label: 'Largura do Cap do Bigode (px)',
+                defaultValue: Number(whiskerCapWidth) || 40,
+            },
+        ],
+    });
+
+    // Seção 4: Outliers
+    const outlierShow = outlierStyle.show !== undefined ? outlierStyle.show : (savedConfig.showOutliers !== false);
+    const outlierShape = typeof outlierStyle.shape === 'string' ? outlierStyle.shape : 'circle';
+    const outlierSize = typeof outlierStyle.size === 'number' ? outlierStyle.size : 4;
+    const outlierFill = typeof outlierStyle.fill === 'string' ? outlierStyle.fill : '#ef4444';
+    const outlierStroke = typeof outlierStyle.stroke === 'string' ? outlierStyle.stroke : '#000000';
+    const outlierStrokeWidth = typeof outlierStyle.strokeWidth === 'number' ? outlierStyle.strokeWidth : 1;
+
+    measureElements.push({
+        type: 'section',
+        key: 'outlierStyle',
+        label: 'Outliers (Valores Atípicos)',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'show',
+                label: 'Mostrar Outliers',
+                defaultValue: Boolean(outlierShow),
+            },
+            {
+                type: 'dropdown',
+                key: 'shape',
+                label: 'Formato do Outlier',
+                defaultValue: String(outlierShape),
+                values: ['circle', 'cross', 'diamond', 'square', 'triangle'],
+            },
+            {
+                type: 'number',
+                key: 'size',
+                label: 'Tamanho do Outlier (px)',
+                defaultValue: Number(outlierSize) || 4,
+            },
+            {
+                type: 'colorpicker',
+                key: 'fill',
+                label: 'Cor de Preenchimento',
+                selectorType: 'COLOR',
+                defaultValue: String(outlierFill),
+            },
+            {
+                type: 'colorpicker',
+                key: 'stroke',
+                label: 'Cor da Borda',
+                selectorType: 'COLOR',
+                defaultValue: String(outlierStroke),
+            },
+            {
+                type: 'number',
+                key: 'strokeWidth',
+                label: 'Espessura da Borda (px)',
+                defaultValue: Number(outlierStrokeWidth) || 1,
+            },
+        ],
+    });
+
+    // Seção 5: Visualização Geral (mantida para compatibilidade)
+    measureElements.push({
+        type: 'section',
+        key: 'visualization',
+        label: 'Visualização',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'dropdown',
+                key: 'orientation',
+                label: 'Orientação',
+                defaultValue: String(savedConfig.orientation || 'vertical'),
+                values: ['vertical', 'horizontal'],
+            },
+            {
+                type: 'colorpicker',
+                key: 'color',
+                label: 'Cor Padrão',
+                selectorType: 'COLOR',
+                defaultValue: String(visualization.color || defaultColors[0]),
+            },
+        ],
+    });
 
     return {
         [measureColumn.id]: {
-            elements: [
-                {
-                    type: 'section',
-                    key: 'visualization',
-                    label: 'Visualização',
-                    isAccordianExpanded: true,
-                    children: [
-                        {
-                            type: 'colorpicker',
-                            key: 'color',
-                            label: 'Cor',
-                            selectorType: 'COLOR',
-                            defaultValue: visualization.color || defaultColors[0],
-                        },
-                        {
-                            type: 'number',
-                            key: 'opacity',
-                            label: 'Opacidade',
-                            defaultValue: typeof savedConfig.opacity === 'number' ? savedConfig.opacity : 0.8,
-                        },
-                        {
-                            type: 'dropdown',
-                            key: 'orientation',
-                            label: 'Orientação',
-                            defaultValue: String(savedConfig.orientation || 'vertical'),
-                            values: ['vertical', 'horizontal'],
-                        },
-                        {
-                            type: 'toggle',
-                            key: 'showOutliers',
-                            label: 'Mostrar Outliers',
-                            defaultValue: savedConfig.showOutliers !== false,
-                        },
-                        {
-                            type: 'number',
-                            key: 'boxWidth',
-                            label: 'Largura da Caixa (px)',
-                            defaultValue: typeof savedConfig.boxWidth === 'number' ? savedConfig.boxWidth : 60,
-                        },
-                        {
-                            type: 'number',
-                            key: 'whiskerWidth',
-                            label: 'Largura dos Bigodes (px)',
-                            defaultValue: typeof savedConfig.whiskerWidth === 'number' ? savedConfig.whiskerWidth : 40,
-                        },
-                    ],
-                },
-            ],
+            elements: measureElements,
         },
     };
 }
@@ -79,11 +258,48 @@ function createEditorSections(
     savedChartDimensions: any,
     savedChartOptions: any,
     savedTextSizes: any,
-    savedChartColorsStyle: any
+    savedChartColorsStyle: any,
+    currentVisualProps?: Record<string, unknown>
 ): any[] {
     const elements: any[] = [];
+    const allVisualProps = currentVisualProps || {};
+    const gridLines = (allVisualProps.gridLines || {}) as Record<string, unknown>;
+    const tooltipConfig = (allVisualProps.tooltip || {}) as Record<string, unknown>;
+    const layoutConfig = (allVisualProps.layout || {}) as Record<string, unknown>;
 
-    // Seção: Eixos
+    // Seção 1: Layout e Espaçamento
+    const paddingValue = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
+    const axisLabelX = typeof layoutConfig.axisLabelX === 'string' ? layoutConfig.axisLabelX : '';
+    const axisLabelY = typeof layoutConfig.axisLabelY === 'string' ? layoutConfig.axisLabelY : '';
+
+    elements.push({
+        type: 'section',
+        key: 'layout',
+        label: 'Layout e Espaçamento',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'number',
+                key: 'padding',
+                label: 'Espaçamento entre Grupos (px)',
+                defaultValue: Number(paddingValue) || 10,
+            },
+            {
+                type: 'text',
+                key: 'axisLabelX',
+                label: 'Título do Eixo X',
+                defaultValue: String(axisLabelX),
+            },
+            {
+                type: 'text',
+                key: 'axisLabelY',
+                label: 'Título do Eixo Y',
+                defaultValue: String(axisLabelY),
+            },
+        ],
+    });
+
+    // Seção 2: Eixos
     elements.push({
         type: 'section',
         key: 'axes',
@@ -95,6 +311,72 @@ function createEditorSections(
                 key: 'showYAxis',
                 label: 'Exibir Eixo Y',
                 defaultValue: savedChartVisual?.showYAxis !== false,
+            },
+        ],
+    });
+
+    // Seção 3: Linhas de Grade
+    const gridShow = typeof gridLines.show === 'boolean' ? gridLines.show : false;
+    const gridColor = typeof gridLines.color === 'string' ? gridLines.color : '#e5e7eb';
+    const gridStrokeWidth = typeof gridLines.strokeWidth === 'number' ? gridLines.strokeWidth : 1;
+
+    elements.push({
+        type: 'section',
+        key: 'gridLines',
+        label: 'Linhas de Grade',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'show',
+                label: 'Mostrar Linhas de Grade',
+                defaultValue: Boolean(gridShow),
+            },
+            {
+                type: 'colorpicker',
+                key: 'color',
+                label: 'Cor das Linhas de Grade',
+                selectorType: 'COLOR',
+                defaultValue: String(gridColor),
+            },
+            {
+                type: 'number',
+                key: 'strokeWidth',
+                label: 'Espessura das Linhas (px)',
+                defaultValue: Number(gridStrokeWidth) || 1,
+            },
+            {
+                type: 'dropdown',
+                key: 'strokeDash',
+                label: 'Estilo das Linhas',
+                defaultValue: String(gridLines.strokeDasharray || 'none'),
+                values: ['none', '5,5', '10,5', '3,3'],
+            },
+        ],
+    });
+
+    // Seção 4: Tooltip (Dica de Contexto)
+    const tooltipEnabled = typeof tooltipConfig.enabled === 'boolean' ? tooltipConfig.enabled : true;
+    const tooltipFormat = typeof tooltipConfig.format === 'string' ? tooltipConfig.format : 'simple';
+
+    elements.push({
+        type: 'section',
+        key: 'tooltip',
+        label: 'Dica de Contexto (Tooltip)',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'enabled',
+                label: 'Habilitar Tooltip',
+                defaultValue: Boolean(tooltipEnabled),
+            },
+            {
+                type: 'dropdown',
+                key: 'format',
+                label: 'Formato do Tooltip',
+                defaultValue: String(tooltipFormat),
+                values: ['simple', 'detailed', 'custom'],
             },
         ],
     });
@@ -192,12 +474,15 @@ export function createVisualPropEditorDefinition(
         ? createMeasureColumnSettings(measureColumns[0], chartModel)
         : {};
 
+    const allSavedProps = (chartModel.visualProps as Record<string, unknown>) || {};
+
     const editorSections = createEditorSections(
         savedChartVisual,
         savedChartDimensions,
         savedChartOptions,
         savedTextSizes,
-        savedChartColorsStyle
+        savedChartColorsStyle,
+        allSavedProps
     );
 
     return {
