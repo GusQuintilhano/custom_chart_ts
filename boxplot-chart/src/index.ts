@@ -73,17 +73,17 @@ export const renderChart = async (ctx: CustomChartContext) => {
             numDimensions: dimensionColumns.length,
         });
 
-        // Calcular dados do boxplot
-        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumns);
+        // Ler opções primeiro (necessárias para cálculos)
+        const allVisualProps = chartModel.visualProps as Record<string, unknown>;
+        const options = readBoxplotOptions(allVisualProps, measureColumn);
+
+        // Calcular dados do boxplot com as opções configuradas
+        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumns, options);
         if (!boxplotData || boxplotData.groups.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Não foi possível calcular os dados do Boxplot</div>';
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
             return;
         }
-
-        // Ler opções
-        const allVisualProps = chartModel.visualProps as Record<string, unknown>;
-        const options = readBoxplotOptions(allVisualProps, measureColumn);
 
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
