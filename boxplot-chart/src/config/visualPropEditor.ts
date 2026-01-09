@@ -37,20 +37,14 @@ function createMeasureColumnSettings(
                             type: 'number',
                             key: 'opacity',
                             label: 'Opacidade',
-                            defaultValue: savedConfig.opacity ?? 0.8,
-                            min: 0,
-                            max: 1,
-                            step: 0.1,
+                            defaultValue: typeof savedConfig.opacity === 'number' ? savedConfig.opacity : 0.8,
                         },
                         {
                             type: 'dropdown',
                             key: 'orientation',
                             label: 'Orientação',
-                            defaultValue: savedConfig.orientation || 'vertical',
-                            values: [
-                                { label: 'Vertical', value: 'vertical' },
-                                { label: 'Horizontal', value: 'horizontal' },
-                            ],
+                            defaultValue: String(savedConfig.orientation || 'vertical'),
+                            values: ['vertical', 'horizontal'],
                         },
                         {
                             type: 'toggle',
@@ -62,17 +56,13 @@ function createMeasureColumnSettings(
                             type: 'number',
                             key: 'boxWidth',
                             label: 'Largura da Caixa (px)',
-                            defaultValue: savedConfig.boxWidth ?? 60,
-                            min: 20,
-                            max: 200,
+                            defaultValue: typeof savedConfig.boxWidth === 'number' ? savedConfig.boxWidth : 60,
                         },
                         {
                             type: 'number',
                             key: 'whiskerWidth',
                             label: 'Largura dos Bigodes (px)',
-                            defaultValue: savedConfig.whiskerWidth ?? 40,
-                            min: 20,
-                            max: 100,
+                            defaultValue: typeof savedConfig.whiskerWidth === 'number' ? savedConfig.whiskerWidth : 40,
                         },
                     ],
                 },
@@ -110,6 +100,10 @@ function createEditorSections(
     });
 
     // Seção: Tipografia
+    // Garantir valores numéricos válidos (não undefined/null)
+    const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 12;
+    const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 10;
+    
     elements.push({
         type: 'section',
         key: 'text_sizes',
@@ -120,18 +114,24 @@ function createEditorSections(
                 type: 'number',
                 key: 'labelFontSize',
                 label: 'Tamanho das Labels (px)',
-                defaultValue: savedTextSizes?.labelFontSize ?? 12,
+                defaultValue: Number(labelFontSizeValue) || 12,
             },
             {
                 type: 'number',
                 key: 'valueLabelFontSize',
                 label: 'Tamanho dos Valores (px)',
-                defaultValue: savedTextSizes?.valueLabelFontSize ?? 10,
+                defaultValue: Number(valueLabelFontSizeValue) || 10,
             },
         ],
     });
 
     // Seção: Cores e Estilo
+    // Garantir valores válidos (não undefined/null)
+    const yAxisColorValue = typeof savedChartColorsStyle?.yAxisColor === 'string' ? savedChartColorsStyle.yAxisColor : '#374151';
+    const xAxisColorValue = typeof savedChartColorsStyle?.xAxisColor === 'string' ? savedChartColorsStyle.xAxisColor : '#374151';
+    const backgroundColorValue = typeof savedChartColorsStyle?.backgroundColor === 'string' ? savedChartColorsStyle.backgroundColor : '#ffffff';
+    const axisStrokeWidthValue = typeof savedChartColorsStyle?.axisStrokeWidth === 'number' ? savedChartColorsStyle.axisStrokeWidth : 1.5;
+    
     elements.push({
         type: 'section',
         key: 'chart_colors_style',
@@ -143,30 +143,27 @@ function createEditorSections(
                 key: 'yAxisColor',
                 label: 'Cor do Eixo Y',
                 selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
+                defaultValue: String(yAxisColorValue),
             },
             {
                 type: 'colorpicker',
                 key: 'xAxisColor',
                 label: 'Cor do Eixo X',
                 selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
+                defaultValue: String(xAxisColorValue),
             },
             {
                 type: 'colorpicker',
                 key: 'backgroundColor',
                 label: 'Cor de Fundo',
                 selectorType: 'COLOR',
-                defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
+                defaultValue: String(backgroundColorValue),
             },
             {
                 type: 'number',
                 key: 'axisStrokeWidth',
                 label: 'Espessura dos Eixos (px)',
-                defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
-                min: 0.5,
-                max: 5,
-                step: 0.1,
+                defaultValue: Number(axisStrokeWidthValue) || 1.5,
             },
         ],
     });
