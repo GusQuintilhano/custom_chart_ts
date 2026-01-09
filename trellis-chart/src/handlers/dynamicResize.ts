@@ -539,8 +539,11 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
                 
                 if (fitWidth) {
-                    // Quando fitWidth está ativo, SVG deve ocupar 100% da largura do wrapper
-                    svgElement.setAttribute('width', '100%');
+                    // Quando fitWidth está ativo, SVG deve ocupar exatamente o offsetWidth do container
+                    // Não usar 100% do wrapper, mas sim o offsetWidth real do container
+                    const containerOffsetWidth = containerDiv.offsetWidth;
+                    const svgWidth = `${containerOffsetWidth}px`;
+                    svgElement.setAttribute('width', svgWidth);
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
                     // preserveAspectRatio: quando apenas fitWidth, usar 'none' para permitir escala independente
                     // Isso evita comprimir o texto - o SVG vai escalar para ocupar 100% da largura
@@ -564,6 +567,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         containerClientWidth: containerDiv.clientWidth,
                         containerOffsetWidth: containerDiv.offsetWidth,
                         newChartWidth,
+                        svgWidth,
                     });
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
