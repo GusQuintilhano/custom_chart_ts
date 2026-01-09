@@ -83,6 +83,20 @@ if (!fs.existsSync(trellisDistPath)) {
     }
 }
 
+if (!fs.existsSync(boxplotDistPath)) {
+    console.error(`ERROR: Boxplot dist path does not exist: ${boxplotDistPath}`);
+    console.error('  Searching for boxplot-chart...');
+    const searchPaths = ['/app', '/app/charts-router', process.cwd()];
+    for (const searchRoot of searchPaths) {
+        const searchPath = path.join(searchRoot, 'boxplot-chart/dist');
+        console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
+        if (fs.existsSync(searchPath)) {
+            const altIndexPath = path.join(searchPath, 'index.html');
+            console.error(`      index.html exists: ${fs.existsSync(altIndexPath)}`);
+        }
+    }
+}
+
 // Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
 // Isso permite que /trellis/assets/... funcione
 app.use('/trellis', express.static(trellisDistPath, { index: false }));
@@ -116,6 +130,34 @@ app.use('/boxplot', express.static(boxplotDistPath, { index: false }));
 app.get('/boxplot', (req, res) => {
     const indexPath = path.join(boxplotDistPath, 'index.html');
     console.log(`Serving boxplot index from: ${indexPath}`);
+    console.log(`Boxplot dist path exists: ${fs.existsSync(boxplotDistPath)}`);
+    console.log(`Boxplot index.html exists: ${fs.existsSync(indexPath)}`);
+    
+    if (!fs.existsSync(indexPath)) {
+        console.error(`ERROR: Boxplot index.html not found at: ${indexPath}`);
+        console.error(`  boxplotDistPath: ${boxplotDistPath}`);
+        console.error(`  Searching for boxplot-chart/dist...`);
+        const searchPaths = ['/app', '/app/boxplot-chart', process.cwd()];
+        for (const searchRoot of searchPaths) {
+            const searchPath = path.join(searchRoot, 'boxplot-chart/dist');
+            console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
+            if (fs.existsSync(searchPath)) {
+                const altIndexPath = path.join(searchPath, 'index.html');
+                console.error(`      index.html exists: ${fs.existsSync(altIndexPath)}`);
+            }
+        }
+        res.status(404).send(`
+            <html>
+                <body>
+                    <h1>Boxplot Chart Not Found</h1>
+                    <p>Boxplot dist path: ${boxplotDistPath}</p>
+                    <p>Index path: ${indexPath}</p>
+                    <p>Please ensure boxplot-chart has been built.</p>
+                </body>
+            </html>
+        `);
+        return;
+    }
     
     // Ler o arquivo e modificar os caminhos dos assets se necessário
     let htmlContent = fs.readFileSync(indexPath, 'utf8');
