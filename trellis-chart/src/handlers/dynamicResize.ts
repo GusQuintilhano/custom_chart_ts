@@ -431,13 +431,23 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Quando fitWidth está ativo, wrapper deve ser 100% da largura
             if (wrapperDiv) {
                 if (fitWidth) {
-                    // Usar clientWidth como referência - é a largura real do conteúdo
-                    // Aceitar que pode haver uma pequena diferença com offsetWidth (devido a bordas invisíveis)
-                    wrapperDiv.style.width = '100%';
+                    // Calcular diferença entre offsetWidth e clientWidth para compensar padding/border
+                    const containerOffsetWidth = containerDiv.offsetWidth;
+                    const containerClientWidth = containerDiv.clientWidth;
+                    const diff = containerOffsetWidth - containerClientWidth;
+                    
+                    if (diff > 0) {
+                        // Se há diferença, usar calc para compensar e ocupar todo o espaço
+                        wrapperDiv.style.width = `calc(100% + ${diff}px)`;
+                        wrapperDiv.style.marginLeft = `-${diff / 2}px`;
+                        wrapperDiv.style.marginRight = `-${diff / 2}px`;
+                    } else {
+                        wrapperDiv.style.width = '100%';
+                        wrapperDiv.style.marginLeft = '0';
+                        wrapperDiv.style.marginRight = '0';
+                    }
                     wrapperDiv.style.minWidth = '100%';
                     wrapperDiv.style.maxWidth = '100%';
-                    wrapperDiv.style.marginLeft = '0';
-                    wrapperDiv.style.marginRight = '0';
                     wrapperDiv.style.boxSizing = 'border-box';
                 } else {
                     wrapperDiv.style.width = `${newChartWidth}px`;
