@@ -213,14 +213,19 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
 
         // Ajustar largura se fitWidth está ativo
         if (fitWidth && containerWidth > 0) {
-            // Usar o clientWidth do wrapper (espaço real disponível para o SVG)
-            // O wrapper é o elemento que realmente contém o SVG e define o espaço disponível
+            // IMPORTANTE: O conteúdo do gráfico deve ser renderizado no mesmo tamanho do viewBox
+            // Para isso, precisamos usar o espaço real disponível do wrapper
+            // Primeiro, garantir que o wrapper está configurado corretamente
             let actualWidth = containerWidth;
             if (wrapperDiv) {
-                // Primeiro garantir que o wrapper está com width: 100%
+                // Configurar o wrapper primeiro
                 wrapperDiv.style.width = '100%';
-                // Depois obter o clientWidth real do wrapper
-                const wrapperClientWidth = wrapperDiv.clientWidth || wrapperDiv.getBoundingClientRect().width || containerWidth;
+                wrapperDiv.style.boxSizing = 'border-box';
+                // Forçar um reflow para garantir que o DOM seja atualizado
+                void wrapperDiv.offsetWidth;
+                // Obter o tamanho real do wrapper após o reflow
+                const wrapperRect = wrapperDiv.getBoundingClientRect();
+                const wrapperClientWidth = wrapperDiv.clientWidth || wrapperRect.width || containerWidth;
                 actualWidth = wrapperClientWidth;
             }
             newChartWidth = actualWidth;
@@ -237,6 +242,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 widthChanged,
                 isFirstRender,
                 shouldUpdate,
+                info: 'newChartWidth será usado tanto para o viewBox quanto para renderizar o conteúdo',
             });
         } else if (!fitWidth) {
             const numBars = chartData.length;
