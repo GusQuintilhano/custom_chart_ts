@@ -645,74 +645,42 @@ function createEditorSections(
     */
     
     // Seção 4: Dimensões e Espaçamento
-    // TEMPORARIAMENTE SIMPLIFICADA - apenas campos básicos sem condicionais
-    const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
-    const savedFitHeight = getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true;
-    const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
-    
-    // Garantir valores numéricos válidos - SEMPRE retornar número, nunca undefined/null
-    const measureLabelSpaceDefault = savedShowYAxis ? 120 : 60;
-    const measureLabelSpaceSaved = getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, measureLabelSpaceDefault);
-    const measureLabelSpaceValue = typeof measureLabelSpaceSaved === 'number' 
-        ? measureLabelSpaceSaved 
-        : (typeof measureLabelSpaceSaved === 'string' ? (parseFloat(measureLabelSpaceSaved) || measureLabelSpaceDefault) : measureLabelSpaceDefault);
-    
-    // Construir array de children SIMPLIFICADO - apenas campos sempre presentes
-    const dimensionsChildren: any[] = [
-        {
-            type: 'toggle',
-            key: 'fitWidth',
-            label: 'Ajustar a 100% da Largura',
-            defaultValue: Boolean(savedFitWidth),
-        },
-        {
-            type: 'toggle',
-            key: 'fitHeight',
-            label: 'Ajustar a 100% da Altura',
-            defaultValue: Boolean(savedFitHeight),
-        },
-        {
-            type: 'number',
-            key: 'measureLabelSpace',
-            label: 'Espaço das Labels das Medidas (px)',
-            defaultValue: Number(measureLabelSpaceValue),
-        },
-    ];
-    
-    // TEMPORARIAMENTE REMOVIDOS os campos condicionais para identificar o problema
-    // Se o erro desaparecer, o problema estava nos campos condicionais
-    /*
-    if (!savedFitWidth) {
-        dimensionsChildren.push({
-            type: 'number',
-            key: 'barWidth',
-            label: 'Largura da Barra (px)',
-            defaultValue: Number(barWidthValue) || 40,
-        });
-        dimensionsChildren.push({
-            type: 'number',
-            key: 'barSpacing',
-            label: 'Espaçamento Entre Barras (px)',
-            defaultValue: Number(barSpacingValue) || (savedShowYAxis ? 20 : 15),
-        });
-    }
-    
-    if (!savedFitHeight) {
-        dimensionsChildren.push({
-            type: 'number',
-            key: 'measureRowHeight',
-            label: 'Altura da Linha (px)',
-            defaultValue: Number(measureRowHeightValue) || 50,
-        });
-    }
-    */
+    // EXTREMAMENTE SIMPLIFICADA - apenas campos básicos mínimos para testar
+    // Se o erro desaparecer, sabemos que o problema está em algum campo específico
+    const fitWidthValue = (savedChartDimensions?.fitWidth === true || savedChartOptions?.fitWidth === true);
+    const fitHeightValue = (savedChartDimensions?.fitHeight === true || savedChartOptions?.fitHeight === true);
+    const showYAxisValue = (savedChartVisual?.showYAxis !== false && savedChartOptions?.showYAxis !== false);
+    const measureLabelSpaceNum = typeof savedChartDimensions?.measureLabelSpace === 'number' 
+        ? savedChartDimensions.measureLabelSpace 
+        : (typeof savedChartOptions?.measureLabelSpace === 'number' 
+            ? savedChartOptions.measureLabelSpace 
+            : (showYAxisValue ? 120 : 60));
     
     elements.push({
         type: 'section',
         key: 'chart_dimensions',
         label: 'Dimensões e Espaçamento',
         isAccordianExpanded: false,
-        children: dimensionsChildren,
+        children: [
+            {
+                type: 'toggle',
+                key: 'fitWidth',
+                label: 'Ajustar a 100% da Largura',
+                defaultValue: Boolean(fitWidthValue),
+            },
+            {
+                type: 'toggle',
+                key: 'fitHeight',
+                label: 'Ajustar a 100% da Altura',
+                defaultValue: Boolean(fitHeightValue),
+            },
+            {
+                type: 'number',
+                key: 'measureLabelSpace',
+                label: 'Espaço das Labels das Medidas (px)',
+                defaultValue: Number(measureLabelSpaceNum),
+            },
+        ],
     });
     
     
