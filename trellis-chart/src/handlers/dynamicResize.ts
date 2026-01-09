@@ -174,6 +174,12 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         
         // Se fitWidth está ativo mas o container ainda não tem dimensões, aguardar
         if (fitWidth && containerWidth === 0) {
+            console.log('[FitWidth] adjustDimensions: containerWidth ainda é 0, aguardando...', {
+                containerDivClientWidth: containerDiv.clientWidth,
+                containerDivOffsetWidth: containerDiv.offsetWidth,
+                containerDivBoundingRect: containerDiv.getBoundingClientRect().width,
+                parentWidth: containerDiv.parentElement?.clientWidth,
+            });
             return;
         }
 
@@ -200,6 +206,16 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         if (fitWidth && containerWidth > 0) {
             newChartWidth = containerWidth;
             shouldUpdate = true;
+            
+            console.log('[FitWidth] adjustDimensions: Ajustando largura do gráfico', {
+                containerWidth,
+                chartWidth,
+                newChartWidth,
+                lastContainerWidth,
+                widthChanged,
+                isFirstRender,
+                shouldUpdate,
+            });
         } else if (!fitWidth) {
             const numBars = chartData.length;
             const totalBarWidth = barWidth * numBars;
@@ -421,6 +437,21 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                         : fitHeight ? 'xMidYMid meet' 
                         : 'none';
                     svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);
+                    
+                    console.log('[FitWidth] adjustDimensions: SVG atualizado com fitWidth', {
+                        viewBox: svgElement.getAttribute('viewBox'),
+                        width: svgElement.getAttribute('width'),
+                        height: svgElement.getAttribute('height'),
+                        preserveAspectRatio: svgElement.getAttribute('preserveAspectRatio'),
+                        svgClientWidth: svgElement.clientWidth,
+                        svgOffsetWidth: svgElement.offsetWidth,
+                        svgBoundingRect: svgElement.getBoundingClientRect().width,
+                        wrapperClientWidth: wrapperDiv?.clientWidth,
+                        wrapperOffsetWidth: wrapperDiv?.offsetWidth,
+                        containerClientWidth: containerDiv.clientWidth,
+                        containerOffsetWidth: containerDiv.offsetWidth,
+                        newChartWidth,
+                    });
                 } else {
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
@@ -437,12 +468,31 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             lastContainerHeight = containerHeight;
             lastChartWidth = newChartWidth;
             lastChartHeight = newChartHeight;
+            
+            console.log('[FitWidth] adjustDimensions: Atualização concluída', {
+                containerWidth,
+                containerHeight,
+                newChartWidth,
+                newChartHeight,
+                lastContainerWidth,
+                lastContainerHeight,
+                lastChartWidth,
+                lastChartHeight,
+                shouldUpdate,
+            });
         }
     };
 
     // Ajustar imediatamente (primeira renderização)
     // A função adjustDimensions verifica internamente se o container tem dimensões
     // Se não tiver, retorna sem fazer nada e tentamos novamente após o DOM ser atualizado
+    console.log('[FitWidth] setupDynamicResize: Iniciando, containerDiv tem dimensões?', {
+        containerDivClientWidth: containerDiv.clientWidth,
+        containerDivOffsetWidth: containerDiv.offsetWidth,
+        fitWidth,
+        fitHeight,
+    });
+    
     adjustDimensions();
     
     // Se fitWidth está ativo, garantir que ajustamos novamente quando o DOM estiver completamente estável
@@ -450,7 +500,22 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
     if (fitWidth) {
         // Usar requestAnimationFrame para garantir que o DOM foi atualizado antes de tentar novamente
         requestAnimationFrame(() => {
+            console.log('[FitWidth] setupDynamicResize: requestAnimationFrame callback, containerDiv tem dimensões?', {
+                containerDivClientWidth: containerDiv.clientWidth,
+                containerDivOffsetWidth: containerDiv.offsetWidth,
+            });
             adjustDimensions();
+            
+            // Se ainda não tem dimensões após requestAnimationFrame, tentar mais uma vez após um pequeno delay
+            if (containerDiv.clientWidth === 0) {
+                setTimeout(() => {
+                    console.log('[FitWidth] setupDynamicResize: setTimeout callback, containerDiv tem dimensões?', {
+                        containerDivClientWidth: containerDiv.clientWidth,
+                        containerDivOffsetWidth: containerDiv.offsetWidth,
+                    });
+                    adjustDimensions();
+                }, 50);
+            }
         });
     }
     
