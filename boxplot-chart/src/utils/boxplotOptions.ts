@@ -9,6 +9,7 @@ import type {
     WhiskerType, 
     OutlierShape,
     BoxplotOrientation,
+    SortType,
     MedianStyle,
     WhiskerStyle,
     BoxStyle,
@@ -42,6 +43,7 @@ export interface BoxplotOptions {
     whiskerType: WhiskerType;
     showMean: boolean;
     showNotch: boolean; // Notch Mode (intervalo de confiança)
+    sortType: SortType; // Tipo de ordenação dos grupos
     medianStyle: MedianStyle;
     whiskerStyle: WhiskerStyle;
     boxStyle: BoxStyle;
@@ -158,6 +160,7 @@ export function readBoxplotOptions(
         whiskerType: (measureConfig.whiskerType as WhiskerType) || 'iqr_1_5',
         showMean: measureConfig.showMean === true,
         showNotch: measureConfig.showNotch === true,
+        sortType: (chartOptions.sortType as SortType) || 'alphabetical',
         medianStyle,
         whiskerStyle,
         boxStyle,
