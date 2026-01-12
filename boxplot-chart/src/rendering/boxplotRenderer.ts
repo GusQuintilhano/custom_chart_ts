@@ -97,6 +97,8 @@ export function renderBoxplot(
         showNotch,
         yScale,
         referenceLines,
+        variableWidth,
+        boxWidth: baseBoxWidth,
         labelFontSize,
         valueLabelFontSize,
         gridLines,
@@ -124,6 +126,11 @@ export function renderBoxplot(
     const baseCenterX = leftMargin + plotAreaWidth / 2;
     const baseCenterY = topMargin + plotAreaHeight / 2;
 
+    // Calcular count máximo para largura variável
+    const maxCount = variableWidth 
+        ? Math.max(...groups.map(g => g.values.length), 1)
+        : 1;
+    
     // Renderizar cada grupo
     const boxesHtml = groups.map((group, index) => {
         // Para vertical: distribuir grupos horizontalmente
@@ -136,14 +143,26 @@ export function renderBoxplot(
             ? baseCenterY
             : topMargin + (index + 0.5) * (plotAreaHeight / groups.length);
 
+        // Calcular largura variável se habilitado
+        // Fórmula: boxWidth = baseWidth * sqrt(count / maxCount)
+        const currentBoxWidth = variableWidth && maxCount > 0
+            ? baseBoxWidth * Math.sqrt(group.values.length / maxCount)
+            : baseBoxWidth;
+        
+        // Criar config com largura variável para este grupo
+        const groupConfig = {
+            ...config,
+            boxWidth: currentBoxWidth,
+        };
+
         // Renderizar elementos do boxplot usando as novas configurações
-        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length, yScale);
-        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, whiskerStyle, globalMin, globalMax, yScale);
-        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, config.boxWidth, globalMin, globalMax, yScale);
+        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, groupConfig, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length, yScale);
+        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, groupConfig, orientation, whiskerStyle, globalMin, globalMax, yScale);
+        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, groupConfig, orientation, medianStyle, currentBoxWidth, globalMin, globalMax, yScale);
         
         // Renderizar média se habilitado
         const meanHtml = showMean && group.stats.mean !== undefined
-            ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, config.boxWidth, globalMin, globalMax, yScale)
+            ? renderBoxplotMean(group.stats, centerX, centerY, groupConfig, orientation, medianStyle.color, 3, currentBoxWidth, globalMin, globalMax, yScale)
             : '';
         
         const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, yScale);
