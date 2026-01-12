@@ -75,11 +75,14 @@ export function renderBoxplotWhiskers(
         `;
     } else {
         // Horizontal
-        const globalRange = globalMax - globalMin;
-        const q1X = leftMargin + ((stats.q1 - globalMin) / globalRange) * plotAreaWidth;
-        const q3X = leftMargin + ((stats.q3 - globalMin) / globalRange) * plotAreaWidth;
-        const minX = leftMargin + ((stats.min - globalMin) / globalRange) * plotAreaWidth;
-        const maxX = leftMargin + ((stats.max - globalMin) / globalRange) * plotAreaWidth;
+        if (scale === 'linear' && globalRange <= 0) {
+            return ''; // Retornar vazio se não há range válido
+        }
+        // Usar funções helper para suportar escala logarítmica
+        const q1X = valueToXCoordinate(stats.q1, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        const q3X = valueToXCoordinate(stats.q3, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        const minX = valueToXCoordinate(stats.min, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        const maxX = valueToXCoordinate(stats.max, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
 
         return `
             <!-- Bigode esquerdo (min) -->
