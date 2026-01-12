@@ -14,6 +14,7 @@ import { renderDotPlot } from './dotPlot';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
 import { generateSvgTitle } from '../utils/tooltipUtils';
+import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 /**
  * Renderiza linhas de grade de fundo
