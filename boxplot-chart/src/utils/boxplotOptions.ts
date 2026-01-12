@@ -67,6 +67,68 @@ export interface BoxplotOptions {
 }
 
 /**
+ * Mapeia valores de orientação em português para valores técnicos
+ */
+function mapOrientation(value: string | undefined): BoxplotOrientation | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized === 'vertical' || normalized.includes('vertical')) return 'vertical';
+    if (normalized === 'horizontal' || normalized.includes('horizontal')) return 'horizontal';
+    return undefined;
+}
+
+/**
+ * Mapeia valores de método de cálculo em português para valores técnicos
+ */
+function mapCalculationMethod(value: string | undefined): CalculationMethod | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('automático') || normalized === 'auto') return 'auto';
+    if (normalized.includes('tukey')) return 'tukey';
+    if (normalized.includes('inclusivo')) return 'inclusive';
+    if (normalized.includes('exclusivo')) return 'exclusive';
+    return undefined;
+}
+
+/**
+ * Mapeia valores de tipo de bigode em português para valores técnicos
+ */
+function mapWhiskerType(value: string | undefined): WhiskerType | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('iqr 1.5') || normalized.includes('1.5') || normalized.includes('padrão')) return 'iqr_1_5';
+    if (normalized.includes('iqr 3') || normalized.includes('3x') || normalized.includes('conservador')) return 'iqr_3';
+    if (normalized.includes('extremos') || normalized.includes('data_extremes')) return 'data_extremes';
+    if (normalized.includes('percentil') || normalized.includes('5-95')) return 'percentile_5_95';
+    if (normalized.includes('mínimo') || normalized.includes('min_max')) return 'min_max';
+    return undefined;
+}
+
+/**
+ * Mapeia valores de escala Y em português para valores técnicos
+ */
+function mapYScale(value: string | undefined): 'linear' | 'log' | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('linear') || normalized === 'linear') return 'linear';
+    if (normalized.includes('log') || normalized.includes('logarítmica')) return 'log';
+    return undefined;
+}
+
+/**
+ * Mapeia valores de tipo de linha de referência em português para valores técnicos
+ */
+function mapReferenceLineType(value: string | undefined): ReferenceLineType | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('nenhuma') || normalized === 'none') return 'none';
+    if (normalized.includes('fixo') || normalized === 'fixed') return 'fixed';
+    if (normalized.includes('média') || normalized.includes('mean')) return 'global_mean';
+    if (normalized.includes('mediana') || normalized.includes('median')) return 'global_median';
+    return undefined;
+}
+
+/**
  * Lê opções do visualProps e retorna configurações do boxplot
  */
 export function readBoxplotOptions(
@@ -141,7 +203,7 @@ export function readBoxplotOptions(
     // Reference Lines
     const referenceLinesConfig: ReferenceLinesConfig = {
         show: typeof referenceLines.show === 'boolean' ? referenceLines.show : false,
-        type: (referenceLines.type as ReferenceLineType) || 'none',
+        type: mapReferenceLineType(referenceLines.type as string) || 'none',
         value: typeof referenceLines.value === 'number' ? referenceLines.value : undefined,
         color: (referenceLines.color as string) || '#ef4444',
         strokeWidth: typeof referenceLines.strokeWidth === 'number' ? referenceLines.strokeWidth : 2,
