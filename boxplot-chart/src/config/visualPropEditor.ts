@@ -470,10 +470,6 @@ export function createVisualPropEditorDefinition(
         (col) => col.type === ColumnType.MEASURE
     );
 
-    const columnSettingsDefinition = measureColumns.length > 0
-        ? createMeasureColumnSettings(measureColumns[0], chartModel)
-        : {};
-
     const allSavedProps = (chartModel.visualProps as Record<string, unknown>) || {};
 
     const editorSections = createEditorSections(
@@ -485,9 +481,25 @@ export function createVisualPropEditorDefinition(
         allSavedProps
     );
 
-    return {
+    // Criar configurações por coluna para aparecer na aba "Configure"
+    const columnsVizPropDefinition: any[] = [];
+    
+    if (measureColumns.length > 0) {
+        const measureColumnSettings = createMeasureColumnSettings(measureColumns[0], chartModel);
+        if (Object.keys(measureColumnSettings).length > 0) {
+            columnsVizPropDefinition.push({
+                type: ColumnType.MEASURE,
+                columnSettingsDefinition: measureColumnSettings,
+            });
+        }
+    }
+
+    const result: VisualPropEditorDefinition = {
         elements: editorSections,
+        ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
     };
+
+    return result;
 }
 
 /**
