@@ -93,6 +93,7 @@ export function renderBoxplot(
         whiskerStyle,
         outlierStyle,
         showMean,
+        showNotch,
         labelFontSize,
         valueLabelFontSize,
         gridLines,
@@ -124,7 +125,7 @@ export function renderBoxplot(
             : topMargin + (index + 0.5) * (plotAreaHeight / groups.length);
 
         // Renderizar elementos do boxplot usando as novas configurações
-        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax);
+        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length);
         const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, whiskerStyle, globalMin, globalMax);
         const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, config.boxWidth, globalMin, globalMax);
         
