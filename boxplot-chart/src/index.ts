@@ -191,9 +191,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
         
-        // As dimensões já estão filtradas pela seção 'grouping' do Chart Config Editor
-        // Não precisamos filtrar novamente
-        const filteredDimensionColumns = dimensionColumns;
+        // Usar apenas a primeira dimensão para agrupamento (Eixo X)
+        // As dimensões da seção 'detail' (granularidade) não são usadas para agrupamento
+        const filteredDimensionColumns = dimensionColumns.length > 0 ? [dimensionColumns[0]] : [];
 
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
