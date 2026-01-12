@@ -126,13 +126,13 @@ export function renderBoxplot(
             : topMargin + (index + 0.5) * (plotAreaHeight / groups.length);
 
         // Renderizar elementos do boxplot usando as novas configurações
-        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length);
-        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, whiskerStyle, globalMin, globalMax);
-        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, config.boxWidth, globalMin, globalMax);
+        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, config, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length, yScale);
+        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, config, orientation, whiskerStyle, globalMin, globalMax, yScale);
+        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, config, orientation, medianStyle, config.boxWidth, globalMin, globalMax, yScale);
         
         // Renderizar média se habilitado
         const meanHtml = showMean && group.stats.mean !== undefined
-            ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, config.boxWidth, globalMin, globalMax)
+            ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, config.boxWidth, globalMin, globalMax, yScale)
             : '';
         
         const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax);
