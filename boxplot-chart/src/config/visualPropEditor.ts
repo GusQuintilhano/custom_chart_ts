@@ -265,7 +265,8 @@ function createEditorSections(
     savedChartOptions: any,
     savedTextSizes: any,
     savedChartColorsStyle: any,
-    currentVisualProps?: Record<string, unknown>
+    currentVisualProps?: Record<string, unknown>,
+    dimensionColumns?: ChartColumn[]
 ): any[] {
     const elements: any[] = [];
     const allVisualProps = currentVisualProps || {};
@@ -292,35 +293,56 @@ function createEditorSections(
     });
 
     // Seção 2: Eixos
-    const sortTypeValue = typeof savedChartOptions?.sortType === 'string' ? savedChartOptions.sortType : 'alphabetical';
+    const sortTypeValue = typeof savedChartOptions?.sortType === 'string' ? savedChartOptions.sortType : 'Alfabética';
+    const selectedDimensionId = typeof savedChartOptions?.selectedDimensionId === 'string' ? savedChartOptions.selectedDimensionId : (dimensionColumns && dimensionColumns.length > 0 ? dimensionColumns[0].id : '');
+    
+    const axesChildren: any[] = [
+        {
+            type: 'toggle',
+            key: 'showYAxis',
+            label: 'Exibir Eixo Y',
+            defaultValue: savedChartVisual?.showYAxis !== false,
+        },
+    ];
+    
+    // Adicionar seletor de dimensão se houver múltiplas dimensões
+    if (dimensionColumns && dimensionColumns.length > 1) {
+        const dimensionOptions = dimensionColumns.map(col => col.id);
+        const dimensionLabels = dimensionColumns.map(col => col.name || col.id);
+        
+        axesChildren.push({
+            type: 'dropdown',
+            key: 'selectedDimensionId',
+            label: 'Dimensão para Agrupamento',
+            defaultValue: String(selectedDimensionId),
+            values: dimensionOptions,
+            // Nota: O ThoughtSpot SDK não suporta labels customizados diretamente,
+            // mas podemos documentar que os valores são os IDs das colunas
+        });
+    }
+    
+    axesChildren.push({
+        type: 'dropdown',
+        key: 'sortType',
+        label: 'Ordenação dos Grupos',
+        defaultValue: String(sortTypeValue),
+        values: ['Alfabética', 'Média (Crescente)', 'Média (Decrescente)', 'Mediana (Crescente)', 'Mediana (Decrescente)', 'Variabilidade (Crescente)', 'Variabilidade (Decrescente)'],
+    });
+    
+    axesChildren.push({
+        type: 'dropdown',
+        key: 'yScale',
+        label: 'Escala do Eixo Y',
+        defaultValue: String(savedChartOptions?.yScale || 'linear'),
+        values: ['linear', 'log'],
+    });
     
     elements.push({
         type: 'section',
         key: 'axes',
         label: 'Eixos',
         isAccordianExpanded: false,
-        children: [
-            {
-                type: 'toggle',
-                key: 'showYAxis',
-                label: 'Exibir Eixo Y',
-                defaultValue: savedChartVisual?.showYAxis !== false,
-            },
-            {
-                type: 'dropdown',
-                key: 'sortType',
-                label: 'Ordenação dos Grupos',
-                defaultValue: String(sortTypeValue),
-                values: ['alphabetical', 'mean_asc', 'mean_desc', 'median_asc', 'median_desc', 'iqr_asc', 'iqr_desc'],
-            },
-            {
-                type: 'dropdown',
-                key: 'yScale',
-                label: 'Escala do Eixo Y',
-                defaultValue: String(savedChartOptions?.yScale || 'linear'),
-                values: ['linear', 'log'],
-            },
-        ],
+        children: axesChildren,
     });
 
     // Seção 3: Linhas de Referência
@@ -551,6 +573,10 @@ export function createVisualPropEditorDefinition(
     const measureColumns = chartModel.columns.filter(
         (col) => col.type === ColumnType.MEASURE
     );
+    
+    const dimensionColumns = chartModel.columns.filter(
+        (col) => col.type === ColumnType.ATTRIBUTE
+    );
 
     const allSavedProps = (chartModel.visualProps as Record<string, unknown>) || {};
 
@@ -560,7 +586,8 @@ export function createVisualPropEditorDefinition(
         savedChartOptions,
         savedTextSizes,
         savedChartColorsStyle,
-        allSavedProps
+        allSavedProps,
+        dimensionColumns
     );
 
     // Criar configurações por coluna para aparecer na aba "Configure"

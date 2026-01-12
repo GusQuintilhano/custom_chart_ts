@@ -188,6 +188,16 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Ler opções primeiro (necessárias para cálculos)
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
+        
+        // Filtrar dimensões se uma dimensão específica foi selecionada
+        let filteredDimensionColumns = dimensionColumns;
+        if (options.selectedDimensionId && dimensionColumns.length > 1) {
+            filteredDimensionColumns = dimensionColumns.filter(col => col.id === options.selectedDimensionId);
+            // Se não encontrou a dimensão selecionada, usar todas (fallback)
+            if (filteredDimensionColumns.length === 0) {
+                filteredDimensionColumns = dimensionColumns;
+            }
+        }
 
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
@@ -221,7 +231,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         }, userId);
 
         // Calcular dados do boxplot com as opções configuradas
-        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumns, options);
+        const boxplotData = calculateBoxplotData(chartModel, measureColumn, filteredDimensionColumns, options);
         if (!boxplotData || boxplotData.groups.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Não foi possível calcular os dados do Boxplot</div>';
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
