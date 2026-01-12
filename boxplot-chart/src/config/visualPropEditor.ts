@@ -307,8 +307,7 @@ function createEditorSections(
     savedChartOptions: any,
     savedTextSizes: any,
     savedChartColorsStyle: any,
-    currentVisualProps?: Record<string, unknown>,
-    dimensionColumns?: ChartColumn[]
+    currentVisualProps?: Record<string, unknown>
 ): any[] {
     const elements: any[] = [];
     const allVisualProps = currentVisualProps || {};
@@ -336,59 +335,34 @@ function createEditorSections(
 
     // Seção 2: Eixos
     const sortTypeValue = typeof savedChartOptions?.sortType === 'string' ? savedChartOptions.sortType : 'Alfabética';
-    const axes = (currentVisualProps?.axes || {}) as Record<string, unknown>;
-    const selectedDimensionForGrouping = typeof axes.selectedDimensionForGrouping === 'string' ? axes.selectedDimensionForGrouping : '';
-    
-    const axesChildren: any[] = [
-        {
-            type: 'toggle',
-            key: 'showYAxis',
-            label: 'Exibir Eixo Y',
-            defaultValue: savedChartVisual?.showYAxis !== false,
-        },
-    ];
-    
-    // Adicionar seletor de dimensão para agrupamento se houver múltiplas dimensões
-    if (dimensionColumns && dimensionColumns.length > 1) {
-        // Criar opções usando nomes das colunas (mais amigável)
-        // O valor será o ID, mas usaremos o nome para display se possível
-        const dimensionOptions = dimensionColumns.map(col => col.id);
-        
-        // Se o SDK permitir, podemos usar um formato com nomes
-        // Caso contrário, os IDs serão usados (mas pelo menos funciona)
-        axesChildren.push({
-            type: 'dropdown',
-            key: 'selectedDimensionForGrouping',
-            label: 'Dimensão para Agrupamento',
-            defaultValue: selectedDimensionForGrouping || dimensionColumns[0].id,
-            values: dimensionOptions,
-            // Nota: O ThoughtSpot SDK pode mostrar IDs, mas a funcionalidade funciona
-            // O usuário pode identificar pela ordem ou pelo ID
-        });
-    }
-    
-    axesChildren.push({
-        type: 'dropdown',
-        key: 'sortType',
-        label: 'Ordenação dos Grupos',
-        defaultValue: String(sortTypeValue),
-        values: ['Alfabética', 'Média (Crescente)', 'Média (Decrescente)', 'Mediana (Crescente)', 'Mediana (Decrescente)', 'Variabilidade (Crescente)', 'Variabilidade (Decrescente)'],
-    });
-    
-    axesChildren.push({
-        type: 'dropdown',
-        key: 'yScale',
-        label: 'Escala do Eixo Y',
-        defaultValue: String(savedChartOptions?.yScale || 'linear'),
-        values: ['linear', 'log'],
-    });
     
     elements.push({
         type: 'section',
         key: 'axes',
         label: 'Eixos',
         isAccordianExpanded: false,
-        children: axesChildren,
+        children: [
+            {
+                type: 'toggle',
+                key: 'showYAxis',
+                label: 'Exibir Eixo Y',
+                defaultValue: savedChartVisual?.showYAxis !== false,
+            },
+            {
+                type: 'dropdown',
+                key: 'sortType',
+                label: 'Ordenação dos Grupos',
+                defaultValue: String(sortTypeValue),
+                values: ['Alfabética', 'Média (Crescente)', 'Média (Decrescente)', 'Mediana (Crescente)', 'Mediana (Decrescente)', 'Variabilidade (Crescente)', 'Variabilidade (Decrescente)'],
+            },
+            {
+                type: 'dropdown',
+                key: 'yScale',
+                label: 'Escala do Eixo Y',
+                defaultValue: String(savedChartOptions?.yScale || 'linear'),
+                values: ['linear', 'log'],
+            },
+        ],
     });
 
     // Seção 3: Linhas de Referência
