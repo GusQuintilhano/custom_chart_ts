@@ -8,6 +8,7 @@ import { renderBoxplotBox } from './boxplotBox';
 import { renderBoxplotWhiskers } from './boxplotWhiskers';
 import { renderBoxplotMedian, renderBoxplotMean } from './boxplotMedian';
 import { renderOutliers } from './outliers';
+import { renderReferenceLines } from './referenceLines';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
 import { generateSvgTitle } from '../utils/tooltipUtils';
