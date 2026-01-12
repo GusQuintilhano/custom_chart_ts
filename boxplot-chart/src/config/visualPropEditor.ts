@@ -269,8 +269,6 @@ function createEditorSections(
 
     // Seção 1: Layout e Espaçamento
     const paddingValue = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
-    const axisLabelX = typeof layoutConfig.axisLabelX === 'string' ? layoutConfig.axisLabelX : '';
-    const axisLabelY = typeof layoutConfig.axisLabelY === 'string' ? layoutConfig.axisLabelY : '';
 
     elements.push({
         type: 'section',
@@ -283,18 +281,6 @@ function createEditorSections(
                 key: 'padding',
                 label: 'Espaçamento entre Grupos (px)',
                 defaultValue: Number(paddingValue) || 10,
-            },
-            {
-                type: 'text',
-                key: 'axisLabelX',
-                label: 'Título do Eixo X',
-                defaultValue: String(axisLabelX),
-            },
-            {
-                type: 'text',
-                key: 'axisLabelY',
-                label: 'Título do Eixo Y',
-                defaultValue: String(axisLabelY),
             },
         ],
     });
