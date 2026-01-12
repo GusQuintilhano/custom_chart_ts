@@ -275,6 +275,7 @@ function createEditorSections(
 
     // Seção 1: Layout e Espaçamento
     const paddingValue = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
+    const fitWidthValue = typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false;
 
     elements.push({
         type: 'section',
@@ -287,6 +288,12 @@ function createEditorSections(
                 key: 'padding',
                 label: 'Espaçamento entre Grupos (px)',
                 defaultValue: Number(paddingValue) || 10,
+            },
+            {
+                type: 'toggle',
+                key: 'fitWidth',
+                label: 'Largura 100%',
+                defaultValue: Boolean(fitWidthValue),
             },
         ],
     });
