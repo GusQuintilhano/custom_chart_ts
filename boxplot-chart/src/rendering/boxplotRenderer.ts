@@ -297,6 +297,7 @@ export function renderBoxplot(
                 ${medianHtml}
                 ${meanHtml}
                 ${outliersHtml}
+                ${valueLabelsHtml}
                 ${labelHtml}
             </g>
         `;
