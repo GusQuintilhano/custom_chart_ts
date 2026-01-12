@@ -261,13 +261,12 @@ function createMeasureColumnSettings(
  */
 function createDimensionColumnSettings(
     dimensionColumns: ChartColumn[],
-    currentVisualProps: ChartModel,
-    allDimensionColumns: ChartColumn[]
+    currentVisualProps: ChartModel
 ): { [columnId: string]: { elements: any[] } } {
     const dimensionSettings: { [columnId: string]: { elements: any[] } } = {};
     
     // Se há múltiplas dimensões, adicionar opção para selecionar qual usar para agrupamento
-    if (allDimensionColumns.length > 1) {
+    if (dimensionColumns.length > 1) {
         dimensionColumns.forEach(dimensionColumn => {
             const savedConfig = (currentVisualProps.visualProps as any)?.[dimensionColumn.id] || {};
             const groupingConfig = (savedConfig.grouping || {}) as Record<string, unknown>;
@@ -624,7 +623,7 @@ export function createVisualPropEditorDefinition(
     }
     
     if (dimensionColumns.length > 0) {
-        const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, chartModel, dimensionColumns);
+        const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, chartModel);
         if (Object.keys(dimensionColumnSettings).length > 0) {
             columnsVizPropDefinition.push({
                 type: ColumnType.ATTRIBUTE,
