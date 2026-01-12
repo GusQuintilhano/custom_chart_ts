@@ -34,16 +34,16 @@ function createMeasureColumnSettings(
             {
                 type: 'dropdown',
                 key: 'calculationMethod',
-                label: 'Método de Cálculo',
-                defaultValue: String(dataConfig.calculationMethod || 'auto'),
-                values: ['auto', 'tukey', 'exclusive', 'inclusive'],
+                label: 'Método de Cálculo dos Quartis',
+                defaultValue: String(dataConfig.calculationMethod || 'Automático'),
+                values: ['Automático', 'Tukey (Recomendado)', 'Inclusivo', 'Exclusivo'],
             },
             {
                 type: 'dropdown',
                 key: 'whiskerType',
-                label: 'Tipo de Bigode',
-                defaultValue: String(savedConfig.whiskerType || 'iqr_1_5'),
-                values: ['data_extremes', 'iqr_1_5', 'iqr_3', 'percentile_5_95', 'min_max'],
+                label: 'Tipo de Bigode (Whisker)',
+                defaultValue: String(dataConfig.whiskerType || 'IQR 1.5x (Padrão)'),
+                values: ['IQR 1.5x (Padrão)', 'IQR 3x (Conservador)', 'Extremos dos Dados', 'Percentis 5-95', 'Mínimo-Máximo'],
             },
         ],
     });
@@ -236,8 +236,8 @@ function createMeasureColumnSettings(
                 type: 'dropdown',
                 key: 'orientation',
                 label: 'Orientação',
-                defaultValue: String(savedConfig.orientation || 'vertical'),
-                values: ['vertical', 'horizontal'],
+                defaultValue: String(visualization.orientation || 'Vertical'),
+                values: ['Vertical', 'Horizontal'],
             },
             {
                 type: 'colorpicker',
