@@ -257,6 +257,48 @@ function createMeasureColumnSettings(
 }
 
 /**
+ * Cria configurações específicas para dimensões
+ */
+function createDimensionColumnSettings(
+    dimensionColumns: ChartColumn[],
+    currentVisualProps: ChartModel,
+    allDimensionColumns: ChartColumn[]
+): { [columnId: string]: { elements: any[] } } {
+    const dimensionSettings: { [columnId: string]: { elements: any[] } } = {};
+    
+    // Se há múltiplas dimensões, adicionar opção para selecionar qual usar para agrupamento
+    if (allDimensionColumns.length > 1) {
+        dimensionColumns.forEach(dimensionColumn => {
+            const savedConfig = (currentVisualProps.visualProps as any)?.[dimensionColumn.id] || {};
+            const groupingConfig = (savedConfig.grouping || {}) as Record<string, unknown>;
+            
+            const dimensionElements: any[] = [];
+            
+            dimensionElements.push({
+                type: 'section',
+                key: 'grouping',
+                label: 'Configurações de Agrupamento',
+                isAccordianExpanded: false,
+                children: [
+                    {
+                        type: 'toggle',
+                        key: 'useForGrouping',
+                        label: 'Usar para Agrupamento Principal',
+                        defaultValue: groupingConfig.useForGrouping === true,
+                    },
+                ],
+            });
+            
+            dimensionSettings[dimensionColumn.id] = {
+                elements: dimensionElements,
+            };
+        });
+    }
+    
+    return dimensionSettings;
+}
+
+/**
  * Cria seções gerais de configuração
  */
 function createEditorSections(
@@ -603,6 +645,16 @@ export function createVisualPropEditorDefinition(
             columnsVizPropDefinition.push({
                 type: ColumnType.MEASURE,
                 columnSettingsDefinition: measureColumnSettings,
+            });
+        }
+    }
+    
+    if (dimensionColumns.length > 0) {
+        const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, chartModel, dimensionColumns);
+        if (Object.keys(dimensionColumnSettings).length > 0) {
+            columnsVizPropDefinition.push({
+                type: ColumnType.ATTRIBUTE,
+                columnSettingsDefinition: dimensionColumnSettings,
             });
         }
     }
