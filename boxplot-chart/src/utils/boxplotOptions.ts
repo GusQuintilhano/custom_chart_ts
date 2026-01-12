@@ -15,6 +15,7 @@ import type {
     BoxStyle,
     OutlierStyle,
     GridLinesConfig,
+    DividerLinesConfig,
     ReferenceLinesConfig,
     ReferenceLineType,
     TooltipConfig,
