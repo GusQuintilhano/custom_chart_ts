@@ -44,6 +44,7 @@ export interface BoxplotOptions {
     showMean: boolean;
     showNotch: boolean; // Notch Mode (intervalo de confiança)
     sortType: SortType; // Tipo de ordenação dos grupos
+    yScale: 'linear' | 'log'; // Escala do eixo Y (linear ou logarítmica)
     medianStyle: MedianStyle;
     whiskerStyle: WhiskerStyle;
     boxStyle: BoxStyle;
@@ -161,6 +162,7 @@ export function readBoxplotOptions(
         showMean: measureConfig.showMean === true,
         showNotch: measureConfig.showNotch === true,
         sortType: (chartOptions.sortType as SortType) || 'alphabetical',
+        yScale: (chartOptions.yScale === 'log' ? 'log' : 'linear') as 'linear' | 'log',
         medianStyle,
         whiskerStyle,
         boxStyle,

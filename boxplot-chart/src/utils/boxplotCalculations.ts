@@ -133,6 +133,7 @@ export function calculateBoxplotData(
 
 /**
  * Converte valor para coordenada Y (vertical) ou X (horizontal)
+ * Suporta escala linear e logarítmica
  */
 export function valueToCoordinate(
     value: number,
@@ -140,13 +141,63 @@ export function valueToCoordinate(
     max: number,
     start: number,
     length: number,
-    orientation: 'vertical' | 'horizontal'
+    orientation: 'vertical' | 'horizontal',
+    scale: 'linear' | 'log' = 'linear'
 ): number {
     if (max === min) return start + length / 2;
-    const ratio = (value - min) / (max - min);
+    
+    let ratio: number;
+    
+    if (scale === 'log') {
+        // Para escala logarítmica, garantir valores positivos
+        if (min <= 0 || max <= 0 || value <= 0) {
+            // Se valores não positivos, usar escala linear como fallback
+            ratio = (value - min) / (max - min);
+        } else {
+            // Escala logarítmica: log(value) entre log(min) e log(max)
+            const logMin = Math.log10(min);
+            const logMax = Math.log10(max);
+            const logValue = Math.log10(value);
+            ratio = (logValue - logMin) / (logMax - logMin);
+        }
+    } else {
+        // Escala linear (padrão)
+        ratio = (value - min) / (max - min);
+    }
+    
     return orientation === 'vertical' 
         ? start + length - (ratio * length)
         : start + (ratio * length);
+}
+
+/**
+ * Converte um valor para coordenada Y usando escala logarítmica ou linear
+ * Helper para renderização vertical
+ */
+export function valueToYCoordinate(
+    value: number,
+    min: number,
+    max: number,
+    topMargin: number,
+    plotAreaHeight: number,
+    scale: 'linear' | 'log' = 'linear'
+): number {
+    return valueToCoordinate(value, min, max, topMargin, plotAreaHeight, 'vertical', scale);
+}
+
+/**
+ * Converte um valor para coordenada X usando escala logarítmica ou linear
+ * Helper para renderização horizontal
+ */
+export function valueToXCoordinate(
+    value: number,
+    min: number,
+    max: number,
+    leftMargin: number,
+    plotAreaWidth: number,
+    scale: 'linear' | 'log' = 'linear'
+): number {
+    return valueToCoordinate(value, min, max, leftMargin, plotAreaWidth, 'horizontal', scale);
 }
 
 /**
