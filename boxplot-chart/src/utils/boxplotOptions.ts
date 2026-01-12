@@ -17,7 +17,8 @@ import type {
     GridLinesConfig,
     ReferenceLinesConfig,
     ReferenceLineType,
-    TooltipConfig
+    TooltipConfig,
+    LayoutConfig
 } from '../types/boxplotTypes';
 
 export interface BoxplotOptions {
