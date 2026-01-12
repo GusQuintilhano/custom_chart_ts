@@ -605,8 +605,7 @@ export function createVisualPropEditorDefinition(
         savedChartOptions,
         savedTextSizes,
         savedChartColorsStyle,
-        allSavedProps,
-        dimensionColumns
+        allSavedProps
     );
 
     // Criar configurações por coluna para aparecer na aba "Configure"
