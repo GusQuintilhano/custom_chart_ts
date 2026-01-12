@@ -18,6 +18,107 @@ import { renderBoxplot, renderYAxis } from './rendering/boxplotRenderer';
 import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
 import { ChartToTSEvent, ColumnType } from '@thoughtspot/ts-chart-sdk';
 
+function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
+    // Rastrear hover em caixas do boxplot
+    const boxes = chartElement.querySelectorAll('rect[class*="box"], path[class*="box"]');
+    boxes.forEach((box, index) => {
+        box.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `box-${index}`, {
+                elementType: 'box',
+            });
+        });
+        
+        box.addEventListener('click', () => {
+            analytics.trackInteraction('boxplot', 'click', `box-${index}`, {
+                elementType: 'box',
+            });
+        });
+    });
+    
+    // Rastrear hover em outliers
+    const outliers = chartElement.querySelectorAll('circle[class*="outlier"], path[class*="outlier"]');
+    outliers.forEach((outlier, index) => {
+        outlier.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `outlier-${index}`, {
+                elementType: 'outlier',
+            });
+        });
+    });
+    
+    // Rastrear hover em pontos de jitter
+    const jitterPoints = chartElement.querySelectorAll('circle[class*="jitter-point"]');
+    jitterPoints.forEach((point, index) => {
+        point.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `jitter-point-${index}`, {
+                elementType: 'jitter-point',
+            });
+        });
+    });
+    
+    // Rastrear hover em pontos de dot plot (amostra insuficiente)
+    const dotPlotPoints = chartElement.querySelectorAll('circle[class*="dot-plot-point"]');
+    dotPlotPoints.forEach((point, index) => {
+        point.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `dot-plot-point-${index}`, {
+                elementType: 'dot-plot-point',
+            });
+        });
+    });
+    
+    // Rastrear tooltips
+    const elementsWithTooltips = chartElement.querySelectorAll('title');
+    elementsWithTooltips.forEach((title, index) => {
+        const parent = title.parentElement;
+        if (parent) {
+            parent.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'tooltip_open', `tooltip-${index}`, {
+                    elementType: 'tooltip',
+                });
+            });
+        }
+    });
+    
+    // Rastrear hover em linhas de referência
+    const referenceLines = chartElement.querySelectorAll('line[class*="reference-line"], .reference-line');
+    referenceLines.forEach((line, index) => {
+        line.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `reference-line-${index}`, {
+                elementType: 'reference-line',
+            });
+        });
+    });
+    
+    // Rastrear hover em linhas de mediana
+    const medianLines = chartElement.querySelectorAll('line[class*="median"]');
+    medianLines.forEach((line, index) => {
+        line.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `median-line-${index}`, {
+                elementType: 'median-line',
+            });
+        });
+    });
+    
+    // Rastrear hover em whiskers (bigodes)
+    const whiskers = chartElement.querySelectorAll('line[class*="whisker"]');
+    whiskers.forEach((whisker, index) => {
+        whisker.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `whisker-${index}`, {
+                elementType: 'whisker',
+            });
+        });
+    });
+    
+    // Rastrear hover em labels/eixos
+    const labels = chartElement.querySelectorAll('text[class*="label"], text[class*="axis"]');
+    labels.forEach((label, index) => {
+        label.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `label-${index}`, {
+                elementType: 'label',
+            });
+        });
+    });
+}
+
 export const renderChart = async (ctx: CustomChartContext) => {
     const performanceMonitor = new PerformanceMonitor();
     const sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
