@@ -83,6 +83,16 @@ export interface GridLinesConfig {
 }
 
 /**
+ * Configuração de linhas divisórias entre grupos
+ */
+export interface DividerLinesConfig {
+    show: boolean;
+    color: string;
+    strokeWidth: number;
+    strokeDasharray?: string;
+}
+
+/**
  * Tipo de linha de referência
  */
 export type ReferenceLineType = 'fixed' | 'global_mean' | 'global_median' | 'none';

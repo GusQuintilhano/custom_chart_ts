@@ -53,6 +53,7 @@ export interface BoxplotOptions {
     boxStyle: BoxStyle;
     outlierStyle: OutlierStyle;
     gridLines: GridLinesConfig;
+    dividerLines: DividerLinesConfig;
     referenceLines: ReferenceLinesConfig;
     showJitter: boolean; // Jitter Plot
     jitterOpacity: number; // Opacidade dos pontos do jitter
@@ -88,6 +89,7 @@ export function readBoxplotOptions(
     const textSizes = (allVisualProps?.text_sizes || {}) as Record<string, unknown>;
     const colorsStyle = (allVisualProps?.chart_colors_style || {}) as Record<string, unknown>;
     const gridLines = (allVisualProps?.gridLines || {}) as Record<string, unknown>;
+    const dividerLines = (allVisualProps?.dividerLines || {}) as Record<string, unknown>;
     const tooltipConfig = (allVisualProps?.tooltip || {}) as Record<string, unknown>;
     const layoutConfig = (allVisualProps?.layout || {}) as Record<string, unknown>;
     const referenceLines = (allVisualProps?.referenceLines || {}) as Record<string, unknown>;
@@ -190,6 +192,7 @@ export function readBoxplotOptions(
         showJitter: jitterPlot.showJitter === true,
         jitterOpacity: typeof jitterPlot.jitterOpacity === 'number' ? jitterPlot.jitterOpacity : 0.5,
         gridLines: gridLinesConfig,
+        dividerLines: dividerLinesConfig,
         referenceLines: referenceLinesConfig,
         tooltip,
         padding,

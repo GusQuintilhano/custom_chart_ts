@@ -11,6 +11,7 @@ import { renderOutliers } from './outliers';
 import { renderReferenceLines } from './referenceLines';
 import { renderJitterPlot } from './jitterPlot';
 import { renderDotPlot } from './dotPlot';
+import { renderDividerLines } from './dividerLines';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
 import { generateSvgTitle } from '../utils/tooltipUtils';
