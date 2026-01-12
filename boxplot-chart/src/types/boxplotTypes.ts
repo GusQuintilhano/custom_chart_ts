@@ -163,6 +163,18 @@ export interface BoxplotData {
 }
 
 /**
+ * Configurações de layout
+ */
+export interface LayoutConfig {
+    marginTop?: number;
+    marginBottom?: number;
+    marginLeft?: number;
+    marginRight?: number;
+    groupSpacing?: number; // Espaçamento entre grupos
+    layoutStyle?: 'compact' | 'normal' | 'spacious' | 'custom'; // Estilo de layout pré-definido
+}
+
+/**
  * Configurações de renderização do boxplot
  */
 export interface BoxplotRenderConfig {
@@ -179,7 +191,7 @@ export interface BoxplotRenderConfig {
     showYAxis: boolean;
     labelFontSize: number;
     valueLabelFontSize: number;
-    padding?: number; // Espaçamento entre grupos
+    padding?: number; // Espaçamento entre grupos (deprecated, usar groupSpacing)
     gridLines?: GridLinesConfig;
     axisLabels?: {
         x?: string;

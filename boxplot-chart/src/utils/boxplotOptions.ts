@@ -58,8 +58,9 @@ export interface BoxplotOptions {
     showJitter: boolean; // Jitter Plot
     jitterOpacity: number; // Opacidade dos pontos do jitter
     tooltip: TooltipConfig;
-    padding: number;
+    padding: number; // Deprecated: usar layout.groupSpacing
     fitWidth: boolean; // Largura 100% do container
+    layout: LayoutConfig; // Configurações de layout sofisticadas
     axisLabels: {
         x?: string;
         y?: string;
@@ -125,6 +126,19 @@ function mapReferenceLineType(value: string | undefined): ReferenceLineType | un
     if (normalized.includes('fixo') || normalized === 'fixed') return 'fixed';
     if (normalized.includes('média') || normalized.includes('mean')) return 'global_mean';
     if (normalized.includes('mediana') || normalized.includes('median')) return 'global_median';
+    return undefined;
+}
+
+/**
+ * Mapeia valores de estilo de layout em português para valores técnicos
+ */
+function mapLayoutStyle(value: string | undefined): 'compact' | 'normal' | 'spacious' | 'custom' | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('compacto')) return 'compact';
+    if (normalized.includes('normal')) return 'normal';
+    if (normalized.includes('espaçado')) return 'spacious';
+    if (normalized.includes('personalizado')) return 'custom';
     return undefined;
 }
 
@@ -219,6 +233,14 @@ export function readBoxplotOptions(
 
     // Layout
     const padding = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
+    const layout: LayoutConfig = {
+        marginTop: typeof layoutConfig.marginTop === 'number' ? layoutConfig.marginTop : undefined,
+        marginBottom: typeof layoutConfig.marginBottom === 'number' ? layoutConfig.marginBottom : undefined,
+        marginLeft: typeof layoutConfig.marginLeft === 'number' ? layoutConfig.marginLeft : undefined,
+        marginRight: typeof layoutConfig.marginRight === 'number' ? layoutConfig.marginRight : undefined,
+        groupSpacing: typeof layoutConfig.groupSpacing === 'number' ? layoutConfig.groupSpacing : undefined,
+        layoutStyle: (layoutConfig.layoutStyle as 'compact' | 'normal' | 'spacious' | 'custom') || 'normal',
+    };
     const axisLabels = {
         x: (layoutConfig.axisLabelX as string) || undefined,
         y: (layoutConfig.axisLabelY as string) || undefined,
