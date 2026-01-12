@@ -19,6 +19,70 @@ import { setupTooltips } from './rendering/tooltip';
 import { applyPercentageOfTotalToAllMeasures } from './utils/percentageCalculation';
 import { initializeChartSDK, emitRenderComplete } from './config/init';
 
+/**
+ * Configura rastreamento de interações do usuário no gráfico Trellis
+ */
+function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
+    // Rastrear hover em barras/séries
+    const bars = chartElement.querySelectorAll('rect[class*="bar"], rect[data-series]');
+    bars.forEach((bar, index) => {
+        bar.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `bar-${index}`, {
+                elementType: 'bar',
+            });
+        });
+        
+        bar.addEventListener('click', () => {
+            analytics.trackInteraction('trellis', 'click', `bar-${index}`, {
+                elementType: 'bar',
+            });
+        });
+    });
+    
+    // Rastrear hover em pontos/linhas (se houver)
+    const points = chartElement.querySelectorAll('circle[class*="point"], circle[data-series]');
+    points.forEach((point, index) => {
+        point.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `point-${index}`, {
+                elementType: 'point',
+            });
+        });
+    });
+    
+    // Rastrear tooltips
+    const elementsWithTooltips = chartElement.querySelectorAll('title');
+    elementsWithTooltips.forEach((title, index) => {
+        const parent = title.parentElement;
+        if (parent) {
+            parent.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('trellis', 'tooltip_open', `tooltip-${index}`, {
+                    elementType: 'tooltip',
+                });
+            });
+        }
+    });
+    
+    // Rastrear hover em linhas de referência
+    const referenceLines = chartElement.querySelectorAll('line[class*="reference"], .reference-line');
+    referenceLines.forEach((line, index) => {
+        line.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `reference-line-${index}`, {
+                elementType: 'reference-line',
+            });
+        });
+    });
+    
+    // Rastrear hover em labels/eixos
+    const labels = chartElement.querySelectorAll('text[class*="label"], text[class*="axis"]');
+    labels.forEach((label, index) => {
+        label.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `label-${index}`, {
+                elementType: 'label',
+            });
+        });
+    });
+}
+
 export const renderChart = async (ctx: CustomChartContext) => {
     const chartModel = ctx.getChartModel();
     const performanceMonitor = new PerformanceMonitor();
@@ -112,8 +176,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
             allVisualProps,
             primaryDimension,
             secondaryDimensions,
-            measureCols,
-            hasSecondaryDimension
+            measureCols
         );
         
         analytics.trackUsage('trellis', {
@@ -420,7 +483,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
     // Adicionar event listeners para rastrear interações do usuário
     setupInteractionTracking(chartElement, userId);
 
-        // Finalizar monitoramento e rastrear performance
+    // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'trellis';
