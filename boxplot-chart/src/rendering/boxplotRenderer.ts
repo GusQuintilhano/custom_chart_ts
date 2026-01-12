@@ -119,7 +119,10 @@ export function renderBoxplot(
     // Renderizar linhas de grade primeiro (vão para trás)
     const gridLinesHtml = renderGridLines(config, options, globalMin, globalMax);
     
-    // Renderizar linhas de referência (depois das grid lines, antes dos boxplots)
+    // Renderizar linhas divisórias entre grupos (depois das grid lines)
+    const dividerLinesHtml = renderDividerLines(config, options, groups.length);
+    
+    // Renderizar linhas de referência (depois das grid lines e divider lines, antes dos boxplots)
     const referenceLinesHtml = renderReferenceLines(
         config,
         { referenceLines, yScale, orientation },
@@ -251,7 +254,7 @@ export function renderBoxplot(
         ? renderJitterPlot(groups, config, orientation, centerPositions, globalMin, globalMax, yScale, jitterOpacity, baseBoxWidth)
         : '';
 
-    return gridLinesHtml + referenceLinesHtml + jitterHtml + boxesHtml;
+    return gridLinesHtml + dividerLinesHtml + referenceLinesHtml + jitterHtml + boxesHtml;
 }
 
 export function renderYAxis(
