@@ -323,7 +323,56 @@ function createEditorSections(
         ],
     });
 
-    // Seção 3: Linhas de Grade
+    // Seção 3: Linhas de Referência
+    const referenceLines = (allVisualProps.referenceLines || {}) as Record<string, unknown>;
+    const refLinesShow = typeof referenceLines.show === 'boolean' ? referenceLines.show : false;
+    const refLinesType = typeof referenceLines.type === 'string' ? referenceLines.type : 'none';
+    const refLinesValue = typeof referenceLines.value === 'number' ? referenceLines.value : undefined;
+    const refLinesColor = typeof referenceLines.color === 'string' ? referenceLines.color : '#ef4444';
+    const refLinesStrokeWidth = typeof referenceLines.strokeWidth === 'number' ? referenceLines.strokeWidth : 2;
+    
+    elements.push({
+        type: 'section',
+        key: 'referenceLines',
+        label: 'Linhas de Referência',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'show',
+                label: 'Mostrar Linhas de Referência',
+                defaultValue: Boolean(refLinesShow),
+            },
+            {
+                type: 'dropdown',
+                key: 'type',
+                label: 'Tipo de Linha',
+                defaultValue: String(refLinesType),
+                values: ['none', 'fixed', 'global_mean', 'global_median'],
+            },
+            {
+                type: 'number',
+                key: 'value',
+                label: 'Valor Fixo (quando tipo = Valor Fixo)',
+                defaultValue: refLinesValue !== undefined ? Number(refLinesValue) : undefined,
+            },
+            {
+                type: 'colorpicker',
+                key: 'color',
+                label: 'Cor da Linha',
+                selectorType: 'COLOR',
+                defaultValue: String(refLinesColor),
+            },
+            {
+                type: 'number',
+                key: 'strokeWidth',
+                label: 'Espessura da Linha (px)',
+                defaultValue: Number(refLinesStrokeWidth) || 2,
+            },
+        ],
+    });
+
+    // Seção 4: Linhas de Grade
     const gridShow = typeof gridLines.show === 'boolean' ? gridLines.show : false;
     const gridColor = typeof gridLines.color === 'string' ? gridLines.color : '#e5e7eb';
     const gridStrokeWidth = typeof gridLines.strokeWidth === 'number' ? gridLines.strokeWidth : 1;

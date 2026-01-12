@@ -95,6 +95,7 @@ export function renderBoxplot(
         showMean,
         showNotch,
         yScale,
+        referenceLines,
         labelFontSize,
         valueLabelFontSize,
         gridLines,
@@ -108,6 +109,15 @@ export function renderBoxplot(
 
     // Renderizar linhas de grade primeiro (vão para trás)
     const gridLinesHtml = renderGridLines(config, options, globalMin, globalMax);
+    
+    // Renderizar linhas de referência (depois das grid lines, antes dos boxplots)
+    const referenceLinesHtml = renderReferenceLines(
+        config,
+        { referenceLines, yScale, orientation },
+        boxplotData.globalStats,
+        globalMin,
+        globalMax
+    );
 
     // Calcular posição base (centro da área de plotagem)
     const baseCenterX = leftMargin + plotAreaWidth / 2;
@@ -169,7 +179,7 @@ export function renderBoxplot(
         `;
     }).join('');
 
-    return gridLinesHtml + boxesHtml;
+    return gridLinesHtml + referenceLinesHtml + boxesHtml;
 }
 
 export function renderYAxis(
