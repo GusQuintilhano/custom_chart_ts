@@ -16,6 +16,7 @@ import type {
     OutlierStyle,
     GridLinesConfig,
     ReferenceLinesConfig,
+    ReferenceLineType,
     TooltipConfig
 } from '../types/boxplotTypes';
 
@@ -53,6 +54,8 @@ export interface BoxplotOptions {
     outlierStyle: OutlierStyle;
     gridLines: GridLinesConfig;
     referenceLines: ReferenceLinesConfig;
+    showJitter: boolean; // Jitter Plot
+    jitterOpacity: number; // Opacidade dos pontos do jitter
     tooltip: TooltipConfig;
     padding: number;
     axisLabels: {
@@ -86,6 +89,8 @@ export function readBoxplotOptions(
     const gridLines = (allVisualProps?.gridLines || {}) as Record<string, unknown>;
     const tooltipConfig = (allVisualProps?.tooltip || {}) as Record<string, unknown>;
     const layoutConfig = (allVisualProps?.layout || {}) as Record<string, unknown>;
+    const referenceLines = (allVisualProps?.referenceLines || {}) as Record<string, unknown>;
+    const jitterPlot = (allVisualProps?.jitterPlot || {}) as Record<string, unknown>;
 
     // Box Style
     const defaultColor = (visualization.color as string) || defaultColors[0];
@@ -130,6 +135,16 @@ export function readBoxplotOptions(
         strokeDasharray: (gridLines.strokeDash as string) || undefined,
     };
 
+    // Reference Lines
+    const referenceLinesConfig: ReferenceLinesConfig = {
+        show: typeof referenceLines.show === 'boolean' ? referenceLines.show : false,
+        type: (referenceLines.type as ReferenceLineType) || 'none',
+        value: typeof referenceLines.value === 'number' ? referenceLines.value : undefined,
+        color: (referenceLines.color as string) || '#ef4444',
+        strokeWidth: typeof referenceLines.strokeWidth === 'number' ? referenceLines.strokeWidth : 2,
+        strokeDasharray: (referenceLines.strokeDasharray as string) || '5,5',
+    };
+
     // Tooltip
     const tooltip: TooltipConfig = {
         enabled: typeof tooltipConfig.enabled === 'boolean' ? tooltipConfig.enabled : true,
@@ -149,7 +164,7 @@ export function readBoxplotOptions(
         showOutliers: outlierStyle.show,
         orientation: (measureConfig.orientation || 'vertical') as BoxplotOrientation,
         boxWidth: typeof boxStyleSection.boxWidth === 'number' ? boxStyleSection.boxWidth : (typeof measureConfig.boxWidth === 'number' ? measureConfig.boxWidth : 60),
-        variableWidth: chartOptions.variableWidth === true,
+        variableWidth: boxStyleSection.variableWidth === true,
         whiskerWidth: whiskerStyle.capWidth, // Usar capWidth como whiskerWidth para compatibilidade
         color: defaultColor,
         opacity: boxStyle.opacity,
@@ -163,18 +178,18 @@ export function readBoxplotOptions(
         // Novas configurações
         calculationMethod: (dataConfig.calculationMethod as CalculationMethod) || 'auto',
         whiskerType: (measureConfig.whiskerType as WhiskerType) || 'iqr_1_5',
-        showMean: measureConfig.showMean === true,
-        showNotch: measureConfig.showNotch === true,
+        showMean: medianStyleSection.showMean === true,
+        showNotch: medianStyleSection.showNotch === true,
         sortType: (chartOptions.sortType as SortType) || 'alphabetical',
         yScale: (chartOptions.yScale === 'log' ? 'log' : 'linear') as 'linear' | 'log',
         medianStyle,
         whiskerStyle,
         boxStyle,
         outlierStyle,
-        showJitter: chartOptions.showJitter === true,
-        jitterOpacity: typeof chartOptions.jitterOpacity === 'number' ? chartOptions.jitterOpacity : 0.5,
+        showJitter: jitterPlot.showJitter === true,
+        jitterOpacity: typeof jitterPlot.jitterOpacity === 'number' ? jitterPlot.jitterOpacity : 0.5,
         gridLines: gridLinesConfig,
-        referenceLines: referenceLinesConfigObj,
+        referenceLines: referenceLinesConfig,
         tooltip,
         padding,
         axisLabels,
