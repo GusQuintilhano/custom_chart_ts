@@ -193,6 +193,7 @@ export function readBoxplotOptions(
         referenceLines: referenceLinesConfig,
         tooltip,
         padding,
+        fitWidth: typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false,
         axisLabels,
     };
 }
