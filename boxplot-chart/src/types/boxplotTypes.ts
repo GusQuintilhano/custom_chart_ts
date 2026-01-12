@@ -28,7 +28,7 @@ export type BoxplotOrientation = 'vertical' | 'horizontal';
 /**
  * Tipo de ordenação dos grupos
  */
-export type SortType = 'alphabetical' | 'mean_asc' | 'mean_desc' | 'median_asc' | 'median_desc' | 'iqr_asc' | 'iqr_desc';
+export type SortType = 'Alfabética' | 'Média (Crescente)' | 'Média (Decrescente)' | 'Mediana (Crescente)' | 'Mediana (Decrescente)' | 'Variabilidade (Crescente)' | 'Variabilidade (Decrescente)';
 
 /**
  * Estilo da linha da mediana
