@@ -240,7 +240,7 @@ export function readBoxplotOptions(
         marginLeft: typeof layoutConfig.marginLeft === 'number' ? layoutConfig.marginLeft : undefined,
         marginRight: typeof layoutConfig.marginRight === 'number' ? layoutConfig.marginRight : undefined,
         groupSpacing: typeof layoutConfig.groupSpacing === 'number' ? layoutConfig.groupSpacing : undefined,
-        layoutStyle: (layoutConfig.layoutStyle as 'compact' | 'normal' | 'spacious' | 'custom') || 'normal',
+        layoutStyle: mapLayoutStyle(layoutConfig.layoutStyle as string) || 'normal',
     };
     const axisLabels = {
         x: (layoutConfig.axisLabelX as string) || undefined,
