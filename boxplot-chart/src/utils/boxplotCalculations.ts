@@ -3,7 +3,7 @@
  */
 
 import { calculateBoxplotStats, type BoxplotStatistics, type CalculationMethod, type WhiskerType } from '@shared/utils/statistical';
-import type { BoxplotDataGroup, BoxplotData } from '../types/boxplotTypes';
+import type { BoxplotDataGroup, BoxplotData, SortType } from '../types/boxplotTypes';
 import type { ChartColumn, ChartModel, DataPointsArray } from '@thoughtspot/ts-chart-sdk';
 import type { BoxplotOptions } from './boxplotOptions';
 
@@ -90,17 +90,35 @@ export function calculateBoxplotData(
         });
     }
 
-    // Ordenar grupos por valor da dimensão (para ordem consistente)
+    // Ordenar grupos conforme configuração
+    const sortType: SortType = options?.sortType || 'alphabetical';
+    
     groups.sort((a, b) => {
-        const aVal = a.dimensionValue;
-        const bVal = b.dimensionValue;
-        // Tentar ordenação numérica se possível
-        const aNum = parseFloat(aVal);
-        const bNum = parseFloat(bVal);
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-            return aNum - bNum;
+        switch (sortType) {
+            case 'mean_asc':
+                return (a.stats.mean || 0) - (b.stats.mean || 0);
+            case 'mean_desc':
+                return (b.stats.mean || 0) - (a.stats.mean || 0);
+            case 'median_asc':
+                return a.stats.q2 - b.stats.q2;
+            case 'median_desc':
+                return b.stats.q2 - a.stats.q2;
+            case 'iqr_asc':
+                return a.stats.iqr - b.stats.iqr;
+            case 'iqr_desc':
+                return b.stats.iqr - a.stats.iqr;
+            case 'alphabetical':
+            default:
+                // Ordenação alfabética (tentativa numérica primeiro)
+                const aVal = a.dimensionValue;
+                const bVal = b.dimensionValue;
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return aNum - bNum;
+                }
+                return aVal.localeCompare(bVal);
         }
-        return aVal.localeCompare(bVal);
     });
 
     // Calcular estatísticas globais
