@@ -48,7 +48,6 @@ export interface BoxplotOptions {
     showNotch: boolean; // Notch Mode (intervalo de confiança)
     sortType: SortType; // Tipo de ordenação dos grupos
     yScale: 'linear' | 'log'; // Escala do eixo Y (linear ou logarítmica)
-    selectedDimensionForGrouping?: string; // ID da dimensão selecionada para agrupamento (quando há múltiplas)
     medianStyle: MedianStyle;
     whiskerStyle: WhiskerStyle;
     boxStyle: BoxStyle;
@@ -183,7 +182,6 @@ export function readBoxplotOptions(
         showNotch: medianStyleSection.showNotch === true,
         sortType: (axes.sortType as SortType) || 'Alfabética',
         yScale: (chartOptions.yScale === 'log' ? 'log' : 'linear') as 'linear' | 'log',
-        selectedDimensionForGrouping: (axes.selectedDimensionForGrouping as string) || undefined,
         medianStyle,
         whiskerStyle,
         boxStyle,
