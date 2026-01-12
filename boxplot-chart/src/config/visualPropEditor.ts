@@ -313,6 +313,13 @@ function createEditorSections(
                 defaultValue: String(sortTypeValue),
                 values: ['alphabetical', 'mean_asc', 'mean_desc', 'median_asc', 'median_desc', 'iqr_asc', 'iqr_desc'],
             },
+            {
+                type: 'dropdown',
+                key: 'yScale',
+                label: 'Escala do Eixo Y',
+                defaultValue: String(savedChartOptions?.yScale || 'linear'),
+                values: ['linear', 'log'],
+            },
         ],
     });
 
