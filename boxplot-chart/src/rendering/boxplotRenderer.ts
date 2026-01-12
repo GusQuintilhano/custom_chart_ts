@@ -10,6 +10,7 @@ import { renderBoxplotMedian, renderBoxplotMean } from './boxplotMedian';
 import { renderOutliers } from './outliers';
 import { renderReferenceLines } from './referenceLines';
 import { renderJitterPlot } from './jitterPlot';
+import { renderDotPlot } from './dotPlot';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
 import { generateSvgTitle } from '../utils/tooltipUtils';
@@ -152,6 +153,41 @@ export function renderBoxplot(
         // Armazenar posição do centro para jitter plot
         centerPositions.push({ centerX, centerY });
 
+        // Verificar se amostra é insuficiente (< 3 pontos)
+        const insufficientSample = group.values.length < 3;
+        
+        if (insufficientSample) {
+            // Renderizar dot plot para amostra insuficiente
+            const dotPlotHtml = renderDotPlot(group, centerX, centerY, config, orientation, globalMin, globalMax, yScale);
+            
+            // Label da dimensão
+            const labelY = orientation === 'vertical' 
+                ? topMargin + plotAreaHeight + labelFontSize + 5
+                : centerY;
+            const labelX = orientation === 'vertical'
+                ? centerX
+                : leftMargin - 10;
+            
+            const labelHtml = orientation === 'vertical'
+                ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
+                : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
+            
+            // Gerar tooltip para o grupo
+            const tooltipTitle = generateSvgTitle(
+                group.dimensionValue,
+                group.stats,
+                group.values.length
+            );
+            
+            return `
+                <g data-group-index="${index}">
+                    ${tooltipTitle}
+                    ${dotPlotHtml}
+                    ${labelHtml}
+                </g>
+            `;
+        }
+        
         // Calcular largura variável se habilitado
         // Fórmula: boxWidth = baseWidth * sqrt(count / maxCount)
         const currentBoxWidth = variableWidth && maxCount > 0
