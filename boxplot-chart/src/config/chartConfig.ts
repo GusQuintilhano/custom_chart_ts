@@ -36,8 +36,8 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
         key: 'column',
         dimensions: [
             {
-                key: 'x',
-                columns: attributeColumns, // Todas as dimensões
+                key: 'grouping',
+                columns: attributeColumns, // Todas as dimensões para agrupamento
             },
             {
                 key: 'y',
