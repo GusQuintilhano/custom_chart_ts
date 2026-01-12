@@ -291,6 +291,7 @@ export function readBoxplotOptions(
         tooltip,
         padding,
         fitWidth: typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false,
+        layout,
         axisLabels,
     };
 }
