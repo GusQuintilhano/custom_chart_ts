@@ -165,7 +165,7 @@ export function readBoxplotOptions(
     return {
         showYAxis: (axes.showYAxis !== undefined ? axes.showYAxis : chartOptions.showYAxis !== false) as boolean,
         showOutliers: outlierStyle.show,
-        orientation: (measureConfig.orientation || 'vertical') as BoxplotOrientation,
+        orientation: mapOrientation(visualization.orientation as string) || 'vertical',
         boxWidth: typeof boxStyleSection.boxWidth === 'number' ? boxStyleSection.boxWidth : (typeof measureConfig.boxWidth === 'number' ? measureConfig.boxWidth : 60),
         variableWidth: boxStyleSection.variableWidth === true,
         whiskerWidth: whiskerStyle.capWidth, // Usar capWidth como whiskerWidth para compatibilidade
@@ -178,13 +178,13 @@ export function readBoxplotOptions(
         backgroundColor: (colorsStyle.backgroundColor as string) || 'transparent',
         axisStrokeWidth: typeof colorsStyle.axisStrokeWidth === 'number' ? colorsStyle.axisStrokeWidth : 1.5,
         
-        // Novas configurações
-        calculationMethod: (dataConfig.calculationMethod as CalculationMethod) || 'auto',
-        whiskerType: (measureConfig.whiskerType as WhiskerType) || 'iqr_1_5',
+        // Novas configurações - mapear valores em português para valores técnicos
+        calculationMethod: mapCalculationMethod(dataConfig.calculationMethod as string) || 'auto',
+        whiskerType: mapWhiskerType(dataConfig.whiskerType as string) || 'iqr_1_5',
         showMean: medianStyleSection.showMean === true,
         showNotch: medianStyleSection.showNotch === true,
         sortType: (axes.sortType as SortType) || 'Alfabética',
-        yScale: (chartOptions.yScale === 'log' ? 'log' : 'linear') as 'linear' | 'log',
+        yScale: mapYScale(chartOptions.yScale as string) || 'linear',
         medianStyle,
         whiskerStyle,
         boxStyle,
