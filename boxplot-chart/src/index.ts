@@ -189,14 +189,22 @@ export const renderChart = async (ctx: CustomChartContext) => {
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
         
-        // Filtrar dimensões se uma dimensão específica foi selecionada para agrupamento
+        // Filtrar dimensões baseado na configuração "useForGrouping" de cada dimensão na aba Configure
         let filteredDimensionColumns = dimensionColumns;
-        if (options.selectedDimensionForGrouping && dimensionColumns.length > 1) {
-            filteredDimensionColumns = dimensionColumns.filter(col => col.id === options.selectedDimensionForGrouping);
-            // Se não encontrou a dimensão selecionada, usar todas (fallback)
-            if (filteredDimensionColumns.length === 0) {
-                filteredDimensionColumns = dimensionColumns;
+        if (dimensionColumns.length > 1) {
+            const columnVisualProps = (allVisualProps.columnVisualProps || {}) as Record<string, any>;
+            // Buscar dimensões que têm "useForGrouping" marcado como true
+            const dimensionsWithGrouping = dimensionColumns.filter(col => {
+                const colConfig = columnVisualProps[col.id] || {};
+                const groupingConfig = colConfig.grouping || {};
+                return groupingConfig.useForGrouping === true;
+            });
+            
+            // Se encontrou dimensões com "useForGrouping" marcado, usar apenas essas
+            if (dimensionsWithGrouping.length > 0) {
+                filteredDimensionColumns = dimensionsWithGrouping;
             }
+            // Caso contrário, usar todas as dimensões (comportamento padrão)
         }
 
         // Rastrear uso com configurações utilizadas
