@@ -386,8 +386,8 @@ function createEditorSections(
                 type: 'dropdown',
                 key: 'type',
                 label: 'Tipo de Linha',
-                defaultValue: String(refLinesType),
-                values: ['none', 'fixed', 'global_mean', 'global_median'],
+                defaultValue: String(refLinesType || 'Nenhuma'),
+                values: ['Nenhuma', 'Valor Fixo', 'Média Global', 'Mediana Global'],
             },
             {
                 type: 'number',
