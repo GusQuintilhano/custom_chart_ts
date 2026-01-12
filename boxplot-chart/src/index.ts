@@ -140,9 +140,34 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
 
-        // Obter colunas
-        const measureColumns = chartModel.columns.filter(col => col.type === ColumnType.MEASURE);
-        const dimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
+        // Obter colunas das seções do Chart Config Editor
+        // A seção 'grouping' contém as dimensões para agrupamento
+        // A seção 'y' contém a medida
+        const chartConfig = chartModel.chartConfig;
+        let dimensionColumns: ChartColumn[] = [];
+        let measureColumns: ChartColumn[] = [];
+        
+        if (chartConfig && chartConfig.columnSections) {
+            // Buscar dimensões da seção 'grouping'
+            const groupingSection = chartConfig.columnSections.find((s: any) => s.key === 'grouping');
+            if (groupingSection && groupingSection.columns) {
+                dimensionColumns = groupingSection.columns;
+            }
+            
+            // Buscar medida da seção 'y'
+            const ySection = chartConfig.columnSections.find((s: any) => s.key === 'y');
+            if (ySection && ySection.columns && ySection.columns.length > 0) {
+                measureColumns = ySection.columns;
+            }
+        }
+        
+        // Fallback: se não encontrou nas seções, usar o método antigo
+        if (dimensionColumns.length === 0) {
+            dimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
+        }
+        if (measureColumns.length === 0) {
+            measureColumns = chartModel.columns.filter(col => col.type === ColumnType.MEASURE);
+        }
 
         if (measureColumns.length === 0 || dimensionColumns.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Boxplot requer pelo menos 1 medida e 1 dimensão</div>';
@@ -189,23 +214,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
         
-        // Filtrar dimensões baseado na configuração "useForGrouping" de cada dimensão na aba Configure
-        let filteredDimensionColumns = dimensionColumns;
-        if (dimensionColumns.length > 1) {
-            const columnVisualProps = (allVisualProps.columnVisualProps || {}) as Record<string, any>;
-            // Buscar dimensões que têm "useForGrouping" marcado como true
-            const dimensionsWithGrouping = dimensionColumns.filter(col => {
-                const colConfig = columnVisualProps[col.id] || {};
-                const groupingConfig = colConfig.grouping || {};
-                return groupingConfig.useForGrouping === true;
-            });
-            
-            // Se encontrou dimensões com "useForGrouping" marcado, usar apenas essas
-            if (dimensionsWithGrouping.length > 0) {
-                filteredDimensionColumns = dimensionsWithGrouping;
-            }
-            // Caso contrário, usar todas as dimensões (comportamento padrão)
-        }
+        // As dimensões já estão filtradas pela seção 'grouping' do Chart Config Editor
+        // Não precisamos filtrar novamente
+        const filteredDimensionColumns = dimensionColumns;
 
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
