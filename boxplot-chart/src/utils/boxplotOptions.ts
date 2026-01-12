@@ -171,6 +171,8 @@ export function readBoxplotOptions(
         whiskerStyle,
         boxStyle,
         outlierStyle,
+        showJitter: chartOptions.showJitter === true,
+        jitterOpacity: typeof chartOptions.jitterOpacity === 'number' ? chartOptions.jitterOpacity : 0.5,
         gridLines: gridLinesConfig,
         referenceLines: referenceLinesConfigObj,
         tooltip,
