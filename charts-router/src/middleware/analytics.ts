@@ -56,8 +56,21 @@ export function analyticsMiddleware(req: Request, res: Response, next: NextFunct
 
 /**
  * Extrai tipo de gráfico do path da requisição
+ * Ignora requisições de assets (imagens, logos, CSS, etc.)
  */
 function getChartTypeFromPath(path: string): 'trellis' | 'boxplot' | null {
+    // Ignorar requisições de assets
+    const assetExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.css', '.woff', '.woff2', '.ttf', '.otf', '.eot'];
+    const hasAssetExtension = assetExtensions.some(ext => path.toLowerCase().endsWith(ext));
+    
+    // Ignorar paths que são claramente assets (logo, images, assets, etc.)
+    const assetPaths = ['/logo', '/images', '/assets', '/favicon'];
+    const isAssetPath = assetPaths.some(assetPath => path.toLowerCase().includes(assetPath));
+    
+    if (hasAssetExtension || isAssetPath) {
+        return null;
+    }
+    
     if (path.startsWith('/trellis')) {
         return 'trellis';
     }

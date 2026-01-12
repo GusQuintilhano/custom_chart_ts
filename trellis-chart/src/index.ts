@@ -89,22 +89,47 @@ export const renderChart = async (ctx: CustomChartContext) => {
             initialContainerHeight
         );
 
+        // Tentar obter userId do contexto (se disponível)
+        let userId: string | undefined;
+        try {
+            const ctxAny = ctx as any;
+            userId = ctxAny.userId || ctxAny.user?.id || ctxAny.user?.username || ctxAny.userInfo?.userId;
+            
+            if (!userId) {
+                const chartModelAny = chartModel as any;
+                userId = chartModelAny.userId || chartModelAny.user?.id || chartModelAny.user?.username;
+            }
+        } catch (e) {
+            // Ignora erros ao tentar acessar propriedades que podem não existir
+        }
+
         // Rastrear uso e configurações
         const { visualProps } = chartModel;
         const allVisualProps = visualProps as Record<string, unknown>;
-        analytics.trackUsage('trellis', {
-            numMeasures: measureCols.length,
-            hasSecondaryDimension,
-            numSecondaryDimensions: hasSecondaryDimension ? secondaryDimensions.length : 0,
-        });
-
-        // Setup de opções e configurações
+        
+        // Setup de opções primeiro para ter acesso às configurações
         const options = setupChartOptions(
             allVisualProps,
             primaryDimension,
             secondaryDimensions,
-            measureCols
+            measureCols,
+            hasSecondaryDimension
         );
+        
+        analytics.trackUsage('trellis', {
+            numMeasures: measureCols.length,
+            hasSecondaryDimension,
+            numSecondaryDimensions: hasSecondaryDimension ? secondaryDimensions.length : 0,
+            // Configurações principais do trellis
+            showYAxis: options.showYAxis,
+            showGridLines: options.showGridLines,
+            fitWidth: options.fitWidth,
+            fitHeight: options.fitHeight,
+            dividerLinesBetweenMeasures: options.dividerLinesBetweenMeasures,
+            dividerLinesBetweenGroups: options.dividerLinesBetweenGroups,
+            dividerLinesBetweenBars: options.dividerLinesBetweenBars,
+            forceLabels: options.forceLabels,
+        }, userId);
 
     const {
         fitWidth,
@@ -391,11 +416,18 @@ export const renderChart = async (ctx: CustomChartContext) => {
         axisStrokeWidth,
         backgroundColor,
     });
+    
+    // Adicionar event listeners para rastrear interações do usuário
+    setupInteractionTracking(chartElement, userId);
 
         // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'trellis';
+            // Passar userId para evento de performance (herda de BaseAnalyticsEvent)
+            if (userId) {
+                perfEvent.userId = userId;
+            }
             analytics.trackPerformance(perfEvent);
         }
 

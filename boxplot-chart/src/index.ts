@@ -67,15 +67,57 @@ export const renderChart = async (ctx: CustomChartContext) => {
             containerHeight
         );
 
-        // Rastrear uso
-        analytics.trackUsage('boxplot', {
-            numMeasures: measureColumns.length,
-            numDimensions: dimensionColumns.length,
-        });
+        // Tentar obter userId do contexto (se disponível)
+        // ThoughtSpot SDK pode não expor diretamente, mas tentamos diferentes formas
+        let userId: string | undefined;
+        try {
+            // Tentar acessar propriedades do contexto (se disponíveis)
+            const ctxAny = ctx as any;
+            userId = ctxAny.userId || ctxAny.user?.id || ctxAny.user?.username || ctxAny.userInfo?.userId;
+            
+            // Se não encontrado no contexto, pode estar no chartModel
+            if (!userId) {
+                const chartModelAny = chartModel as any;
+                userId = chartModelAny.userId || chartModelAny.user?.id || chartModelAny.user?.username;
+            }
+        } catch (e) {
+            // Ignora erros ao tentar acessar propriedades que podem não existir
+        }
 
         // Ler opções primeiro (necessárias para cálculos)
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
+
+        // Rastrear uso com configurações utilizadas
+        analytics.trackUsage('boxplot', {
+            numMeasures: measureColumns.length,
+            numDimensions: dimensionColumns.length,
+            // Configurações principais
+            orientation: options.orientation,
+            yScale: options.yScale,
+            showNotch: options.showNotch,
+            sortType: options.sortType,
+            showJitter: options.showJitter,
+            variableWidth: options.variableWidth,
+            showMean: options.showMean,
+            showOutliers: options.showOutliers,
+            calculationMethod: options.calculationMethod,
+            whiskerType: options.whiskerType,
+            // Configurações de referência
+            referenceLines: {
+                show: options.referenceLines.show,
+                type: options.referenceLines.type,
+            },
+            // Configurações de grade
+            gridLines: {
+                show: options.gridLines.show,
+            },
+            // Configurações de tooltip
+            tooltip: {
+                enabled: options.tooltip.enabled,
+                format: options.tooltip.format,
+            },
+        }, userId);
 
         // Calcular dados do boxplot com as opções configuradas
         const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumns, options);
@@ -122,10 +164,17 @@ export const renderChart = async (ctx: CustomChartContext) => {
 
         chartElement.innerHTML = html;
         
+        // Adicionar event listeners para rastrear interações do usuário
+        setupInteractionTracking(chartElement, userId);
+        
         // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'boxplot';
+            // Passar userId para evento de performance (herda de BaseAnalyticsEvent)
+            if (userId) {
+                perfEvent.userId = userId;
+            }
             analytics.trackPerformance(perfEvent);
         }
         
