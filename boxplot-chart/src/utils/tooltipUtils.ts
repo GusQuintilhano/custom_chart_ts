@@ -6,6 +6,18 @@ import type { BoxplotStatistics } from '@shared/utils/statistical';
 import { formatValue } from '@shared/utils/formatters';
 
 /**
+ * Escapa caracteres especiais para uso em SVG title
+ */
+function escapeXml(text: string): string {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+/**
  * Gera o conteúdo do tooltip em formato texto simples (para elementos SVG <title>)
  */
 export function generateTooltipText(
@@ -14,7 +26,7 @@ export function generateTooltipText(
     count: number
 ): string {
     const parts: string[] = [];
-    parts.push(categoryName);
+    parts.push(escapeXml(categoryName));
     parts.push(`Max: ${formatValue(stats.max, 'decimal', 2)}`);
     parts.push(`Q3: ${formatValue(stats.q3, 'decimal', 2)}`);
     parts.push(`Mediana: ${formatValue(stats.q2, 'decimal', 2)}`);
