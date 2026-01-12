@@ -4,6 +4,7 @@
 
 import type { BoxplotStatistics } from '@shared/utils/statistical';
 import type { BoxplotRenderConfig, WhiskerStyle, BoxplotOrientation } from '../types/boxplotTypes';
+import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 export function renderBoxplotWhiskers(
     stats: BoxplotStatistics,
@@ -13,7 +14,8 @@ export function renderBoxplotWhiskers(
     orientation: BoxplotOrientation,
     whiskerStyle: WhiskerStyle,
     globalMin: number,
-    globalMax: number
+    globalMax: number,
+    scale: 'linear' | 'log' = 'linear'
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
     const globalRange = globalMax - globalMin;
@@ -24,16 +26,16 @@ export function renderBoxplotWhiskers(
     const capWidth = whiskerStyle.capWidth; // Largura do "T" na ponta do bigode
 
     if (orientation === 'vertical') {
-        // Usar globalRange para consistência e proteger contra divisão por zero
-        if (globalRange <= 0) {
+        // Proteger contra divisão por zero (apenas para escala linear)
+        if (scale === 'linear' && globalRange <= 0) {
             return ''; // Retornar vazio se não há range válido
         }
         
-        // Para orientação vertical, calcular coordenadas Y baseadas no globalRange
-        const q1Y = topMargin + plotAreaHeight - ((stats.q1 - globalMin) / globalRange) * plotAreaHeight;
-        const q3Y = topMargin + plotAreaHeight - ((stats.q3 - globalMin) / globalRange) * plotAreaHeight;
-        const minY = topMargin + plotAreaHeight - ((stats.min - globalMin) / globalRange) * plotAreaHeight;
-        const maxY = topMargin + plotAreaHeight - ((stats.max - globalMin) / globalRange) * plotAreaHeight;
+        // Usar funções helper para suportar escala logarítmica
+        const q1Y = valueToYCoordinate(stats.q1, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        const q3Y = valueToYCoordinate(stats.q3, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        const minY = valueToYCoordinate(stats.min, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        const maxY = valueToYCoordinate(stats.max, globalMin, globalMax, topMargin, plotAreaHeight, scale);
 
         return `
             <!-- Bigode inferior -->

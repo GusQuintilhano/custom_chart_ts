@@ -5,6 +5,7 @@
 import type { BoxplotStatistics } from '@shared/utils/statistical';
 import type { BoxplotRenderConfig, BoxStyle, BoxplotOrientation } from '../types/boxplotTypes';
 import { calculateNotchLimits } from '../utils/notchCalculations';
+import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 /**
  * Gera path SVG para caixa com notch (cintura) em orientação vertical
@@ -99,7 +100,8 @@ export function renderBoxplotBox(
     globalMin: number,
     globalMax: number,
     showNotch?: boolean,
-    sampleSize?: number
+    sampleSize?: number,
+    scale: 'linear' | 'log' = 'linear'
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
     const globalRange = globalMax - globalMin;
@@ -112,15 +114,15 @@ export function renderBoxplotBox(
     const borderRadius = boxStyle.borderRadius || 0;
 
     if (orientation === 'vertical') {
-        // Proteger contra divisão por zero
-        if (globalRange <= 0) {
+        // Proteger contra divisão por zero (apenas para escala linear)
+        if (scale === 'linear' && globalRange <= 0) {
             return ''; // Retornar vazio se não há range válido
         }
         
-        // Usar coordenadas absolutas para consistência com mediana e whiskers
-        const q1Y = topMargin + plotAreaHeight - ((stats.q1 - globalMin) / globalRange) * plotAreaHeight;
-        const q3Y = topMargin + plotAreaHeight - ((stats.q3 - globalMin) / globalRange) * plotAreaHeight;
-        const medianY = topMargin + plotAreaHeight - ((stats.q2 - globalMin) / globalRange) * plotAreaHeight;
+        // Usar funções helper para suportar escala logarítmica
+        const q1Y = valueToYCoordinate(stats.q1, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        const q3Y = valueToYCoordinate(stats.q3, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        const medianY = valueToYCoordinate(stats.q2, globalMin, globalMax, topMargin, plotAreaHeight, scale);
         const boxHeight = Math.abs(q3Y - q1Y);
         const boxTop = Math.min(q1Y, q3Y);
         const boxLeft = centerX - boxWidth / 2;
@@ -128,8 +130,8 @@ export function renderBoxplotBox(
         // Se notch está habilitado e temos sample size
         if (showNotch && sampleSize && sampleSize > 0) {
             const notchLimits = calculateNotchLimits(stats, sampleSize);
-            const notchLowerY = topMargin + plotAreaHeight - ((notchLimits.lower - globalMin) / globalRange) * plotAreaHeight;
-            const notchUpperY = topMargin + plotAreaHeight - ((notchLimits.upper - globalMin) / globalRange) * plotAreaHeight;
+            const notchLowerY = valueToYCoordinate(notchLimits.lower, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+            const notchUpperY = valueToYCoordinate(notchLimits.upper, globalMin, globalMax, topMargin, plotAreaHeight, scale);
             
             // Largura do notch: geralmente 50-70% da largura da caixa
             const notchWidth = boxWidth * 0.6;
@@ -183,14 +185,15 @@ export function renderBoxplotBox(
         `;
     } else {
         // Horizontal
-        // Proteger contra divisão por zero
-        if (globalRange <= 0) {
+        // Proteger contra divisão por zero (apenas para escala linear)
+        if (scale === 'linear' && globalRange <= 0) {
             return ''; // Retornar vazio se não há range válido
         }
         
-        const q1X = leftMargin + ((stats.q1 - globalMin) / globalRange) * plotAreaWidth;
-        const q3X = leftMargin + ((stats.q3 - globalMin) / globalRange) * plotAreaWidth;
-        const medianX = leftMargin + ((stats.q2 - globalMin) / globalRange) * plotAreaWidth;
+        // Usar funções helper para suportar escala logarítmica
+        const q1X = valueToXCoordinate(stats.q1, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        const q3X = valueToXCoordinate(stats.q3, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        const medianX = valueToXCoordinate(stats.q2, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
         const boxLength = Math.abs(q3X - q1X);
         const boxLeft = Math.min(q1X, q3X);
         const boxHeight = boxWidth;
@@ -199,8 +202,8 @@ export function renderBoxplotBox(
         // Se notch está habilitado e temos sample size
         if (showNotch && sampleSize && sampleSize > 0) {
             const notchLimits = calculateNotchLimits(stats, sampleSize);
-            const notchLowerX = leftMargin + ((notchLimits.lower - globalMin) / globalRange) * plotAreaWidth;
-            const notchUpperX = leftMargin + ((notchLimits.upper - globalMin) / globalRange) * plotAreaWidth;
+            const notchLowerX = valueToXCoordinate(notchLimits.lower, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+            const notchUpperX = valueToXCoordinate(notchLimits.upper, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
             
             // Largura do notch: geralmente 50-70% da altura da caixa
             const notchWidth = boxHeight * 0.6;
