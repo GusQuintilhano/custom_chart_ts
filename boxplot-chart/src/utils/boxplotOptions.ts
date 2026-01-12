@@ -216,6 +216,14 @@ export function readBoxplotOptions(
         strokeDasharray: (gridLines.strokeDash as string) || undefined,
     };
 
+    // Divider Lines
+    const dividerLinesConfig: DividerLinesConfig = {
+        show: typeof dividerLines.show === 'boolean' ? dividerLines.show : false,
+        color: (dividerLines.color as string) || '#e5e7eb',
+        strokeWidth: typeof dividerLines.strokeWidth === 'number' ? dividerLines.strokeWidth : 1,
+        strokeDasharray: (dividerLines.strokeDasharray as string) || undefined,
+    };
+
     // Reference Lines
     const referenceLinesConfig: ReferenceLinesConfig = {
         show: typeof referenceLines.show === 'boolean' ? referenceLines.show : false,
