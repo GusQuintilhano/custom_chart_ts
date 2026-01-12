@@ -91,23 +91,23 @@ export function calculateBoxplotData(
     }
 
     // Ordenar grupos conforme configuração
-    const sortType: SortType = options?.sortType || 'alphabetical';
+    const sortType: SortType = options?.sortType || 'Alfabética';
     
     groups.sort((a, b) => {
         switch (sortType) {
-            case 'mean_asc':
+            case 'Média (Crescente)':
                 return (a.stats.mean || 0) - (b.stats.mean || 0);
-            case 'mean_desc':
+            case 'Média (Decrescente)':
                 return (b.stats.mean || 0) - (a.stats.mean || 0);
-            case 'median_asc':
+            case 'Mediana (Crescente)':
                 return a.stats.q2 - b.stats.q2;
-            case 'median_desc':
+            case 'Mediana (Decrescente)':
                 return b.stats.q2 - a.stats.q2;
-            case 'iqr_asc':
+            case 'Variabilidade (Crescente)':
                 return a.stats.iqr - b.stats.iqr;
-            case 'iqr_desc':
+            case 'Variabilidade (Decrescente)':
                 return b.stats.iqr - a.stats.iqr;
-            case 'alphabetical':
+            case 'Alfabética':
             default:
                 // Ordenação alfabética (tentativa numérica primeiro)
                 const aVal = a.dimensionValue;

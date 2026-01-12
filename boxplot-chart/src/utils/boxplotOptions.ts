@@ -48,6 +48,7 @@ export interface BoxplotOptions {
     showNotch: boolean; // Notch Mode (intervalo de confiança)
     sortType: SortType; // Tipo de ordenação dos grupos
     yScale: 'linear' | 'log'; // Escala do eixo Y (linear ou logarítmica)
+    selectedDimensionId?: string; // ID da dimensão selecionada para agrupamento (quando há múltiplas)
     medianStyle: MedianStyle;
     whiskerStyle: WhiskerStyle;
     boxStyle: BoxStyle;
@@ -180,8 +181,9 @@ export function readBoxplotOptions(
         whiskerType: (measureConfig.whiskerType as WhiskerType) || 'iqr_1_5',
         showMean: medianStyleSection.showMean === true,
         showNotch: medianStyleSection.showNotch === true,
-        sortType: (chartOptions.sortType as SortType) || 'alphabetical',
+        sortType: (axes.sortType as SortType) || 'Alfabética',
         yScale: (chartOptions.yScale === 'log' ? 'log' : 'linear') as 'linear' | 'log',
+        selectedDimensionId: (axes.selectedDimensionId as string) || undefined,
         medianStyle,
         whiskerStyle,
         boxStyle,
