@@ -237,6 +237,20 @@ export function renderBoxplot(
         
         const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, yScale);
 
+        // Renderizar labels de valores (quartis)
+        const valueLabelsHtml = renderValueLabels(
+            group.stats,
+            centerX,
+            centerY,
+            config,
+            orientation,
+            options.valueLabels,
+            currentBoxWidth,
+            globalMin,
+            globalMax,
+            yScale
+        );
+
         // Label da dimensão
         const labelY = orientation === 'vertical' 
             ? topMargin + plotAreaHeight + labelFontSize + 5
