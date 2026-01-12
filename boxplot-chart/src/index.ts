@@ -278,9 +278,11 @@ export const renderChart = async (ctx: CustomChartContext) => {
         );
 
         // Criar estrutura HTML completa
+        // fitWidth: controlado pela opção do usuário
+        // fitHeight: sempre true (altura sempre 100%)
         const html = createChartHtmlStructure(
-            false, // fitWidth
-            false, // fitHeight
+            options.fitWidth, // fitWidth (controlado pelo usuário)
+            true, // fitHeight (sempre 100%)
             dimensions.chartWidth,
             dimensions.chartHeight,
             '', // secondaryXAxisHtml

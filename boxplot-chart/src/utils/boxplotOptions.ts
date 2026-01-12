@@ -58,6 +58,7 @@ export interface BoxplotOptions {
     jitterOpacity: number; // Opacidade dos pontos do jitter
     tooltip: TooltipConfig;
     padding: number;
+    fitWidth: boolean; // Largura 100% do container
     axisLabels: {
         x?: string;
         y?: string;
