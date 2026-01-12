@@ -356,8 +356,8 @@ function createEditorSections(
                 type: 'dropdown',
                 key: 'yScale',
                 label: 'Escala do Eixo Y',
-                defaultValue: String(savedChartOptions?.yScale || 'linear'),
-                values: ['linear', 'log'],
+                defaultValue: String(savedChartOptions?.yScale || 'Linear'),
+                values: ['Linear', 'Logarítmica'],
             },
         ],
     });
