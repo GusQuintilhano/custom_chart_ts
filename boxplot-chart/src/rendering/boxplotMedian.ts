@@ -24,6 +24,11 @@ export function renderBoxplotMedian(
     const strokeDash = medianStyle.strokeDasharray || 'none';
 
     if (orientation === 'vertical') {
+        // Proteger contra divisão por zero
+        if (globalRange <= 0) {
+            return '';
+        }
+        
         const medianY = topMargin + plotAreaHeight - ((stats.q2 - globalMin) / globalRange) * plotAreaHeight;
         
         const dashAttr = strokeDash !== 'none' ? `stroke-dasharray="${strokeDash}"` : '';
@@ -82,6 +87,11 @@ export function renderBoxplotMean(
     const globalRange = globalMax - globalMin;
 
     if (orientation === 'vertical') {
+        // Proteger contra divisão por zero
+        if (globalRange <= 0) {
+            return '';
+        }
+        
         const meanY = topMargin + plotAreaHeight - ((stats.mean - globalMin) / globalRange) * plotAreaHeight;
         return `
             <circle

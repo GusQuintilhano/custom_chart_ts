@@ -26,8 +26,16 @@ export function renderBoxplotBox(
     const borderRadius = boxStyle.borderRadius || 0;
 
     if (orientation === 'vertical') {
-        const boxHeight = (stats.q3 - stats.q1) / (stats.whiskerUpper - stats.whiskerLower) * plotAreaHeight;
-        const boxTop = centerY - boxHeight / 2;
+        // Proteger contra divisão por zero
+        if (globalRange <= 0) {
+            return ''; // Retornar vazio se não há range válido
+        }
+        
+        // Usar coordenadas absolutas para consistência com mediana e whiskers
+        const q1Y = topMargin + plotAreaHeight - ((stats.q1 - globalMin) / globalRange) * plotAreaHeight;
+        const q3Y = topMargin + plotAreaHeight - ((stats.q3 - globalMin) / globalRange) * plotAreaHeight;
+        const boxHeight = Math.abs(q3Y - q1Y);
+        const boxTop = Math.min(q1Y, q3Y);
         const boxLeft = centerX - boxWidth / 2;
 
         // Se borderRadius > 0, usar rounded rectangle

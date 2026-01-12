@@ -16,6 +16,7 @@ export function renderBoxplotWhiskers(
     globalMax: number
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
+    const globalRange = globalMax - globalMin;
 
     // Usar configurações do whiskerStyle
     const color = whiskerStyle.color;
@@ -23,11 +24,16 @@ export function renderBoxplotWhiskers(
     const capWidth = whiskerStyle.capWidth; // Largura do "T" na ponta do bigode
 
     if (orientation === 'vertical') {
-        const range = stats.whiskerUpper - stats.whiskerLower;
-        const q1Y = centerY + (stats.q1 - stats.whiskerLower) / range * plotAreaHeight / 2;
-        const q3Y = centerY - (stats.whiskerUpper - stats.q3) / range * plotAreaHeight / 2;
-        const minY = centerY + (stats.min - stats.whiskerLower) / range * plotAreaHeight / 2;
-        const maxY = centerY - (stats.max - stats.whiskerUpper) / range * plotAreaHeight / 2;
+        // Usar globalRange para consistência e proteger contra divisão por zero
+        if (globalRange <= 0) {
+            return ''; // Retornar vazio se não há range válido
+        }
+        
+        // Para orientação vertical, calcular coordenadas Y baseadas no globalRange
+        const q1Y = topMargin + plotAreaHeight - ((stats.q1 - globalMin) / globalRange) * plotAreaHeight;
+        const q3Y = topMargin + plotAreaHeight - ((stats.q3 - globalMin) / globalRange) * plotAreaHeight;
+        const minY = topMargin + plotAreaHeight - ((stats.min - globalMin) / globalRange) * plotAreaHeight;
+        const maxY = topMargin + plotAreaHeight - ((stats.max - globalMin) / globalRange) * plotAreaHeight;
 
         return `
             <!-- Bigode inferior -->
