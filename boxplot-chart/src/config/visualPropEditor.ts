@@ -257,47 +257,6 @@ function createMeasureColumnSettings(
 }
 
 /**
- * Cria configurações específicas para dimensões
- */
-function createDimensionColumnSettings(
-    dimensionColumns: ChartColumn[],
-    currentVisualProps: ChartModel
-): { [columnId: string]: { elements: any[] } } {
-    const dimensionSettings: { [columnId: string]: { elements: any[] } } = {};
-    
-    // Se há múltiplas dimensões, adicionar opção para selecionar qual usar para agrupamento
-    if (dimensionColumns.length > 1) {
-        dimensionColumns.forEach(dimensionColumn => {
-            const savedConfig = (currentVisualProps.visualProps as any)?.[dimensionColumn.id] || {};
-            const groupingConfig = (savedConfig.grouping || {}) as Record<string, unknown>;
-            
-            const dimensionElements: any[] = [];
-            
-            dimensionElements.push({
-                type: 'section',
-                key: 'grouping',
-                label: 'Configurações de Agrupamento',
-                isAccordianExpanded: false,
-                children: [
-                    {
-                        type: 'toggle',
-                        key: 'useForGrouping',
-                        label: 'Usar para Agrupamento Principal',
-                        defaultValue: groupingConfig.useForGrouping === true,
-                    },
-                ],
-            });
-            
-            dimensionSettings[dimensionColumn.id] = {
-                elements: dimensionElements,
-            };
-        });
-    }
-    
-    return dimensionSettings;
-}
-
-/**
  * Cria seções gerais de configuração
  */
 function createEditorSections(
@@ -621,15 +580,6 @@ export function createVisualPropEditorDefinition(
         }
     }
     
-    if (dimensionColumns.length > 0) {
-        const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, chartModel);
-        if (Object.keys(dimensionColumnSettings).length > 0) {
-            columnsVizPropDefinition.push({
-                type: ColumnType.ATTRIBUTE,
-                columnSettingsDefinition: dimensionColumnSettings,
-            });
-        }
-    }
 
     const result: VisualPropEditorDefinition = {
         elements: editorSections,
@@ -647,11 +597,11 @@ export function createChartConfigEditorDefinition(): ChartConfigEditorDefinition
         {
             key: 'column',
             label: 'Atributos e Medidas',
-            descriptionText: 'Boxplot requer 1 medida e pelo menos 1 dimensão para agrupamento. Cada dimensão criará um grupo no boxplot.',
+            descriptionText: 'Boxplot requer 1 medida e pelo menos 1 dimensão para agrupamento. Arraste dimensões para "Agrupamento" e a medida para "Eixo Y".',
             columnSections: [
                 {
-                    key: 'x',
-                    label: 'Categorias (Dimensões para Agrupamento)',
+                    key: 'grouping',
+                    label: 'Agrupamento',
                     allowAttributeColumns: true,
                     allowMeasureColumns: false,
                     allowTimeSeriesColumns: true,
