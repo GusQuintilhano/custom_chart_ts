@@ -85,3 +85,21 @@ export function generateSvgTitle(
     const text = generateTooltipText(categoryName, stats, count);
     return `<title>${text}</title>`;
 }
+
+/**
+ * Gera um rect invisível com title para tooltip que cobre toda a área do boxplot do grupo
+ */
+export function generateTooltipRect(
+    categoryName: string,
+    stats: BoxplotStatistics,
+    count: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+): string {
+    const text = generateTooltipText(categoryName, stats, count);
+    return `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="transparent" stroke="none" pointer-events="all">
+        <title>${text}</title>
+    </rect>`;
+}

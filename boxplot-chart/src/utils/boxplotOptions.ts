@@ -290,7 +290,7 @@ export function readBoxplotOptions(
         referenceLines: referenceLinesConfig,
         tooltip,
         padding,
-        fitWidth: typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false,
+        fitWidth: false, // Sempre false (não usar largura 100%)
         layout,
         axisLabels,
     };

@@ -14,7 +14,7 @@ import { renderDotPlot } from './dotPlot';
 import { renderDividerLines } from './dividerLines';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
-import { generateSvgTitle } from '../utils/tooltipUtils';
+import { generateTooltipRect } from '../utils/tooltipUtils';
 import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 /**
@@ -177,16 +177,35 @@ export function renderBoxplot(
                 ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
                 : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
             
-            // Gerar tooltip para o grupo
-            const tooltipTitle = generateSvgTitle(
+            // Calcular área do tooltip (rect invisível)
+            const tooltipPadding = 30; // Espaço extra para outliers/whiskers
+            const tooltipRectX = orientation === 'vertical'
+                ? centerX - 50 // Largura aproximada para dot plot
+                : leftMargin - tooltipPadding;
+            const tooltipRectY = orientation === 'vertical'
+                ? topMargin - tooltipPadding
+                : centerY - 50;
+            const tooltipRectWidth = orientation === 'vertical'
+                ? 100
+                : plotAreaWidth + tooltipPadding * 2;
+            const tooltipRectHeight = orientation === 'vertical'
+                ? plotAreaHeight + tooltipPadding * 2
+                : 100;
+            
+            // Gerar tooltip para o grupo (rect invisível com title)
+            const tooltipRect = generateTooltipRect(
                 group.dimensionValue,
                 group.stats,
-                group.values.length
+                group.values.length,
+                tooltipRectX,
+                tooltipRectY,
+                tooltipRectWidth,
+                tooltipRectHeight
             );
             
             return `
                 <g data-group-index="${index}">
-                    ${tooltipTitle}
+                    ${tooltipRect}
                     ${dotPlotHtml}
                     ${labelHtml}
                 </g>
@@ -229,16 +248,35 @@ export function renderBoxplot(
             ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
             : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
 
-        // Gerar tooltip para o grupo
-        const tooltipTitle = generateSvgTitle(
+        // Calcular área do tooltip (rect invisível)
+        const tooltipPadding = 40; // Espaço extra para outliers/whiskers
+        const tooltipRectX = orientation === 'vertical'
+            ? centerX - currentBoxWidth / 2 - tooltipPadding
+            : leftMargin - tooltipPadding;
+        const tooltipRectY = orientation === 'vertical'
+            ? topMargin - tooltipPadding
+            : centerY - currentBoxWidth / 2 - tooltipPadding;
+        const tooltipRectWidth = orientation === 'vertical'
+            ? currentBoxWidth + tooltipPadding * 2
+            : plotAreaWidth + tooltipPadding * 2;
+        const tooltipRectHeight = orientation === 'vertical'
+            ? plotAreaHeight + tooltipPadding * 2
+            : currentBoxWidth + tooltipPadding * 2;
+        
+        // Gerar tooltip para o grupo (rect invisível com title)
+        const tooltipRect = generateTooltipRect(
             group.dimensionValue,
             group.stats,
-            group.values.length
+            group.values.length,
+            tooltipRectX,
+            tooltipRectY,
+            tooltipRectWidth,
+            tooltipRectHeight
         );
         
         return `
             <g data-group-index="${index}">
-                ${tooltipTitle}
+                ${tooltipRect}
                 ${boxHtml}
                 ${whiskersHtml}
                 ${medianHtml}
