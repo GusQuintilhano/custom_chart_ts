@@ -16,7 +16,7 @@ import { calculateBoxplotDimensions } from './utils/boxplotDimensions';
 import { readBoxplotOptions } from './utils/boxplotOptions';
 import { renderBoxplot, renderYAxis } from './rendering/boxplotRenderer';
 import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
-import { ChartToTSEvent, ColumnType } from '@thoughtspot/ts-chart-sdk';
+import { ChartToTSEvent, ColumnType, ChartColumn } from '@thoughtspot/ts-chart-sdk';
 
 function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
     // Rastrear hover em caixas do boxplot
@@ -140,37 +140,11 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
 
-        // Obter colunas das seções do Chart Config Editor
-        // A seção 'grouping' contém as dimensões para agrupamento
-        // A seção 'y' contém a medida
-        const chartConfigs = chartModel.chartConfig || [];
-        let dimensionColumns: ChartColumn[] = [];
-        let measureColumns: ChartColumn[] = [];
-        
-        if (chartConfigs.length > 0) {
-            const config = chartConfigs[0];
-            if (config && config.dimensions) {
-                // Buscar dimensões da seção 'grouping'
-                const groupingDimension = config.dimensions.find((d: any) => d.key === 'grouping');
-                if (groupingDimension && groupingDimension.columns) {
-                    dimensionColumns = groupingDimension.columns;
-                }
-                
-                // Buscar medida da seção 'y'
-                const yDimension = config.dimensions.find((d: any) => d.key === 'y');
-                if (yDimension && yDimension.columns && yDimension.columns.length > 0) {
-                    measureColumns = yDimension.columns;
-                }
-            }
-        }
-        
-        // Fallback: se não encontrou nas seções, usar o método antigo
-        if (dimensionColumns.length === 0) {
-            dimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
-        }
-        if (measureColumns.length === 0) {
-            measureColumns = chartModel.columns.filter(col => col.type === ColumnType.MEASURE);
-        }
+        // Obter colunas
+        // O Chart Config Editor já filtra quais colunas são usadas nas queries
+        // As colunas em chartModel.columns já são apenas as que o usuário arrastou para as seções
+        const measureColumns = chartModel.columns.filter(col => col.type === ColumnType.MEASURE);
+        const dimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
 
         if (measureColumns.length === 0 || dimensionColumns.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Boxplot requer pelo menos 1 medida e 1 dimensão</div>';
