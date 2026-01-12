@@ -48,7 +48,10 @@ export function renderBoxplotMedian(
         `;
     } else {
         // Horizontal
-        const medianX = leftMargin + ((stats.q2 - globalMin) / globalRange) * plotAreaWidth;
+        if (scale === 'linear' && globalRange <= 0) {
+            return '';
+        }
+        const medianX = valueToXCoordinate(stats.q2, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
         
         const dashAttr = strokeDash !== 'none' ? `stroke-dasharray="${strokeDash}"` : '';
         
@@ -108,7 +111,10 @@ export function renderBoxplotMean(
         `;
     } else {
         // Horizontal
-        const meanX = leftMargin + ((stats.mean - globalMin) / globalRange) * plotAreaWidth;
+        if (scale === 'linear' && globalRange <= 0) {
+            return '';
+        }
+        const meanX = valueToXCoordinate(stats.mean!, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
         return `
             <circle
                 cx="${meanX}"
