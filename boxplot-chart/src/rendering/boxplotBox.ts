@@ -4,6 +4,7 @@
 
 import type { BoxplotStatistics } from '@shared/utils/statistical';
 import type { BoxplotRenderConfig, BoxStyle, BoxplotOrientation } from '../types/boxplotTypes';
+import { calculateNotchLimits } from '../utils/notchCalculations';
 
 export function renderBoxplotBox(
     stats: BoxplotStatistics,
@@ -13,7 +14,9 @@ export function renderBoxplotBox(
     orientation: BoxplotOrientation,
     boxStyle: BoxStyle,
     globalMin: number,
-    globalMax: number
+    globalMax: number,
+    showNotch?: boolean,
+    sampleSize?: number
 ): string {
     const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
     const globalRange = globalMax - globalMin;

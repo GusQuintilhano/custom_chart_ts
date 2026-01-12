@@ -41,6 +41,7 @@ export interface BoxplotOptions {
     calculationMethod: CalculationMethod;
     whiskerType: WhiskerType;
     showMean: boolean;
+    showNotch: boolean; // Notch Mode (intervalo de confiança)
     medianStyle: MedianStyle;
     whiskerStyle: WhiskerStyle;
     boxStyle: BoxStyle;
@@ -156,6 +157,7 @@ export function readBoxplotOptions(
         calculationMethod: (dataConfig.calculationMethod as CalculationMethod) || 'auto',
         whiskerType: (measureConfig.whiskerType as WhiskerType) || 'iqr_1_5',
         showMean: measureConfig.showMean === true,
+        showNotch: measureConfig.showNotch === true,
         medianStyle,
         whiskerStyle,
         boxStyle,
