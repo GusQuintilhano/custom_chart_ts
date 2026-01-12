@@ -25,6 +25,7 @@ export interface BoxplotOptions {
     showOutliers: boolean;
     orientation: BoxplotOrientation;
     boxWidth: number;
+    variableWidth: boolean; // Largura variável proporcional ao count
     whiskerWidth: number;
     color: string;
     opacity: number;
@@ -148,6 +149,7 @@ export function readBoxplotOptions(
         showOutliers: outlierStyle.show,
         orientation: (measureConfig.orientation || 'vertical') as BoxplotOrientation,
         boxWidth: typeof boxStyleSection.boxWidth === 'number' ? boxStyleSection.boxWidth : (typeof measureConfig.boxWidth === 'number' ? measureConfig.boxWidth : 60),
+        variableWidth: chartOptions.variableWidth === true,
         whiskerWidth: whiskerStyle.capWidth, // Usar capWidth como whiskerWidth para compatibilidade
         color: defaultColor,
         opacity: boxStyle.opacity,
