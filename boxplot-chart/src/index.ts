@@ -240,6 +240,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
             valueLabelFontSize: options.valueLabelFontSize,
             numGroups: boxplotData.groups.length,
             boxWidth: options.boxWidth,
+            groupSpacing: options.layout.groupSpacing || options.padding,
+            layout: options.layout,
         });
 
         // Renderizar boxplot
