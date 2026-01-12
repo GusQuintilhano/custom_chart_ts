@@ -15,6 +15,7 @@ import type {
     BoxStyle,
     OutlierStyle,
     GridLinesConfig,
+    ReferenceLinesConfig,
     TooltipConfig
 } from '../types/boxplotTypes';
 
@@ -50,6 +51,7 @@ export interface BoxplotOptions {
     boxStyle: BoxStyle;
     outlierStyle: OutlierStyle;
     gridLines: GridLinesConfig;
+    referenceLines: ReferenceLinesConfig;
     tooltip: TooltipConfig;
     padding: number;
     axisLabels: {
@@ -168,6 +170,7 @@ export function readBoxplotOptions(
         boxStyle,
         outlierStyle,
         gridLines: gridLinesConfig,
+        referenceLines: referenceLinesConfigObj,
         tooltip,
         padding,
         axisLabels,

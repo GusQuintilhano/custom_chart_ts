@@ -83,6 +83,24 @@ export interface GridLinesConfig {
 }
 
 /**
+ * Tipo de linha de referência
+ */
+export type ReferenceLineType = 'fixed' | 'global_mean' | 'global_median' | 'none';
+
+/**
+ * Configuração de linhas de referência
+ */
+export interface ReferenceLinesConfig {
+    show: boolean;
+    type: ReferenceLineType;
+    value?: number; // Valor fixo (quando type === 'fixed')
+    color: string;
+    strokeWidth: number;
+    strokeDasharray?: string;
+    label?: string; // Label opcional para a linha
+}
+
+/**
  * Configuração de tooltip
  */
 export interface TooltipConfig {
