@@ -120,6 +120,24 @@ export interface TooltipConfig {
 }
 
 /**
+ * Configuração de labels de valores plotados no boxplot
+ */
+export interface ValueLabelsConfig {
+    show: boolean; // Mostrar valores
+    showMin: boolean; // Mostrar valor mínimo
+    showQ1: boolean; // Mostrar Q1
+    showMedian: boolean; // Mostrar mediana
+    showMean: boolean; // Mostrar média
+    showQ3: boolean; // Mostrar Q3
+    showMax: boolean; // Mostrar valor máximo
+    position: 'inside' | 'outside' | 'both'; // Posição dos labels (dentro da caixa, fora, ou ambos)
+    color: string; // Cor do texto
+    fontSize: number; // Tamanho da fonte
+    format: 'decimal' | 'integer' | 'auto'; // Formato numérico
+    decimals: number; // Número de casas decimais
+}
+
+/**
  * Configuração de uma medida para boxplot
  */
 export interface BoxplotMeasureConfig {

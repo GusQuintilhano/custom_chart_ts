@@ -19,7 +19,8 @@ import type {
     ReferenceLinesConfig,
     ReferenceLineType,
     TooltipConfig,
-    LayoutConfig
+    LayoutConfig,
+    ValueLabelsConfig
 } from '../types/boxplotTypes';
 
 export interface BoxplotOptions {
@@ -60,6 +61,7 @@ export interface BoxplotOptions {
     showJitter: boolean; // Jitter Plot
     jitterOpacity: number; // Opacidade dos pontos do jitter
     tooltip: TooltipConfig;
+    valueLabels: ValueLabelsConfig; // Configuração de labels de valores plotados
     padding: number; // Deprecated: usar layout.groupSpacing
     fitWidth: boolean; // Largura 100% do container
     layout: LayoutConfig; // Configurações de layout sofisticadas
@@ -145,6 +147,30 @@ function mapLayoutStyle(value: string | undefined): 'compact' | 'normal' | 'spac
 }
 
 /**
+ * Mapeia valores de posição de labels em português para valores técnicos
+ */
+function mapValueLabelPosition(value: string | undefined): 'inside' | 'outside' | 'both' | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('dentro')) return 'inside';
+    if (normalized.includes('fora')) return 'outside';
+    if (normalized.includes('ambos')) return 'both';
+    return undefined;
+}
+
+/**
+ * Mapeia valores de formato numérico em português para valores técnicos
+ */
+function mapValueLabelFormat(value: string | undefined): 'decimal' | 'integer' | 'auto' | undefined {
+    if (!value) return undefined;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('decimal')) return 'decimal';
+    if (normalized.includes('inteiro')) return 'integer';
+    if (normalized.includes('automático') || normalized.includes('auto')) return 'auto';
+    return undefined;
+}
+
+/**
  * Lê opções do visualProps e retorna configurações do boxplot
  */
 export function readBoxplotOptions(
@@ -172,6 +198,7 @@ export function readBoxplotOptions(
     const layoutConfig = (allVisualProps?.layout || {}) as Record<string, unknown>;
     const referenceLines = (allVisualProps?.referenceLines || {}) as Record<string, unknown>;
     const jitterPlot = (allVisualProps?.jitterPlot || {}) as Record<string, unknown>;
+    const valueLabelsConfig = (allVisualProps?.valueLabels || {}) as Record<string, unknown>;
 
     // Box Style
     const defaultColor = (visualization.color as string) || defaultColors[0];
@@ -241,6 +268,22 @@ export function readBoxplotOptions(
         customTemplate: (tooltipConfig.customTemplate as string) || undefined,
     };
 
+    // Value Labels
+    const valueLabels: ValueLabelsConfig = {
+        show: typeof valueLabelsConfig.show === 'boolean' ? valueLabelsConfig.show : false,
+        showMin: typeof valueLabelsConfig.showMin === 'boolean' ? valueLabelsConfig.showMin : false,
+        showQ1: typeof valueLabelsConfig.showQ1 === 'boolean' ? valueLabelsConfig.showQ1 : false,
+        showMedian: typeof valueLabelsConfig.showMedian === 'boolean' ? valueLabelsConfig.showMedian : true,
+        showMean: typeof valueLabelsConfig.showMean === 'boolean' ? valueLabelsConfig.showMean : false,
+        showQ3: typeof valueLabelsConfig.showQ3 === 'boolean' ? valueLabelsConfig.showQ3 : false,
+        showMax: typeof valueLabelsConfig.showMax === 'boolean' ? valueLabelsConfig.showMax : false,
+        position: mapValueLabelPosition(valueLabelsConfig.position as string) || 'outside',
+        color: (valueLabelsConfig.color as string) || '#374151',
+        fontSize: typeof valueLabelsConfig.fontSize === 'number' ? valueLabelsConfig.fontSize : (typeof textSizes.valueLabelFontSize === 'number' ? textSizes.valueLabelFontSize : 10),
+        format: mapValueLabelFormat(valueLabelsConfig.format as string) || 'decimal',
+        decimals: typeof valueLabelsConfig.decimals === 'number' ? valueLabelsConfig.decimals : 2,
+    };
+
     // Layout
     const padding = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
     const layout: LayoutConfig = {
@@ -289,6 +332,7 @@ export function readBoxplotOptions(
         dividerLines: dividerLinesConfig,
         referenceLines: referenceLinesConfig,
         tooltip,
+        valueLabels,
         padding,
         fitWidth: false, // Sempre false (não usar largura 100%)
         layout,

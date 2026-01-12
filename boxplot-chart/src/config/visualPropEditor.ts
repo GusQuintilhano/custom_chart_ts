@@ -570,6 +570,105 @@ function createEditorSections(
         ],
     });
 
+    // Seção: Valores Plotados (Labels de Valores)
+    const valueLabels = (allVisualProps.valueLabels || {}) as Record<string, unknown>;
+    const valueLabelsShow = typeof valueLabels.show === 'boolean' ? valueLabels.show : false;
+    const valueLabelsShowMin = typeof valueLabels.showMin === 'boolean' ? valueLabels.showMin : false;
+    const valueLabelsShowQ1 = typeof valueLabels.showQ1 === 'boolean' ? valueLabels.showQ1 : false;
+    const valueLabelsShowMedian = typeof valueLabels.showMedian === 'boolean' ? valueLabels.showMedian : true;
+    const valueLabelsShowMean = typeof valueLabels.showMean === 'boolean' ? valueLabels.showMean : false;
+    const valueLabelsShowQ3 = typeof valueLabels.showQ3 === 'boolean' ? valueLabels.showQ3 : false;
+    const valueLabelsShowMax = typeof valueLabels.showMax === 'boolean' ? valueLabels.showMax : false;
+    const valueLabelsPosition = typeof valueLabels.position === 'string' ? valueLabels.position : 'outside';
+    const valueLabelsColor = typeof valueLabels.color === 'string' ? valueLabels.color : '#374151';
+    const valueLabelsFontSize = typeof valueLabels.fontSize === 'number' ? valueLabels.fontSize : valueLabelFontSizeValue;
+    const valueLabelsFormat = typeof valueLabels.format === 'string' ? valueLabels.format : 'decimal';
+    const valueLabelsDecimals = typeof valueLabels.decimals === 'number' ? valueLabels.decimals : 2;
+
+    elements.push({
+        type: 'section',
+        key: 'valueLabels',
+        label: 'Valores Plotados (Quartis)',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'show',
+                label: 'Mostrar Valores dos Quartis',
+                defaultValue: Boolean(valueLabelsShow),
+            },
+            {
+                type: 'dropdown',
+                key: 'position',
+                label: 'Posição dos Valores',
+                defaultValue: String(valueLabelsPosition),
+                values: ['Dentro da Caixa', 'Fora da Caixa', 'Ambos'],
+            },
+            {
+                type: 'colorpicker',
+                key: 'color',
+                label: 'Cor dos Valores',
+                selectorType: 'COLOR',
+                defaultValue: String(valueLabelsColor),
+            },
+            {
+                type: 'number',
+                key: 'fontSize',
+                label: 'Tamanho da Fonte dos Valores (px)',
+                defaultValue: Number(valueLabelsFontSize) || valueLabelFontSizeValue,
+            },
+            {
+                type: 'dropdown',
+                key: 'format',
+                label: 'Formato Numérico',
+                defaultValue: String(valueLabelsFormat),
+                values: ['Decimal', 'Inteiro', 'Automático'],
+            },
+            {
+                type: 'number',
+                key: 'decimals',
+                label: 'Casas Decimais',
+                defaultValue: Number(valueLabelsDecimals) || 2,
+            },
+            {
+                type: 'toggle',
+                key: 'showMin',
+                label: 'Mostrar Mínimo',
+                defaultValue: Boolean(valueLabelsShowMin),
+            },
+            {
+                type: 'toggle',
+                key: 'showQ1',
+                label: 'Mostrar Q1',
+                defaultValue: Boolean(valueLabelsShowQ1),
+            },
+            {
+                type: 'toggle',
+                key: 'showMedian',
+                label: 'Mostrar Mediana',
+                defaultValue: Boolean(valueLabelsShowMedian),
+            },
+            {
+                type: 'toggle',
+                key: 'showMean',
+                label: 'Mostrar Média',
+                defaultValue: Boolean(valueLabelsShowMean),
+            },
+            {
+                type: 'toggle',
+                key: 'showQ3',
+                label: 'Mostrar Q3',
+                defaultValue: Boolean(valueLabelsShowQ3),
+            },
+            {
+                type: 'toggle',
+                key: 'showMax',
+                label: 'Mostrar Máximo',
+                defaultValue: Boolean(valueLabelsShowMax),
+            },
+        ],
+    });
+
     // Seção: Cores e Estilo
     // Garantir valores válidos (não undefined/null)
     const yAxisColorValue = typeof savedChartColorsStyle?.yAxisColor === 'string' ? savedChartColorsStyle.yAxisColor : '#374151';
