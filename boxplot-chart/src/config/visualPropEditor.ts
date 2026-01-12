@@ -142,6 +142,12 @@ function createMeasureColumnSettings(
                 defaultValue: savedConfig.showMean === true,
             },
             {
+                type: 'toggle',
+                key: 'showNotch',
+                label: 'Notch Mode (Intervalo de Confiança)',
+                defaultValue: savedConfig.showNotch === true,
+            },
+            {
                 type: 'colorpicker',
                 key: 'whiskerColor',
                 label: 'Cor dos Bigodes',
