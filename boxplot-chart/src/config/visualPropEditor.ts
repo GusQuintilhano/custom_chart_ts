@@ -679,18 +679,25 @@ export function createChartConfigEditorDefinition(): ChartConfigEditorDefinition
         {
             key: 'column',
             label: 'Atributos e Medidas',
-            descriptionText: 'Boxplot requer 1 medida e pelo menos 1 dimensão para agrupamento. Arraste dimensões para "Agrupamento" e a medida para "Eixo Y".',
+            descriptionText: 'Boxplot requer 1 medida, pelo menos 1 dimensão para categoria (Eixo X), e opcionalmente 1 dimensão para detalhe/granularidade (pontos do gráfico).',
             columnSections: [
                 {
-                    key: 'grouping',
-                    label: 'Agrupamento',
+                    key: 'x',
+                    label: 'Categoria/Atributo (Eixo X)',
+                    allowAttributeColumns: true,
+                    allowMeasureColumns: false,
+                    allowTimeSeriesColumns: true,
+                },
+                {
+                    key: 'detail',
+                    label: 'Detalhe/Granularidade (Pontos do Gráfico)',
                     allowAttributeColumns: true,
                     allowMeasureColumns: false,
                     allowTimeSeriesColumns: true,
                 },
                 {
                     key: 'y',
-                    label: 'Medida (Valor Numérico)',
+                    label: 'Medida/Métrica',
                     allowAttributeColumns: false,
                     allowMeasureColumns: true,
                     allowTimeSeriesColumns: false,

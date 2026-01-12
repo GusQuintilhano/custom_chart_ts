@@ -31,17 +31,21 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
         return [];
     }
 
-    // Usar primeira medida e todas as dimensões
+    // Usar primeira medida e todas as dimensões (primeira para Eixo X, demais opcionalmente para detalhe)
     const axisConfig: ChartConfig = {
         key: 'column',
         dimensions: [
             {
-                key: 'grouping',
-                columns: attributeColumns, // Todas as dimensões para agrupamento
+                key: 'x',
+                columns: attributeColumns.length > 0 ? [attributeColumns[0]] : [], // Primeira dimensão para Eixo X
+            },
+            {
+                key: 'detail',
+                columns: attributeColumns.length > 1 ? attributeColumns.slice(1) : [], // Demais dimensões para detalhe (opcional)
             },
             {
                 key: 'y',
-                columns: [measureColumns[0]], // Apenas primeira medida
+                columns: [measureColumns[0]], // Primeira medida
             },
         ],
     };
