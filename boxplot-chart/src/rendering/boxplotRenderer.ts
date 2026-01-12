@@ -12,6 +12,7 @@ import { renderReferenceLines } from './referenceLines';
 import { renderJitterPlot } from './jitterPlot';
 import { renderDotPlot } from './dotPlot';
 import { renderDividerLines } from './dividerLines';
+import { renderValueLabels } from './valueLabels';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
 import { generateTooltipRect } from '../utils/tooltipUtils';
