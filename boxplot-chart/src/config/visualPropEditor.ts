@@ -276,6 +276,12 @@ function createEditorSections(
     // Seção 1: Layout e Espaçamento
     const paddingValue = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
     const fitWidthValue = typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false;
+    const marginTopValue = typeof layoutConfig.marginTop === 'number' ? layoutConfig.marginTop : undefined;
+    const marginBottomValue = typeof layoutConfig.marginBottom === 'number' ? layoutConfig.marginBottom : undefined;
+    const marginLeftValue = typeof layoutConfig.marginLeft === 'number' ? layoutConfig.marginLeft : undefined;
+    const marginRightValue = typeof layoutConfig.marginRight === 'number' ? layoutConfig.marginRight : undefined;
+    const groupSpacingValue = typeof layoutConfig.groupSpacing === 'number' ? layoutConfig.groupSpacing : undefined;
+    const layoutStyleValue = typeof layoutConfig.layoutStyle === 'string' ? layoutConfig.layoutStyle : 'normal';
     const dividerLines = (allVisualProps.dividerLines || {}) as Record<string, unknown>;
     const dividerLinesShow = typeof dividerLines.show === 'boolean' ? dividerLines.show : false;
     const dividerLinesColor = typeof dividerLines.color === 'string' ? dividerLines.color : '#e5e7eb';
@@ -288,16 +294,53 @@ function createEditorSections(
         isAccordianExpanded: false,
         children: [
             {
-                type: 'number',
-                key: 'padding',
-                label: 'Espaçamento entre Grupos (px)',
-                defaultValue: Number(paddingValue) || 10,
+                type: 'dropdown',
+                key: 'layoutStyle',
+                label: 'Estilo de Layout',
+                defaultValue: String(layoutStyleValue || 'normal'),
+                values: ['Compacto', 'Normal', 'Espaçado', 'Personalizado'],
             },
             {
                 type: 'toggle',
                 key: 'fitWidth',
                 label: 'Largura 100%',
                 defaultValue: Boolean(fitWidthValue),
+            },
+            {
+                type: 'number',
+                key: 'marginTop',
+                label: 'Margem Superior (px)',
+                defaultValue: marginTopValue !== undefined ? Number(marginTopValue) : undefined,
+            },
+            {
+                type: 'number',
+                key: 'marginBottom',
+                label: 'Margem Inferior (px)',
+                defaultValue: marginBottomValue !== undefined ? Number(marginBottomValue) : undefined,
+            },
+            {
+                type: 'number',
+                key: 'marginLeft',
+                label: 'Margem Esquerda (px)',
+                defaultValue: marginLeftValue !== undefined ? Number(marginLeftValue) : undefined,
+            },
+            {
+                type: 'number',
+                key: 'marginRight',
+                label: 'Margem Direita (px)',
+                defaultValue: marginRightValue !== undefined ? Number(marginRightValue) : undefined,
+            },
+            {
+                type: 'number',
+                key: 'groupSpacing',
+                label: 'Espaçamento entre Grupos (px)',
+                defaultValue: groupSpacingValue !== undefined ? Number(groupSpacingValue) : undefined,
+            },
+            {
+                type: 'number',
+                key: 'padding',
+                label: 'Espaçamento entre Grupos (px) - Legado',
+                defaultValue: Number(paddingValue) || 10,
             },
         ],
     });
