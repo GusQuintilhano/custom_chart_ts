@@ -276,6 +276,10 @@ function createEditorSections(
     // Seção 1: Layout e Espaçamento
     const paddingValue = typeof layoutConfig.padding === 'number' ? layoutConfig.padding : 10;
     const fitWidthValue = typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false;
+    const dividerLines = (allVisualProps.dividerLines || {}) as Record<string, unknown>;
+    const dividerLinesShow = typeof dividerLines.show === 'boolean' ? dividerLines.show : false;
+    const dividerLinesColor = typeof dividerLines.color === 'string' ? dividerLines.color : '#e5e7eb';
+    const dividerLinesStrokeWidth = typeof dividerLines.strokeWidth === 'number' ? dividerLines.strokeWidth : 1;
 
     elements.push({
         type: 'section',
@@ -294,6 +298,34 @@ function createEditorSections(
                 key: 'fitWidth',
                 label: 'Largura 100%',
                 defaultValue: Boolean(fitWidthValue),
+            },
+        ],
+    });
+
+    elements.push({
+        type: 'section',
+        key: 'dividerLines',
+        label: 'Linhas Divisórias entre Grupos',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'show',
+                label: 'Mostrar Linhas Divisórias',
+                defaultValue: Boolean(dividerLinesShow),
+            },
+            {
+                type: 'colorpicker',
+                key: 'color',
+                label: 'Cor das Linhas',
+                selectorType: 'COLOR',
+                defaultValue: String(dividerLinesColor),
+            },
+            {
+                type: 'number',
+                key: 'strokeWidth',
+                label: 'Espessura (px)',
+                defaultValue: Number(dividerLinesStrokeWidth) || 1,
             },
         ],
     });
