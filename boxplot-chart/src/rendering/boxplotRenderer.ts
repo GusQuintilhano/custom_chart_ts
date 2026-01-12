@@ -9,6 +9,7 @@ import { renderBoxplotWhiskers } from './boxplotWhiskers';
 import { renderBoxplotMedian, renderBoxplotMean } from './boxplotMedian';
 import { renderOutliers } from './outliers';
 import { renderReferenceLines } from './referenceLines';
+import { renderJitterPlot } from './jitterPlot';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
 import { generateSvgTitle } from '../utils/tooltipUtils';
@@ -99,6 +100,8 @@ export function renderBoxplot(
         referenceLines,
         variableWidth,
         boxWidth: baseBoxWidth,
+        showJitter,
+        jitterOpacity,
         labelFontSize,
         valueLabelFontSize,
         gridLines,
@@ -131,6 +134,9 @@ export function renderBoxplot(
         ? Math.max(...groups.map(g => g.values.length), 1)
         : 1;
     
+    // Armazenar posições dos centros para jitter plot
+    const centerPositions: Array<{ centerX: number; centerY: number }> = [];
+    
     // Renderizar cada grupo
     const boxesHtml = groups.map((group, index) => {
         // Para vertical: distribuir grupos horizontalmente
@@ -142,6 +148,9 @@ export function renderBoxplot(
         const centerY = orientation === 'vertical'
             ? baseCenterY
             : topMargin + (index + 0.5) * (plotAreaHeight / groups.length);
+        
+        // Armazenar posição do centro para jitter plot
+        centerPositions.push({ centerX, centerY });
 
         // Calcular largura variável se habilitado
         // Fórmula: boxWidth = baseWidth * sqrt(count / maxCount)
@@ -199,7 +208,12 @@ export function renderBoxplot(
         `;
     }).join('');
 
-    return gridLinesHtml + referenceLinesHtml + boxesHtml;
+    // Renderizar jitter plot se habilitado (antes dos boxplots, mas depois das linhas)
+    const jitterHtml = showJitter
+        ? renderJitterPlot(groups, config, orientation, centerPositions, globalMin, globalMax, yScale, jitterOpacity, baseBoxWidth)
+        : '';
+
+    return gridLinesHtml + referenceLinesHtml + jitterHtml + boxesHtml;
 }
 
 export function renderYAxis(
