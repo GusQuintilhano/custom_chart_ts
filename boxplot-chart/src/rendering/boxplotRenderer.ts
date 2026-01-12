@@ -135,7 +135,7 @@ export function renderBoxplot(
             ? renderBoxplotMean(group.stats, centerX, centerY, config, orientation, medianStyle.color, 3, config.boxWidth, globalMin, globalMax, yScale)
             : '';
         
-        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax);
+        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, yScale);
 
         // Label da dimensão
         const labelY = orientation === 'vertical' 

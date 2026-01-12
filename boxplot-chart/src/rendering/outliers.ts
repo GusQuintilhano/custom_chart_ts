@@ -109,7 +109,8 @@ export function renderOutliers(
     orientation: BoxplotOrientation,
     outlierStyle: OutlierStyle,
     globalMin: number,
-    globalMax: number
+    globalMax: number,
+    scale: 'linear' | 'log' = 'linear'
 ): string {
     if (!outlierStyle.show || stats.outliers.length === 0) {
         return '';
@@ -120,10 +121,10 @@ export function renderOutliers(
 
     return stats.outliers.map(outlier => {
         if (orientation === 'vertical') {
-            const y = valueToCoordinate(outlier, globalMin, globalMax, topMargin, plotAreaHeight, 'vertical');
+            const y = valueToCoordinate(outlier, globalMin, globalMax, topMargin, plotAreaHeight, 'vertical', scale);
             return renderOutlierShape(centerX, y, shape, size, fill, stroke, strokeWidth);
         } else {
-            const x = valueToCoordinate(outlier, globalMin, globalMax, leftMargin, plotAreaWidth, 'horizontal');
+            const x = valueToCoordinate(outlier, globalMin, globalMax, leftMargin, plotAreaWidth, 'horizontal', scale);
             return renderOutlierShape(x, centerY, shape, size, fill, stroke, strokeWidth);
         }
     }).join('');
