@@ -372,6 +372,31 @@ function createEditorSections(
         ],
     });
 
+    // Seção: Jitter Plot (Dispersão Total)
+    const jitterShow = savedChartOptions?.showJitter === true;
+    const jitterOpacity = typeof savedChartOptions?.jitterOpacity === 'number' ? savedChartOptions.jitterOpacity : 0.5;
+    
+    elements.push({
+        type: 'section',
+        key: 'jitterPlot',
+        label: 'Jitter Plot (Dispersão Total)',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'toggle',
+                key: 'showJitter',
+                label: 'Mostrar Jitter Plot',
+                defaultValue: Boolean(jitterShow),
+            },
+            {
+                type: 'number',
+                key: 'jitterOpacity',
+                label: 'Opacidade dos Pontos (0-1)',
+                defaultValue: Number(jitterOpacity) || 0.5,
+            },
+        ],
+    });
+
     // Seção 4: Linhas de Grade
     const gridShow = typeof gridLines.show === 'boolean' ? gridLines.show : false;
     const gridColor = typeof gridLines.color === 'string' ? gridLines.color : '#e5e7eb';
