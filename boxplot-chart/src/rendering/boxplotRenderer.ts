@@ -10,6 +10,7 @@ import { renderBoxplotMedian, renderBoxplotMean } from './boxplotMedian';
 import { renderOutliers } from './outliers';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
+import { generateSvgTitle } from '../utils/tooltipUtils';
 
 /**
  * Renderiza linhas de grade de fundo
@@ -146,8 +147,16 @@ export function renderBoxplot(
             ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
             : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
 
+        // Gerar tooltip para o grupo
+        const tooltipTitle = generateSvgTitle(
+            group.dimensionValue,
+            group.stats,
+            group.values.length
+        );
+        
         return `
             <g data-group-index="${index}">
+                ${tooltipTitle}
                 ${boxHtml}
                 ${whiskersHtml}
                 ${medianHtml}
