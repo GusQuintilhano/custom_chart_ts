@@ -26,6 +26,11 @@ export type OutlierShape = 'circle' | 'cross' | 'diamond' | 'square' | 'triangle
 export type BoxplotOrientation = 'vertical' | 'horizontal';
 
 /**
+ * Tipo de ordenação dos grupos
+ */
+export type SortType = 'alphabetical' | 'mean_asc' | 'mean_desc' | 'median_asc' | 'median_desc' | 'iqr_asc' | 'iqr_desc';
+
+/**
  * Estilo da linha da mediana
  */
 export interface MedianStyle {

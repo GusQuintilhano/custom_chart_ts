@@ -292,6 +292,8 @@ function createEditorSections(
     });
 
     // Seção 2: Eixos
+    const sortTypeValue = typeof savedChartOptions?.sortType === 'string' ? savedChartOptions.sortType : 'alphabetical';
+    
     elements.push({
         type: 'section',
         key: 'axes',
@@ -303,6 +305,13 @@ function createEditorSections(
                 key: 'showYAxis',
                 label: 'Exibir Eixo Y',
                 defaultValue: savedChartVisual?.showYAxis !== false,
+            },
+            {
+                type: 'dropdown',
+                key: 'sortType',
+                label: 'Ordenação dos Grupos',
+                defaultValue: String(sortTypeValue),
+                values: ['alphabetical', 'mean_asc', 'mean_desc', 'median_asc', 'median_desc', 'iqr_asc', 'iqr_desc'],
             },
         ],
     });
