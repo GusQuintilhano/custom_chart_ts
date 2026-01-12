@@ -70,6 +70,11 @@ export function renderBoxplotBox(
         `;
     } else {
         // Horizontal
+        // Proteger contra divisão por zero
+        if (globalRange <= 0) {
+            return ''; // Retornar vazio se não há range válido
+        }
+        
         const q1X = leftMargin + ((stats.q1 - globalMin) / globalRange) * plotAreaWidth;
         const q3X = leftMargin + ((stats.q3 - globalMin) / globalRange) * plotAreaWidth;
         const boxLength = Math.abs(q3X - q1X);
