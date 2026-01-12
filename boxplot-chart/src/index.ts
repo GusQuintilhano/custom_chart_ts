@@ -143,21 +143,24 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Obter colunas das seções do Chart Config Editor
         // A seção 'grouping' contém as dimensões para agrupamento
         // A seção 'y' contém a medida
-        const chartConfig = chartModel.chartConfig;
+        const chartConfigs = chartModel.chartConfig || [];
         let dimensionColumns: ChartColumn[] = [];
         let measureColumns: ChartColumn[] = [];
         
-        if (chartConfig && chartConfig.columnSections) {
-            // Buscar dimensões da seção 'grouping'
-            const groupingSection = chartConfig.columnSections.find((s: any) => s.key === 'grouping');
-            if (groupingSection && groupingSection.columns) {
-                dimensionColumns = groupingSection.columns;
-            }
-            
-            // Buscar medida da seção 'y'
-            const ySection = chartConfig.columnSections.find((s: any) => s.key === 'y');
-            if (ySection && ySection.columns && ySection.columns.length > 0) {
-                measureColumns = ySection.columns;
+        if (chartConfigs.length > 0) {
+            const config = chartConfigs[0];
+            if (config && config.dimensions) {
+                // Buscar dimensões da seção 'grouping'
+                const groupingDimension = config.dimensions.find((d: any) => d.key === 'grouping');
+                if (groupingDimension && groupingDimension.columns) {
+                    dimensionColumns = groupingDimension.columns;
+                }
+                
+                // Buscar medida da seção 'y'
+                const yDimension = config.dimensions.find((d: any) => d.key === 'y');
+                if (yDimension && yDimension.columns && yDimension.columns.length > 0) {
+                    measureColumns = yDimension.columns;
+                }
             }
         }
         
