@@ -27,7 +27,7 @@ function renderGridLines(
 
     const gridLines = options.gridLines as GridLinesConfig;
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin } = config;
-    const { orientation } = options;
+    const { orientation, yScale } = options;
 
     const color = gridLines.color || '#e5e7eb';
     const strokeWidth = gridLines.strokeWidth || 1;
@@ -41,7 +41,7 @@ function renderGridLines(
         // Linhas horizontais para orientação vertical
         for (let i = 0; i <= numLines; i++) {
             const value = globalMin + (globalMax - globalMin) * (i / numLines);
-            const y = topMargin + plotAreaHeight - (i / numLines) * plotAreaHeight;
+            const y = valueToYCoordinate(value, globalMin, globalMax, topMargin, plotAreaHeight, yScale);
             
             lines.push(`
                 <line
@@ -60,7 +60,7 @@ function renderGridLines(
         // Linhas verticais para orientação horizontal
         for (let i = 0; i <= numLines; i++) {
             const value = globalMin + (globalMax - globalMin) * (i / numLines);
-            const x = leftMargin + (i / numLines) * plotAreaWidth;
+            const x = valueToXCoordinate(value, globalMin, globalMax, leftMargin, plotAreaWidth, yScale);
             
             lines.push(`
                 <line
@@ -94,6 +94,7 @@ export function renderBoxplot(
         outlierStyle,
         showMean,
         showNotch,
+        yScale,
         labelFontSize,
         valueLabelFontSize,
         gridLines,
@@ -198,9 +199,10 @@ export function renderYAxis(
     // Ticks e labels (simplificado - pode ser expandido)
     const ticks = [];
     const numTicks = 5;
+    const scale = options.yScale || 'linear';
     for (let i = 0; i <= numTicks; i++) {
         const value = min + (max - min) * (i / numTicks);
-        const y = topMargin + plotAreaHeight - (i / numTicks) * plotAreaHeight;
+        const y = valueToYCoordinate(value, min, max, topMargin, plotAreaHeight, scale);
         
         ticks.push(`
             <line
