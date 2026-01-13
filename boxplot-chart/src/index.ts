@@ -227,7 +227,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
             numMeasures: measureColumns.length,
-            numDimensions: dimensionColumns.length,
+            numDimensions: dimensionColumnsForGrouping.length,
             // Configurações principais
             orientation: options.orientation,
             yScale: options.yScale,
