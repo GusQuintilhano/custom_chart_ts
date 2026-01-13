@@ -152,10 +152,16 @@ export function renderBoxplot(
             : baseBoxWidth;
         
         // Para vertical: distribuir grupos horizontalmente dentro da área de plotagem
-        // Garantir que o primeiro grupo começa após o eixo Y (leftMargin)
-        // Usar distribuição uniforme baseada no espaço disponível
+        // Garantir que o primeiro boxplot começa após o eixo Y (leftMargin)
+        // Usar distribuição uniforme, mas garantir que boxLeft = centerX - currentBoxWidth/2 >= leftMargin
+        // Para o primeiro grupo: centerX = leftMargin + currentBoxWidth/2 + margem
+        // Para grupos subsequentes: distribuir uniformemente no espaço restante
+        const firstBoxMargin = currentBoxWidth / 2 + 5; // Margem de 5px após o eixo Y
+        const remainingWidth = plotAreaWidth - firstBoxMargin - (currentBoxWidth / 2);
         const centerX = orientation === 'vertical'
-            ? leftMargin + (index + 0.5) * (plotAreaWidth / groups.length)
+            ? (index === 0 
+                ? leftMargin + firstBoxMargin
+                : leftMargin + firstBoxMargin + (index / (groups.length - 1)) * remainingWidth)
             : baseCenterX;
         
         const centerY = orientation === 'vertical'
