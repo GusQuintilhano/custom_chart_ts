@@ -324,6 +324,19 @@ export function renderYAxis(
     const { topMargin, leftMargin, plotAreaHeight } = config;
     const yAxisColor = '#374151';
     const axisStrokeWidth = 1.5;
+    const scale = options.yScale || 'linear';
+
+    // Para escala logarítmica, garantir que min e max sejam positivos
+    // Se há valores não positivos, usar apenas valores positivos ou forçar linear
+    let actualMin = min;
+    let actualMax = max;
+    let actualScale = scale;
+    
+    if (scale === 'log' && (min <= 0 || max <= 0)) {
+        // Se há valores não positivos, usar escala linear
+        actualScale = 'linear';
+        console.warn('[BOXPLOT] Valores não positivos detectados (min:', min, 'max:', max, '), usando escala linear ao invés de logarítmica');
+    }
 
     // Linha do eixo Y
     const axisLine = `
@@ -340,10 +353,9 @@ export function renderYAxis(
     // Ticks e labels (simplificado - pode ser expandido)
     const ticks = [];
     const numTicks = 5;
-    const scale = options.yScale || 'linear';
     for (let i = 0; i <= numTicks; i++) {
-        const value = min + (max - min) * (i / numTicks);
-        const y = valueToYCoordinate(value, min, max, topMargin, plotAreaHeight, scale);
+        const value = actualMin + (actualMax - actualMin) * (i / numTicks);
+        const y = valueToYCoordinate(value, actualMin, actualMax, topMargin, plotAreaHeight, actualScale);
         
         ticks.push(`
             <line
