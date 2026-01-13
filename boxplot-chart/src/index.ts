@@ -257,8 +257,11 @@ export const renderChart = async (ctx: CustomChartContext) => {
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
         
-        // Debug: verificar yScale (usar console.log para garantir que apareça)
-        console.log('[BOXPLOT DEBUG] yScale lido:', options.yScale, 'axes.yScale:', (allVisualProps.axes as any)?.yScale, 'chartOptions.yScale:', (allVisualProps.chart_options as any)?.yScale);
+        // Debug: verificar yScale e valores globais
+        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumnsForGrouping, options);
+        if (boxplotData) {
+            console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'globalMin:', boxplotData.globalStats.whiskerLower, 'globalMax:', boxplotData.globalStats.whiskerUpper);
+        }
 
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
