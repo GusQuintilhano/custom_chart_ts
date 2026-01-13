@@ -301,6 +301,12 @@ function createEditorSections(
                 values: ['Compacto', 'Normal', 'Espaçado', 'Personalizado'],
             },
             {
+                type: 'toggle',
+                key: 'fitWidth',
+                label: 'Largura 100% (Ajustar ao Container)',
+                defaultValue: Boolean(fitWidthValue),
+            },
+            {
                 type: 'number',
                 key: 'marginTop',
                 label: 'Margem Superior (px)',
