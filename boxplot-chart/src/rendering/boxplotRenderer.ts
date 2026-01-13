@@ -112,6 +112,9 @@ export function renderBoxplot(
     } = options;
 
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin, bottomMargin, groupSpacing } = config;
+    
+    // Debug: verificar dimensões
+    console.log('[BOXPLOT RENDER] plotAreaWidth:', plotAreaWidth, 'leftMargin:', leftMargin, 'numGroups:', groups.length);
 
     // Calcular range global para coordenadas
     const globalMin = boxplotData.globalStats.whiskerLower;
