@@ -146,8 +146,14 @@ export function renderBoxplot(
     
     // Renderizar cada grupo
     const boxesHtml = groups.map((group, index) => {
-        // Para vertical: distribuir grupos horizontalmente
-        // Para horizontal: distribuir grupos verticalmente
+        // Calcular largura variável se habilitado (precisa ser feito antes para calcular centerX)
+        const currentBoxWidth = variableWidth && maxCount > 0
+            ? baseBoxWidth * Math.sqrt(group.values.length / maxCount)
+            : baseBoxWidth;
+        
+        // Para vertical: distribuir grupos horizontalmente dentro da área de plotagem
+        // Garantir que o primeiro grupo começa após o eixo Y (leftMargin)
+        // Usar distribuição uniforme baseada no espaço disponível
         const centerX = orientation === 'vertical'
             ? leftMargin + (index + 0.5) * (plotAreaWidth / groups.length)
             : baseCenterX;
