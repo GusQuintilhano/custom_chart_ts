@@ -10,7 +10,7 @@ import { formatValue } from '@shared/utils/formatters';
  */
 export class CustomTooltip {
     private tooltipElement: HTMLElement | null = null;
-    private currentTarget: Element | null = null;
+    public currentTarget: Element | null = null;
 
     constructor() {
         this.createTooltipElement();
@@ -144,12 +144,20 @@ export function setupCustomTooltips(
     chartElement: HTMLElement,
     boxplotData: { groups: Array<{ dimensionValue: string; stats: BoxplotStatistics; values: number[] }> }
 ): void {
+    console.log('[TOOLTIP] setupCustomTooltips chamado, grupos:', boxplotData.groups.length);
     // Aguardar um pouco para garantir que o DOM foi atualizado
     setTimeout(() => {
+        console.log('[TOOLTIP] Executando setup após timeout');
         const tooltip = new CustomTooltip();
 
         // Encontrar todos os grupos SVG
         const groups = chartElement.querySelectorAll('g[data-group-index]');
+        console.log('[TOOLTIP] Grupos encontrados:', groups.length, 'de', boxplotData.groups.length);
+
+        if (groups.length === 0) {
+            console.warn('[TOOLTIP] Nenhum grupo SVG encontrado com data-group-index');
+            return;
+        }
 
         groups.forEach((group, index) => {
             const groupData = boxplotData.groups[index];
