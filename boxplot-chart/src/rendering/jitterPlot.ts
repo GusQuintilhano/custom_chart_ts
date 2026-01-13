@@ -66,6 +66,10 @@ export function renderJitterPlot(
                     fill="#6b7280"
                     opacity="${opacity}"
                     stroke="none"
+                    data-jitter="true"
+                    data-point-value="${value}"
+                    data-group-index="${groupIndex}"
+                    data-point-index="${valueIndex}"
                 />
             `);
         });
