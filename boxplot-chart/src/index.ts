@@ -299,6 +299,11 @@ export const renderChart = async (ctx: CustomChartContext) => {
         
         // Debug: verificar yScale, valores globais e dimensões
         console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'globalMin:', boxplotData.globalStats.whiskerLower, 'globalMax:', boxplotData.globalStats.whiskerUpper, 'numGroups:', boxplotData.groups.length);
+        
+        // Avisar se há muitos grupos (pode causar sobreposição)
+        if (boxplotData.groups.length > 100) {
+            console.warn('[BOXPLOT] Número de grupos muito alto (' + boxplotData.groups.length + '). A visualização pode estar comprometida devido à sobreposição.');
+        }
 
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
