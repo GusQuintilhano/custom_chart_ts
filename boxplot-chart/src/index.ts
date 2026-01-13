@@ -140,15 +140,6 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
 
-        // Tentar obter chartConfig para identificar quais dimensões estão em cada seção
-        let chartConfig: any = null;
-        try {
-            const ctxAny = ctx as any;
-            chartConfig = ctxAny.getChartConfig?.() || ctxAny.chartConfig || (chartModel as any).chartConfig;
-        } catch (e) {
-            // Se não conseguir acessar chartConfig, continua com lógica alternativa
-        }
-
         // Obter colunas
         // O Chart Config Editor já filtra quais colunas são usadas nas queries
         // As colunas em chartModel.columns já são apenas as que o usuário arrastou para as seções
@@ -165,28 +156,70 @@ export const renderChart = async (ctx: CustomChartContext) => {
         const measureColumn = measureColumns[0];
         
         // Identificar quais dimensões estão na seção 'x' (Categoria/Atributo) vs 'detail' (Granularidade)
+        // Tentar múltiplas abordagens para identificar as colunas da seção 'x'
         let dimensionColumnsForGrouping: ChartColumn[] = [];
         
-        if (chartConfig && Array.isArray(chartConfig) && chartConfig.length > 0) {
-            // Tentar encontrar a dimensão com key 'x' no chartConfig
-            const firstConfig = chartConfig[0];
-            if (firstConfig && firstConfig.dimensions && Array.isArray(firstConfig.dimensions)) {
-                const xDimension = firstConfig.dimensions.find((dim: any) => dim.key === 'x');
-                if (xDimension && xDimension.columns && Array.isArray(xDimension.columns)) {
-                    // Filtrar apenas as colunas que estão na seção 'x'
-                    const xColumnIds = new Set(xDimension.columns.map((col: any) => col.id || col.name));
-                    dimensionColumnsForGrouping = allDimensionColumns.filter(col => 
-                        xColumnIds.has(col.id) || xColumnIds.has(col.name)
-                    );
+        // Abordagem 1: Verificar se ChartColumn tem propriedade columnSectionName
+        const xColumnsBySectionName = allDimensionColumns.filter((col: any) => 
+            col.columnSectionName === 'x' || col.sectionName === 'x' || col.section === 'x'
+        );
+        
+        if (xColumnsBySectionName.length > 0) {
+            dimensionColumnsForGrouping = xColumnsBySectionName;
+        } else {
+            // Abordagem 2: Tentar acessar chartConfig através do contexto
+            try {
+                const ctxAny = ctx as any;
+                const chartConfig = ctxAny.getChartConfig?.() || ctxAny.chartConfig || (chartModel as any).chartConfig;
+                
+                if (chartConfig && Array.isArray(chartConfig) && chartConfig.length > 0) {
+                    const firstConfig = chartConfig[0];
+                    if (firstConfig && firstConfig.dimensions && Array.isArray(firstConfig.dimensions)) {
+                        const xDimension = firstConfig.dimensions.find((dim: any) => dim.key === 'x');
+                        if (xDimension && xDimension.columns && Array.isArray(xDimension.columns)) {
+                            // Filtrar apenas as colunas que estão na seção 'x'
+                            const xColumnIds = new Set(xDimension.columns.map((col: any) => col.id || col.name || col.columnId));
+                            dimensionColumnsForGrouping = allDimensionColumns.filter(col => 
+                                xColumnIds.has(col.id) || xColumnIds.has((col as any).name) || xColumnIds.has((col as any).columnId)
+                            );
+                        }
+                    }
                 }
+            } catch (e) {
+                // Ignora erros
             }
         }
         
-        // Fallback: se não conseguiu identificar através do chartConfig, usar todas as dimensões
-        // (comportamento antigo)
+        // Abordagem 3: Usar a ordem das colunas nos dados retornados para identificar qual está na seção 'x'
+        // As colunas na seção 'x' geralmente aparecem primeiro nos dados
+        if (dimensionColumnsForGrouping.length === 0) {
+            try {
+                const data = chartModel.data?.[0]?.data;
+                if (data && data.columns && data.columns.length > 0) {
+                    // Encontrar o índice da primeira dimensão nos dados
+                    const firstDimensionColumnId = data.columns.find((colId: string) => 
+                        allDimensionColumns.some(dim => dim.id === colId)
+                    );
+                    
+                    if (firstDimensionColumnId) {
+                        const firstDimension = allDimensionColumns.find(dim => dim.id === firstDimensionColumnId);
+                        if (firstDimension) {
+                            dimensionColumnsForGrouping = [firstDimension];
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignora erros
+            }
+        }
+        
+        // Fallback final: usar todas as dimensões (comportamento antigo)
         if (dimensionColumnsForGrouping.length === 0) {
             dimensionColumnsForGrouping = allDimensionColumns;
         }
+        
+        // Log para debug (remover em produção se necessário)
+        logger.debug('Dimensões para agrupamento identificadas:', dimensionColumnsForGrouping.map(d => d.name || d.id).join(', '));
         
         // Calcular dimensões do container
         const containerWidth = chartElement.clientWidth || 800;
