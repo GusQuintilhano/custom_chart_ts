@@ -227,20 +227,18 @@ export function setupCustomTooltips(
             const groupData = boxplotData.groups[index];
             if (!groupData) return;
 
-            // Adicionar event listeners para todos os elementos filhos do grupo
+            // Adicionar event listeners apenas ao grupo (event delegation)
             const handleMouseEnter = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
                 const target = e.target as Element;
                 
-                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
-                // Os handlers específicos dos pontos vão tratar (e já fizeram stopPropagation)
-                if (target.hasAttribute('data-jitter')) {
+                // Se o evento foi parado por um handler de ponto, não fazer nada
+                if (e.defaultPrevented) {
                     return;
                 }
                 
-                // Verificar se o target está dentro de um grupo de outlier
-                const outlierGroup = target.closest('[data-outlier]');
-                if (outlierGroup) {
+                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
+                if (target.hasAttribute('data-jitter') || target.closest('[data-outlier]')) {
                     return;
                 }
                 
@@ -260,14 +258,13 @@ export function setupCustomTooltips(
                 const mouseEvent = e as MouseEvent;
                 const target = e.target as Element;
                 
-                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
-                if (target.hasAttribute('data-jitter')) {
+                // Se o evento foi parado por um handler de ponto, não fazer nada
+                if (e.defaultPrevented) {
                     return;
                 }
                 
-                // Verificar se o target está dentro de um grupo de outlier
-                const outlierGroup = target.closest('[data-outlier]');
-                if (outlierGroup) {
+                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
+                if (target.hasAttribute('data-jitter') || target.closest('[data-outlier]')) {
                     return;
                 }
                 
@@ -288,27 +285,10 @@ export function setupCustomTooltips(
                 }
             };
 
-            // Adicionar listeners ao grupo e a todos os elementos filhos
-            group.addEventListener('mouseenter', handleMouseEnter);
-            group.addEventListener('mousemove', handleMouseMove);
-            group.addEventListener('mouseleave', handleMouseLeave);
-
-            // Também adicionar aos elementos filhos diretamente (para garantir que funcione)
-            const childElements = group.querySelectorAll('rect, path, circle, line');
-            childElements.forEach(child => {
-                // Pular elementos que são outliers ou jitter (têm handlers próprios)
-                // Não adicionar listeners a elementos que estão dentro de grupos com data-outlier ou data-jitter
-                if (child.closest('[data-outlier], [data-jitter]')) {
-                    return;
-                }
-                // Não adicionar listeners a elementos que têm data-jitter diretamente
-                if (child.hasAttribute('data-jitter')) {
-                    return;
-                }
-                child.addEventListener('mouseenter', handleMouseEnter);
-                child.addEventListener('mousemove', handleMouseMove);
-                child.addEventListener('mouseleave', handleMouseLeave);
-            });
+            // Adicionar listeners apenas ao grupo (event delegation)
+            group.addEventListener('mouseenter', handleMouseEnter, true); // Use capture phase
+            group.addEventListener('mousemove', handleMouseMove, true);
+            group.addEventListener('mouseleave', handleMouseLeave, true);
         });
 
         // Adicionar tooltips para outliers
