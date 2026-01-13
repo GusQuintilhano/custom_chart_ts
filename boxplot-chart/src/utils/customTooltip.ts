@@ -322,6 +322,7 @@ export function setupCustomTooltips(
 
             const handleOutlierEnter = (e: Event) => {
                 e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
+                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -334,6 +335,7 @@ export function setupCustomTooltips(
 
             const handleOutlierMove = (e: Event) => {
                 e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
+                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -364,6 +366,7 @@ export function setupCustomTooltips(
 
             const handleJitterEnter = (e: Event) => {
                 e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
+                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -376,6 +379,7 @@ export function setupCustomTooltips(
 
             const handleJitterMove = (e: Event) => {
                 e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
+                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
