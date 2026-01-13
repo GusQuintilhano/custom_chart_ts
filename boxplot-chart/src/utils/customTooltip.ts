@@ -4,6 +4,7 @@
 
 import type { BoxplotStatistics } from '@shared/utils/statistical';
 import { formatValue } from '@shared/utils/formatters';
+import type { TooltipConfig } from '../types/boxplotTypes';
 
 /**
  * Cria e gerencia tooltips customizados para elementos SVG
@@ -11,8 +12,12 @@ import { formatValue } from '@shared/utils/formatters';
 export class CustomTooltip {
     private tooltipElement: HTMLElement | null = null;
     public currentTarget: Element | null = null;
+    private tooltipFormat: 'simple' | 'detailed' | 'custom' = 'detailed';
+    private customTemplate?: string;
 
-    constructor() {
+    constructor(tooltipConfig?: TooltipConfig) {
+        this.tooltipFormat = (tooltipConfig?.format as 'simple' | 'detailed' | 'custom') || 'detailed';
+        this.customTemplate = tooltipConfig?.customTemplate;
         this.createTooltipElement();
     }
 
@@ -48,18 +53,36 @@ export class CustomTooltip {
     }
 
     /**
-     * Mostra o tooltip com as informações do boxplot
+     * Gera conteúdo do tooltip baseado no formato configurado
      */
-    show(
+    private generateTooltipContent(
         categoryName: string,
         stats: BoxplotStatistics,
-        count: number,
-        x: number,
-        y: number
-    ): void {
-        if (!this.tooltipElement) return;
+        count: number
+    ): string {
+        if (this.tooltipFormat === 'custom' && this.customTemplate) {
+            // Substituir placeholders no template customizado
+            return this.customTemplate
+                .replace(/\{categoryName\}/g, this.escapeHtml(categoryName))
+                .replace(/\{max\}/g, formatValue(stats.max, 'decimal', 2))
+                .replace(/\{q3\}/g, formatValue(stats.q3, 'decimal', 2))
+                .replace(/\{median\}/g, formatValue(stats.q2, 'decimal', 2))
+                .replace(/\{mean\}/g, stats.mean !== undefined ? formatValue(stats.mean, 'decimal', 2) : 'N/A')
+                .replace(/\{q1\}/g, formatValue(stats.q1, 'decimal', 2))
+                .replace(/\{min\}/g, formatValue(stats.min, 'decimal', 2))
+                .replace(/\{count\}/g, String(count));
+        }
 
-        // Gerar conteúdo do tooltip
+        if (this.tooltipFormat === 'simple') {
+            // Formato simples: apenas categoria, mediana e count
+            return `
+                <div style="font-weight: 600; margin-bottom: 4px;">${this.escapeHtml(categoryName)}</div>
+                <div style="font-size: 11px; color: #6b7280;">Mediana: ${formatValue(stats.q2, 'decimal', 2)}</div>
+                <div style="font-size: 11px; color: #6b7280;">n = ${count}</div>
+            `;
+        }
+
+        // Formato detalhado (padrão)
         const rows: string[] = [];
         rows.push(`<div style="font-weight: 600; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb;">${this.escapeHtml(categoryName)}</div>`);
         rows.push(`<div style="display: flex; justify-content: space-between; margin: 2px 0;"><span>Max:</span><span>${formatValue(stats.max, 'decimal', 2)}</span></div>`);
@@ -71,10 +94,54 @@ export class CustomTooltip {
         rows.push(`<div style="display: flex; justify-content: space-between; margin: 2px 0;"><span>Q1:</span><span>${formatValue(stats.q1, 'decimal', 2)}</span></div>`);
         rows.push(`<div style="display: flex; justify-content: space-between; margin: 2px 0;"><span>Min:</span><span>${formatValue(stats.min, 'decimal', 2)}</span></div>`);
         rows.push(`<div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280;">n = ${count}</div>`);
+        
+        return rows.join('');
+    }
 
-        this.tooltipElement.innerHTML = rows.join('');
+    /**
+     * Mostra o tooltip com as informações do boxplot
+     */
+    show(
+        categoryName: string,
+        stats: BoxplotStatistics,
+        count: number,
+        x: number,
+        y: number
+    ): void {
+        if (!this.tooltipElement) return;
 
-        // Posicionar tooltip (ajustar para não sair da tela)
+        this.tooltipElement.innerHTML = this.generateTooltipContent(categoryName, stats, count);
+        this.positionTooltip(x, y);
+    }
+
+    /**
+     * Mostra tooltip para um ponto individual (outlier ou jitter)
+     */
+    showPoint(
+        pointValue: number,
+        dimensionValue: string,
+        groupName: string,
+        x: number,
+        y: number
+    ): void {
+        if (!this.tooltipElement) return;
+
+        const content = `
+            <div style="font-weight: 600; margin-bottom: 4px;">${this.escapeHtml(groupName)}</div>
+            <div style="font-size: 11px; color: #6b7280; margin: 2px 0;">Dimensão: ${this.escapeHtml(dimensionValue)}</div>
+            <div style="font-size: 11px; color: #6b7280;">Valor: ${formatValue(pointValue, 'decimal', 2)}</div>
+        `;
+
+        this.tooltipElement.innerHTML = content;
+        this.positionTooltip(x, y);
+    }
+
+    /**
+     * Posiciona o tooltip baseado nas coordenadas do mouse
+     */
+    private positionTooltip(x: number, y: number): void {
+        if (!this.tooltipElement) return;
+
         const tooltipWidth = this.tooltipElement.offsetWidth || 250;
         const tooltipHeight = this.tooltipElement.offsetHeight || 200;
         const padding = 10;
@@ -142,20 +209,17 @@ export class CustomTooltip {
  */
 export function setupCustomTooltips(
     chartElement: HTMLElement,
-    boxplotData: { groups: Array<{ dimensionValue: string; stats: BoxplotStatistics; values: number[] }> }
+    boxplotData: { groups: Array<{ dimensionValue: string; stats: BoxplotStatistics; values: number[] }> },
+    tooltipConfig?: TooltipConfig
 ): void {
-    console.log('[TOOLTIP] setupCustomTooltips chamado, grupos:', boxplotData.groups.length);
     // Aguardar um pouco para garantir que o DOM foi atualizado
     setTimeout(() => {
-        console.log('[TOOLTIP] Executando setup após timeout');
-        const tooltip = new CustomTooltip();
+        const tooltip = new CustomTooltip(tooltipConfig);
 
         // Encontrar todos os grupos SVG
         const groups = chartElement.querySelectorAll('g[data-group-index]');
-        console.log('[TOOLTIP] Grupos encontrados:', groups.length, 'de', boxplotData.groups.length);
 
         if (groups.length === 0) {
-            console.warn('[TOOLTIP] Nenhum grupo SVG encontrado com data-group-index');
             return;
         }
 
@@ -166,6 +230,12 @@ export function setupCustomTooltips(
             // Adicionar event listeners para todos os elementos filhos do grupo
             const handleMouseEnter = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
+                // Verificar se o target é um ponto (outlier ou jitter)
+                const target = e.target as HTMLElement;
+                if (target.hasAttribute('data-outlier') || target.hasAttribute('data-jitter')) {
+                    return; // Deixar que os handlers específicos de pontos tratem
+                }
+                
                 if (tooltip.currentTarget === group) return; // Já está mostrando para este grupo
                 
                 tooltip.currentTarget = group;
@@ -180,6 +250,11 @@ export function setupCustomTooltips(
 
             const handleMouseMove = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
+                const target = e.target as HTMLElement;
+                if (target.hasAttribute('data-outlier') || target.hasAttribute('data-jitter')) {
+                    return; // Deixar que os handlers específicos de pontos tratem
+                }
+                
                 if (tooltip.currentTarget === group) {
                     tooltip.show(
                         groupData.dimensionValue,
@@ -205,10 +280,95 @@ export function setupCustomTooltips(
             // Também adicionar aos elementos filhos diretamente (para garantir que funcione)
             const childElements = group.querySelectorAll('rect, path, circle, line');
             childElements.forEach(child => {
+                // Pular elementos que são outliers ou jitter (têm handlers próprios)
+                if (child.hasAttribute('data-outlier') || child.hasAttribute('data-jitter') || 
+                    child.closest('g[data-outlier]') || child.closest('circle[data-jitter]')) {
+                    return;
+                }
                 child.addEventListener('mouseenter', handleMouseEnter);
                 child.addEventListener('mousemove', handleMouseMove);
                 child.addEventListener('mouseleave', handleMouseLeave);
             });
+        });
+
+        // Adicionar tooltips para outliers
+        const outliers = chartElement.querySelectorAll('[data-outlier="true"]');
+        outliers.forEach(outlier => {
+            const groupIndex = parseInt(outlier.getAttribute('data-group-index') || '0', 10);
+            const pointValue = parseFloat(outlier.getAttribute('data-outlier-value') || '0');
+            const groupData = boxplotData.groups[groupIndex];
+            
+            if (!groupData) return;
+
+            const handleOutlierEnter = (e: Event) => {
+                const mouseEvent = e as MouseEvent;
+                tooltip.showPoint(
+                    pointValue,
+                    formatValue(pointValue, 'decimal', 2), // Usar valor formatado como dimensão
+                    groupData.dimensionValue,
+                    mouseEvent.clientX,
+                    mouseEvent.clientY
+                );
+            };
+
+            const handleOutlierMove = (e: Event) => {
+                const mouseEvent = e as MouseEvent;
+                tooltip.showPoint(
+                    pointValue,
+                    formatValue(pointValue, 'decimal', 2),
+                    groupData.dimensionValue,
+                    mouseEvent.clientX,
+                    mouseEvent.clientY
+                );
+            };
+
+            const handleOutlierLeave = () => {
+                tooltip.hide();
+            };
+
+            outlier.addEventListener('mouseenter', handleOutlierEnter);
+            outlier.addEventListener('mousemove', handleOutlierMove);
+            outlier.addEventListener('mouseleave', handleOutlierLeave);
+        });
+
+        // Adicionar tooltips para pontos de jitter
+        const jitterPoints = chartElement.querySelectorAll('[data-jitter="true"]');
+        jitterPoints.forEach(point => {
+            const groupIndex = parseInt(point.getAttribute('data-group-index') || '0', 10);
+            const pointValue = parseFloat(point.getAttribute('data-point-value') || '0');
+            const groupData = boxplotData.groups[groupIndex];
+            
+            if (!groupData) return;
+
+            const handleJitterEnter = (e: Event) => {
+                const mouseEvent = e as MouseEvent;
+                tooltip.showPoint(
+                    pointValue,
+                    formatValue(pointValue, 'decimal', 2), // Usar valor formatado como dimensão
+                    groupData.dimensionValue,
+                    mouseEvent.clientX,
+                    mouseEvent.clientY
+                );
+            };
+
+            const handleJitterMove = (e: Event) => {
+                const mouseEvent = e as MouseEvent;
+                tooltip.showPoint(
+                    pointValue,
+                    formatValue(pointValue, 'decimal', 2),
+                    groupData.dimensionValue,
+                    mouseEvent.clientX,
+                    mouseEvent.clientY
+                );
+            };
+
+            const handleJitterLeave = () => {
+                tooltip.hide();
+            };
+
+            point.addEventListener('mouseenter', handleJitterEnter);
+            point.addEventListener('mousemove', handleJitterMove);
+            point.addEventListener('mouseleave', handleJitterLeave);
         });
 
         // Limpar tooltip quando sair do chart

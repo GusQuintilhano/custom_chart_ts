@@ -15,7 +15,6 @@ import { renderDividerLines } from './dividerLines';
 import { renderValueLabels } from './valueLabels';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
-import { generateTooltipText } from '../utils/tooltipUtils';
 import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 /**
@@ -114,9 +113,6 @@ export function renderBoxplot(
 
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin, bottomMargin, groupSpacing } = config;
     
-    // Debug: verificar dimensões
-    console.log('[BOXPLOT RENDER] plotAreaWidth:', plotAreaWidth, 'leftMargin:', leftMargin, 'numGroups:', groups.length);
-
     // Calcular range global para coordenadas:
     // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
     // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)
@@ -128,8 +124,16 @@ export function renderBoxplot(
         // Incluir outliers: usar valores absolutos min/max de todos os dados
         const allDataValues = groups.flatMap(g => g.values);
         if (allDataValues.length > 0) {
-            globalMin = Math.min(...allDataValues);
-            globalMax = Math.max(...allDataValues);
+            // Usar loop ao invés de spread operator para evitar "Maximum call stack size exceeded" com arrays grandes
+            let min = allDataValues[0];
+            let max = allDataValues[0];
+            for (let i = 1; i < allDataValues.length; i++) {
+                const val = allDataValues[i];
+                if (val < min) min = val;
+                if (val > max) max = val;
+            }
+            globalMin = min;
+            globalMax = max;
         } else {
             globalMin = boxplotData.globalStats.whiskerLower;
             globalMax = boxplotData.globalStats.whiskerUpper;
@@ -146,7 +150,6 @@ export function renderBoxplot(
         actualScale = 'linear';
         console.warn('[BOXPLOT] Escala logarítmica solicitada, mas há valores não positivos (min:', globalMin, 'max:', globalMax, '). Usando escala linear.');
     }
-    console.log('[BOXPLOT RENDER] yScale solicitado:', yScale, 'actualScale aplicado:', actualScale, 'globalMin:', globalMin, 'globalMax:', globalMax);
 
     // Renderizar linhas de grade primeiro (vão para trás)
     const gridLinesHtml = renderGridLines(config, options, globalMin, globalMax, actualScale);
@@ -168,8 +171,9 @@ export function renderBoxplot(
     const baseCenterY = topMargin + plotAreaHeight / 2;
 
     // Calcular count máximo para largura variável
+    // Usar reduce ao invés de spread operator para evitar "Maximum call stack size exceeded" com muitos grupos
     const maxCount = variableWidth 
-        ? Math.max(...groups.map(g => g.values.length), 1)
+        ? groups.reduce((max, g) => Math.max(max, g.values.length), 1)
         : 1;
     
     // Armazenar posições dos centros para jitter plot
@@ -214,37 +218,10 @@ export function renderBoxplot(
                 ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
                 : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
             
-            // Calcular área coberta pelo dot plot para tooltip
-            const tooltipPadding = 30;
-            let tooltipRectX: number, tooltipRectY: number, tooltipRectWidth: number, tooltipRectHeight: number;
-            
-            if (orientation === 'vertical') {
-                tooltipRectX = centerX - 50 - tooltipPadding;
-                tooltipRectY = topMargin - tooltipPadding;
-                tooltipRectWidth = 100 + tooltipPadding * 2;
-                tooltipRectHeight = plotAreaHeight + tooltipPadding * 2;
-            } else {
-                tooltipRectX = leftMargin - tooltipPadding;
-                tooltipRectY = centerY - 50 - tooltipPadding;
-                tooltipRectWidth = plotAreaWidth + tooltipPadding * 2;
-                tooltipRectHeight = 100 + tooltipPadding * 2;
-            }
-            
-            // Gerar tooltip: rect invisível com title (colocado POR ÚLTIMO para ficar acima)
-            const tooltipText = generateTooltipText(
-                group.dimensionValue,
-                group.stats,
-                group.values.length
-            );
-            const tooltipRect = `<rect x="${tooltipRectX}" y="${tooltipRectY}" width="${tooltipRectWidth}" height="${tooltipRectHeight}" fill="transparent" stroke="none" pointer-events="all">
-                <title>${tooltipText}</title>
-            </rect>`;
-            
             return `
                 <g data-group-index="${index}">
                     ${dotPlotHtml}
                     ${labelHtml}
-                    ${tooltipRect}
                 </g>
             `;
         }
@@ -265,7 +242,7 @@ export function renderBoxplot(
             ? renderBoxplotMean(group.stats, centerX, centerY, groupConfig, orientation, medianStyle.color, 3, currentBoxWidth, globalMin, globalMax, actualScale)
             : '';
         
-        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, actualScale);
+        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, actualScale, index);
 
         // Renderizar labels de valores (quartis)
         const valueLabelsHtml = renderValueLabels(
@@ -293,39 +270,6 @@ export function renderBoxplot(
             ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
             : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
 
-        // Calcular área coberta pelo boxplot (incluindo whiskers e outliers)
-        // Para tooltip: rect invisível que cobre toda a área
-        const tooltipPadding = 20; // Padding para cobrir whiskers e outliers
-        let tooltipRectX: number, tooltipRectY: number, tooltipRectWidth: number, tooltipRectHeight: number;
-        
-        if (orientation === 'vertical') {
-            // Área vertical: da posição do min até max, com padding
-            const minY = valueToYCoordinate(group.stats.min, globalMin, globalMax, topMargin, plotAreaHeight, actualScale);
-            const maxY = valueToYCoordinate(group.stats.max, globalMin, globalMax, topMargin, plotAreaHeight, actualScale);
-            tooltipRectX = centerX - currentBoxWidth / 2 - tooltipPadding;
-            tooltipRectY = Math.min(minY, maxY) - tooltipPadding;
-            tooltipRectWidth = currentBoxWidth + tooltipPadding * 2;
-            tooltipRectHeight = Math.abs(maxY - minY) + tooltipPadding * 2;
-        } else {
-            // Área horizontal
-            const minX = valueToXCoordinate(group.stats.min, globalMin, globalMax, leftMargin, plotAreaWidth, actualScale);
-            const maxX = valueToXCoordinate(group.stats.max, globalMin, globalMax, leftMargin, plotAreaWidth, actualScale);
-            tooltipRectX = Math.min(minX, maxX) - tooltipPadding;
-            tooltipRectY = centerY - currentBoxWidth / 2 - tooltipPadding;
-            tooltipRectWidth = Math.abs(maxX - minX) + tooltipPadding * 2;
-            tooltipRectHeight = currentBoxWidth + tooltipPadding * 2;
-        }
-        
-        // Gerar tooltip: rect invisível com title (colocado POR ÚLTIMO para ficar acima)
-        const tooltipText = generateTooltipText(
-            group.dimensionValue,
-            group.stats,
-            group.values.length
-        );
-        const tooltipRect = `<rect x="${tooltipRectX}" y="${tooltipRectY}" width="${tooltipRectWidth}" height="${tooltipRectHeight}" fill="transparent" stroke="none" pointer-events="all">
-            <title>${tooltipText}</title>
-        </rect>`;
-        
         return `
             <g data-group-index="${index}">
                 ${boxHtml}
@@ -335,7 +279,6 @@ export function renderBoxplot(
                 ${outliersHtml}
                 ${valueLabelsHtml}
                 ${labelHtml}
-                ${tooltipRect}
             </g>
         `;
     }).join('');

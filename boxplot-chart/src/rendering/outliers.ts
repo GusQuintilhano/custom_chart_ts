@@ -110,7 +110,8 @@ export function renderOutliers(
     outlierStyle: OutlierStyle,
     globalMin: number,
     globalMax: number,
-    scale: 'linear' | 'log' = 'linear'
+    scale: 'linear' | 'log' = 'linear',
+    groupIndex?: number
 ): string {
     if (!outlierStyle.show || stats.outliers.length === 0) {
         return '';
@@ -119,14 +120,23 @@ export function renderOutliers(
     const { plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
     const { shape, size, fill, stroke, strokeWidth } = outlierStyle;
 
-    return stats.outliers.map(outlier => {
+    return stats.outliers.map((outlier, outlierIndex) => {
+        let shapeHtml: string;
         if (orientation === 'vertical') {
             const y = valueToCoordinate(outlier, globalMin, globalMax, topMargin, plotAreaHeight, 'vertical', scale);
-            return renderOutlierShape(centerX, y, shape, size, fill, stroke, strokeWidth);
+            shapeHtml = renderOutlierShape(centerX, y, shape, size, fill, stroke, strokeWidth);
         } else {
             const x = valueToCoordinate(outlier, globalMin, globalMax, leftMargin, plotAreaWidth, 'horizontal', scale);
-            return renderOutlierShape(x, centerY, shape, size, fill, stroke, strokeWidth);
+            shapeHtml = renderOutlierShape(x, centerY, shape, size, fill, stroke, strokeWidth);
         }
+        
+        // Adicionar data attributes para tooltip
+        const dataAttrs = groupIndex !== undefined 
+            ? `data-outlier="true" data-outlier-value="${outlier}" data-group-index="${groupIndex}" data-outlier-index="${outlierIndex}"`
+            : '';
+        
+        // Envolver o shape em um grupo com data attributes
+        return `<g ${dataAttrs}>${shapeHtml}</g>`;
     }).join('');
 }
 
