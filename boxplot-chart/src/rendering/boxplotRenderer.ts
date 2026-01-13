@@ -225,12 +225,6 @@ export function renderBoxplot(
             `;
         }
         
-        // Calcular largura variável se habilitado
-        // Fórmula: boxWidth = baseWidth * sqrt(count / maxCount)
-        const currentBoxWidth = variableWidth && maxCount > 0
-            ? baseBoxWidth * Math.sqrt(group.values.length / maxCount)
-            : baseBoxWidth;
-        
         // Criar config com largura variável para este grupo
         const groupConfig = {
             ...config,
