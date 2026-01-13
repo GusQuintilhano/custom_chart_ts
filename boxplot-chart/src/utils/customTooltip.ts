@@ -227,68 +227,53 @@ export function setupCustomTooltips(
             const groupData = boxplotData.groups[index];
             if (!groupData) return;
 
-            // Adicionar event listeners apenas ao grupo (event delegation)
-            const handleMouseEnter = (e: Event) => {
-                const mouseEvent = e as MouseEvent;
-                const target = e.target as Element;
-                
-                // Se o evento foi parado por um handler de ponto, não fazer nada
-                if (e.defaultPrevented) {
-                    return;
-                }
-                
-                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
-                if (target.hasAttribute('data-jitter') || target.closest('[data-outlier]')) {
-                    return;
-                }
-                
-                if (tooltip.currentTarget === group) return; // Já está mostrando para este grupo
-                
+            // Handler para mostrar tooltip do grupo
+            const showGroupTooltip = (e: MouseEvent) => {
                 tooltip.currentTarget = group;
                 tooltip.show(
                     groupData.dimensionValue,
                     groupData.stats,
                     groupData.values.length,
-                    mouseEvent.clientX,
-                    mouseEvent.clientY
+                    e.clientX,
+                    e.clientY
                 );
             };
 
-            const handleMouseMove = (e: Event) => {
-                const mouseEvent = e as MouseEvent;
-                const target = e.target as Element;
-                
-                // Se o evento foi parado por um handler de ponto, não fazer nada
-                if (e.defaultPrevented) {
+            // Adicionar listeners aos elementos filhos do boxplot (rect, path, line, text)
+            // Mas não aos elementos que são outliers ou jitter
+            const boxplotElements = group.querySelectorAll('rect:not([data-jitter]), path:not([data-jitter]), line:not([data-jitter]), text:not([data-jitter])');
+            
+            // Filtrar elementos que estão dentro de grupos de outliers
+            boxplotElements.forEach(element => {
+                // Pular elementos que estão dentro de grupos com data-outlier
+                if (element.closest('[data-outlier]')) {
                     return;
                 }
                 
-                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
-                if (target.hasAttribute('data-jitter') || target.closest('[data-outlier]')) {
-                    return;
-                }
-                
-                if (tooltip.currentTarget === group) {
-                    tooltip.show(
-                        groupData.dimensionValue,
-                        groupData.stats,
-                        groupData.values.length,
-                        mouseEvent.clientX,
-                        mouseEvent.clientY
-                    );
-                }
-            };
+                const handleMouseEnter = (e: Event) => {
+                    const mouseEvent = e as MouseEvent;
+                    if (tooltip.currentTarget !== group) {
+                        showGroupTooltip(mouseEvent);
+                    }
+                };
 
-            const handleMouseLeave = () => {
-                if (tooltip.currentTarget === group) {
-                    tooltip.hide();
-                }
-            };
+                const handleMouseMove = (e: Event) => {
+                    const mouseEvent = e as MouseEvent;
+                    if (tooltip.currentTarget === group) {
+                        showGroupTooltip(mouseEvent);
+                    }
+                };
 
-            // Adicionar listeners apenas ao grupo (event delegation)
-            group.addEventListener('mouseenter', handleMouseEnter, true); // Use capture phase
-            group.addEventListener('mousemove', handleMouseMove, true);
-            group.addEventListener('mouseleave', handleMouseLeave, true);
+                const handleMouseLeave = () => {
+                    if (tooltip.currentTarget === group) {
+                        tooltip.hide();
+                    }
+                };
+
+                element.addEventListener('mouseenter', handleMouseEnter);
+                element.addEventListener('mousemove', handleMouseMove);
+                element.addEventListener('mouseleave', handleMouseLeave);
+            });
         });
 
         // Adicionar tooltips para outliers
@@ -301,8 +286,6 @@ export function setupCustomTooltips(
             if (!groupData) return;
 
             const handleOutlierEnter = (e: Event) => {
-                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
-                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -314,8 +297,6 @@ export function setupCustomTooltips(
             };
 
             const handleOutlierMove = (e: Event) => {
-                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
-                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -345,8 +326,6 @@ export function setupCustomTooltips(
             if (!groupData) return;
 
             const handleJitterEnter = (e: Event) => {
-                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
-                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -358,8 +337,6 @@ export function setupCustomTooltips(
             };
 
             const handleJitterMove = (e: Event) => {
-                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
-                e.preventDefault(); // Marcar como prevenido para os handlers do grupo verificarem
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
