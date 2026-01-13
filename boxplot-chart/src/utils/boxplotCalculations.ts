@@ -150,29 +150,15 @@ export function valueToCoordinate(
     
     if (scale === 'log') {
         // Para escala logarítmica, garantir valores positivos
-        // Se min <= 0, ajustar para usar um offset positivo
-        let adjustedMin = min;
-        let adjustedMax = max;
-        let adjustedValue = value;
-        
-        if (min <= 0) {
-            // Calcular offset para tornar todos os valores positivos
-            const offset = Math.abs(min) + 1; // +1 para garantir que seja > 0
-            adjustedMin = min + offset;
-            adjustedMax = max + offset;
-            adjustedValue = value + offset;
-        }
-        
-        // Verificar se ainda há valores não positivos após ajuste
-        if (adjustedMin <= 0 || adjustedMax <= 0 || adjustedValue <= 0) {
-            // Se ainda não positivo após ajuste, usar escala linear como fallback
-            console.warn('[BOXPLOT] Valores não positivos detectados na escala logarítmica, usando fallback linear. min:', min, 'max:', max, 'value:', value);
+        // Se há valores não positivos, usar escala linear como fallback
+        if (min <= 0 || max <= 0 || value <= 0) {
+            // Usar escala linear como fallback se há valores não positivos
             ratio = (value - min) / (max - min);
         } else {
             // Escala logarítmica: log(value) entre log(min) e log(max)
-            const logMin = Math.log10(adjustedMin);
-            const logMax = Math.log10(adjustedMax);
-            const logValue = Math.log10(adjustedValue);
+            const logMin = Math.log10(min);
+            const logMax = Math.log10(max);
+            const logValue = Math.log10(value);
             ratio = (logValue - logMin) / (logMax - logMin);
         }
     } else {
