@@ -231,8 +231,9 @@ export function setupCustomTooltips(
             const handleMouseEnter = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
                 // Verificar se o target é um ponto (outlier ou jitter)
-                const target = e.target as HTMLElement;
-                if (target.hasAttribute('data-outlier') || target.hasAttribute('data-jitter')) {
+                const target = e.target as Element;
+                // Se o elemento ou algum ancestral tem data-outlier ou data-jitter, pular
+                if (target.closest('[data-outlier], [data-jitter]')) {
                     return; // Deixar que os handlers específicos de pontos tratem
                 }
                 
@@ -250,8 +251,9 @@ export function setupCustomTooltips(
 
             const handleMouseMove = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
-                const target = e.target as HTMLElement;
-                if (target.hasAttribute('data-outlier') || target.hasAttribute('data-jitter')) {
+                const target = e.target as Element;
+                // Se o elemento ou algum ancestral tem data-outlier ou data-jitter, pular
+                if (target.closest('[data-outlier], [data-jitter]')) {
                     return; // Deixar que os handlers específicos de pontos tratem
                 }
                 
@@ -281,8 +283,12 @@ export function setupCustomTooltips(
             const childElements = group.querySelectorAll('rect, path, circle, line');
             childElements.forEach(child => {
                 // Pular elementos que são outliers ou jitter (têm handlers próprios)
-                if (child.hasAttribute('data-outlier') || child.hasAttribute('data-jitter') || 
-                    child.closest('g[data-outlier]') || child.closest('circle[data-jitter]')) {
+                // Não adicionar listeners a elementos que estão dentro de grupos com data-outlier ou data-jitter
+                if (child.closest('[data-outlier], [data-jitter]')) {
+                    return;
+                }
+                // Não adicionar listeners a elementos que têm data-jitter diretamente
+                if (child.hasAttribute('data-jitter')) {
                     return;
                 }
                 child.addEventListener('mouseenter', handleMouseEnter);
