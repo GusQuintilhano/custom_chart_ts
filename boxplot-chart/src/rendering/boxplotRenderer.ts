@@ -15,7 +15,7 @@ import { renderDividerLines } from './dividerLines';
 import { renderValueLabels } from './valueLabels';
 import { formatValue } from '@shared/utils/formatters';
 import type { GridLinesConfig } from '../types/boxplotTypes';
-import { generateTooltipRect } from '../utils/tooltipUtils';
+import { generateTooltipText } from '../utils/tooltipUtils';
 import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 /**
@@ -202,31 +202,31 @@ export function renderBoxplot(
                 ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
                 : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
             
-            // Calcular área do tooltip (rect invisível)
-            const tooltipPadding = 30; // Espaço extra para outliers/whiskers
-            const tooltipRectX = orientation === 'vertical'
-                ? centerX - 50 // Largura aproximada para dot plot
-                : leftMargin - tooltipPadding;
-            const tooltipRectY = orientation === 'vertical'
-                ? topMargin - tooltipPadding
-                : centerY - 50;
-            const tooltipRectWidth = orientation === 'vertical'
-                ? 100
-                : plotAreaWidth + tooltipPadding * 2;
-            const tooltipRectHeight = orientation === 'vertical'
-                ? plotAreaHeight + tooltipPadding * 2
-                : 100;
+            // Calcular área coberta pelo dot plot para tooltip
+            const tooltipPadding = 30;
+            let tooltipRectX: number, tooltipRectY: number, tooltipRectWidth: number, tooltipRectHeight: number;
             
-            // Gerar tooltip para o grupo (rect invisível com title)
-            const tooltipRect = generateTooltipRect(
+            if (orientation === 'vertical') {
+                tooltipRectX = centerX - 50 - tooltipPadding;
+                tooltipRectY = topMargin - tooltipPadding;
+                tooltipRectWidth = 100 + tooltipPadding * 2;
+                tooltipRectHeight = plotAreaHeight + tooltipPadding * 2;
+            } else {
+                tooltipRectX = leftMargin - tooltipPadding;
+                tooltipRectY = centerY - 50 - tooltipPadding;
+                tooltipRectWidth = plotAreaWidth + tooltipPadding * 2;
+                tooltipRectHeight = 100 + tooltipPadding * 2;
+            }
+            
+            // Gerar tooltip: rect invisível com title
+            const tooltipText = generateTooltipText(
                 group.dimensionValue,
                 group.stats,
-                group.values.length,
-                tooltipRectX,
-                tooltipRectY,
-                tooltipRectWidth,
-                tooltipRectHeight
+                group.values.length
             );
+            const tooltipRect = `<rect x="${tooltipRectX}" y="${tooltipRectY}" width="${tooltipRectWidth}" height="${tooltipRectHeight}" fill="transparent" stroke="none" pointer-events="all">
+                <title>${tooltipText}</title>
+            </rect>`;
             
             return `
                 <g data-group-index="${index}">
@@ -281,31 +281,38 @@ export function renderBoxplot(
             ? `<text x="${centerX}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`
             : `<text x="${labelX}" y="${centerY + 5}" text-anchor="end" font-size="${labelFontSize}" fill="#374151">${group.dimensionValue}</text>`;
 
-        // Calcular área do tooltip (rect invisível)
-        const tooltipPadding = 40; // Espaço extra para outliers/whiskers
-        const tooltipRectX = orientation === 'vertical'
-            ? centerX - currentBoxWidth / 2 - tooltipPadding
-            : leftMargin - tooltipPadding;
-        const tooltipRectY = orientation === 'vertical'
-            ? topMargin - tooltipPadding
-            : centerY - currentBoxWidth / 2 - tooltipPadding;
-        const tooltipRectWidth = orientation === 'vertical'
-            ? currentBoxWidth + tooltipPadding * 2
-            : plotAreaWidth + tooltipPadding * 2;
-        const tooltipRectHeight = orientation === 'vertical'
-            ? plotAreaHeight + tooltipPadding * 2
-            : currentBoxWidth + tooltipPadding * 2;
+        // Calcular área coberta pelo boxplot (incluindo whiskers e outliers)
+        // Para tooltip: rect invisível que cobre toda a área
+        const tooltipPadding = 20; // Padding para cobrir whiskers e outliers
+        let tooltipRectX: number, tooltipRectY: number, tooltipRectWidth: number, tooltipRectHeight: number;
         
-        // Gerar tooltip para o grupo (rect invisível com title)
-        const tooltipRect = generateTooltipRect(
+        if (orientation === 'vertical') {
+            // Área vertical: da posição do min até max, com padding
+            const minY = valueToYCoordinate(group.stats.min, globalMin, globalMax, topMargin, plotAreaHeight, actualScale);
+            const maxY = valueToYCoordinate(group.stats.max, globalMin, globalMax, topMargin, plotAreaHeight, actualScale);
+            tooltipRectX = centerX - currentBoxWidth / 2 - tooltipPadding;
+            tooltipRectY = Math.min(minY, maxY) - tooltipPadding;
+            tooltipRectWidth = currentBoxWidth + tooltipPadding * 2;
+            tooltipRectHeight = Math.abs(maxY - minY) + tooltipPadding * 2;
+        } else {
+            // Área horizontal
+            const minX = valueToXCoordinate(group.stats.min, globalMin, globalMax, leftMargin, plotAreaWidth, actualScale);
+            const maxX = valueToXCoordinate(group.stats.max, globalMin, globalMax, leftMargin, plotAreaWidth, actualScale);
+            tooltipRectX = Math.min(minX, maxX) - tooltipPadding;
+            tooltipRectY = centerY - currentBoxWidth / 2 - tooltipPadding;
+            tooltipRectWidth = Math.abs(maxX - minX) + tooltipPadding * 2;
+            tooltipRectHeight = currentBoxWidth + tooltipPadding * 2;
+        }
+        
+        // Gerar tooltip: rect invisível com title
+        const tooltipText = generateTooltipText(
             group.dimensionValue,
             group.stats,
-            group.values.length,
-            tooltipRectX,
-            tooltipRectY,
-            tooltipRectWidth,
-            tooltipRectHeight
+            group.values.length
         );
+        const tooltipRect = `<rect x="${tooltipRectX}" y="${tooltipRectY}" width="${tooltipRectWidth}" height="${tooltipRectHeight}" fill="transparent" stroke="none" pointer-events="all">
+            <title>${tooltipText}</title>
+        </rect>`;
         
         return `
             <g data-group-index="${index}">
