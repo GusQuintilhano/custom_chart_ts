@@ -164,7 +164,8 @@ export function setupCustomTooltips(
             if (!groupData) return;
 
             // Adicionar event listeners para todos os elementos filhos do grupo
-            const handleMouseEnter = (e: MouseEvent) => {
+            const handleMouseEnter = (e: Event) => {
+                const mouseEvent = e as MouseEvent;
                 if (tooltip.currentTarget === group) return; // Já está mostrando para este grupo
                 
                 tooltip.currentTarget = group;
@@ -172,19 +173,20 @@ export function setupCustomTooltips(
                     groupData.dimensionValue,
                     groupData.stats,
                     groupData.values.length,
-                    e.clientX,
-                    e.clientY
+                    mouseEvent.clientX,
+                    mouseEvent.clientY
                 );
             };
 
-            const handleMouseMove = (e: MouseEvent) => {
+            const handleMouseMove = (e: Event) => {
+                const mouseEvent = e as MouseEvent;
                 if (tooltip.currentTarget === group) {
                     tooltip.show(
                         groupData.dimensionValue,
                         groupData.stats,
                         groupData.values.length,
-                        e.clientX,
-                        e.clientY
+                        mouseEvent.clientX,
+                        mouseEvent.clientY
                     );
                 }
             };
