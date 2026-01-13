@@ -117,16 +117,28 @@ export function renderBoxplot(
     // Debug: verificar dimensões
     console.log('[BOXPLOT RENDER] plotAreaWidth:', plotAreaWidth, 'leftMargin:', leftMargin, 'numGroups:', groups.length);
 
-    // Calcular range global para coordenadas usando os valores reais min/max dos dados
-    // (dentro dos whiskers) ao invés dos limites teóricos, para evitar espaços vazios
-    const actualMin = groups.length > 0 
-        ? Math.min(...groups.map(g => g.stats.min))
-        : boxplotData.globalStats.whiskerLower;
-    const actualMax = groups.length > 0
-        ? Math.max(...groups.map(g => g.stats.max))
-        : boxplotData.globalStats.whiskerUpper;
-    const globalMin = actualMin;
-    const globalMax = actualMax;
+    // Calcular range global para coordenadas:
+    // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
+    // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)
+    const showOutliers = options.showOutliers !== false;
+    let globalMin: number;
+    let globalMax: number;
+    
+    if (showOutliers) {
+        // Incluir outliers: usar valores absolutos min/max de todos os dados
+        const allDataValues = groups.flatMap(g => g.values);
+        if (allDataValues.length > 0) {
+            globalMin = Math.min(...allDataValues);
+            globalMax = Math.max(...allDataValues);
+        } else {
+            globalMin = boxplotData.globalStats.whiskerLower;
+            globalMax = boxplotData.globalStats.whiskerUpper;
+        }
+    } else {
+        // Sem outliers: usar limites dos whiskers
+        globalMin = boxplotData.globalStats.whiskerLower;
+        globalMax = boxplotData.globalStats.whiskerUpper;
+    }
 
     // Determinar escala real: se logarítmica foi solicitada mas há valores não positivos, usar linear
     let actualScale: 'linear' | 'log' = yScale;
@@ -218,7 +230,7 @@ export function renderBoxplot(
                 tooltipRectHeight = 100 + tooltipPadding * 2;
             }
             
-            // Gerar tooltip: rect invisível com title
+            // Gerar tooltip: rect invisível com title (colocado POR ÚLTIMO para ficar acima)
             const tooltipText = generateTooltipText(
                 group.dimensionValue,
                 group.stats,
@@ -230,9 +242,9 @@ export function renderBoxplot(
             
             return `
                 <g data-group-index="${index}">
-                    ${tooltipRect}
                     ${dotPlotHtml}
                     ${labelHtml}
+                    ${tooltipRect}
                 </g>
             `;
         }
@@ -304,7 +316,7 @@ export function renderBoxplot(
             tooltipRectHeight = currentBoxWidth + tooltipPadding * 2;
         }
         
-        // Gerar tooltip: rect invisível com title
+        // Gerar tooltip: rect invisível com title (colocado POR ÚLTIMO para ficar acima)
         const tooltipText = generateTooltipText(
             group.dimensionValue,
             group.stats,
@@ -316,7 +328,6 @@ export function renderBoxplot(
         
         return `
             <g data-group-index="${index}">
-                ${tooltipRect}
                 ${boxHtml}
                 ${whiskersHtml}
                 ${medianHtml}
@@ -324,6 +335,7 @@ export function renderBoxplot(
                 ${outliersHtml}
                 ${valueLabelsHtml}
                 ${labelHtml}
+                ${tooltipRect}
             </g>
         `;
     }).join('');
