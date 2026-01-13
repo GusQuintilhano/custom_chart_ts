@@ -321,7 +321,7 @@ export function readBoxplotOptions(
         showMean: medianStyleSection.showMean === true,
         showNotch: medianStyleSection.showNotch === true,
         sortType: (axes.sortType as SortType) || 'Alfabética',
-        yScale: mapYScale(axes.yScale as string) || mapYScale(chartOptions.yScale as string) || 'linear',
+        yScale: (mapYScale(axes.yScale as string) || mapYScale(chartOptions.yScale as string) || 'linear') as 'linear' | 'log',
         medianStyle,
         whiskerStyle,
         boxStyle,
