@@ -17,6 +17,7 @@ import { readBoxplotOptions } from './utils/boxplotOptions';
 import { renderBoxplot, renderYAxis } from './rendering/boxplotRenderer';
 import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
 import { ChartToTSEvent, ColumnType, ChartColumn } from '@thoughtspot/ts-chart-sdk';
+import { setupCustomTooltips } from './utils/customTooltip';
 
 function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
     // Rastrear hover em caixas do boxplot
@@ -297,17 +298,31 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
         
-        // Calcular range real para o eixo Y usando valores min/max reais dos dados
-        // (dentro dos whiskers) ao invés dos limites teóricos
-        const actualYMin = boxplotData.groups.length > 0
-            ? Math.min(...boxplotData.groups.map(g => g.stats.min))
-            : boxplotData.globalStats.whiskerLower;
-        const actualYMax = boxplotData.groups.length > 0
-            ? Math.max(...boxplotData.groups.map(g => g.stats.max))
-            : boxplotData.globalStats.whiskerUpper;
+        // Calcular range para o eixo Y:
+        // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
+        // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)
+        const showOutliers = options.showOutliers !== false;
+        let actualYMin: number;
+        let actualYMax: number;
+        
+        if (showOutliers) {
+            // Incluir outliers: usar valores absolutos min/max de todos os dados
+            const allDataValues = boxplotData.groups.flatMap(g => g.values);
+            if (allDataValues.length > 0) {
+                actualYMin = Math.min(...allDataValues);
+                actualYMax = Math.max(...allDataValues);
+            } else {
+                actualYMin = boxplotData.globalStats.whiskerLower;
+                actualYMax = boxplotData.globalStats.whiskerUpper;
+            }
+        } else {
+            // Sem outliers: usar limites dos whiskers
+            actualYMin = boxplotData.globalStats.whiskerLower;
+            actualYMax = boxplotData.globalStats.whiskerUpper;
+        }
 
         // Debug: verificar yScale, valores globais e dimensões
-        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'whiskerLower teórico:', boxplotData.globalStats.whiskerLower, 'whiskerUpper teórico:', boxplotData.globalStats.whiskerUpper, 'actualYMin (real):', actualYMin, 'actualYMax (real):', actualYMax, 'numGroups:', boxplotData.groups.length);
+        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'showOutliers:', showOutliers, 'whiskerLower:', boxplotData.globalStats.whiskerLower, 'whiskerUpper:', boxplotData.globalStats.whiskerUpper, 'actualYMin:', actualYMin, 'actualYMax:', actualYMax, 'numGroups:', boxplotData.groups.length);
         
         // Avisar se há muitos grupos (pode causar sobreposição)
         if (boxplotData.groups.length > 100) {
@@ -355,6 +370,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         );
 
         chartElement.innerHTML = html;
+        
+        // Configurar tooltips customizados
+        setupCustomTooltips(chartElement, boxplotData);
         
         // Adicionar event listeners para rastrear interações do usuário
         setupInteractionTracking(chartElement, userId);
