@@ -296,6 +296,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
             return;
         }
+        
+        // Debug: verificar yScale e valores globais
+        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'globalMin:', boxplotData.globalStats.whiskerLower, 'globalMax:', boxplotData.globalStats.whiskerUpper);
 
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
