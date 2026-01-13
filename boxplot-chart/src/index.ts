@@ -256,6 +256,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Ler opções primeiro (necessárias para cálculos)
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
+        
+        // Debug: verificar yScale
+        logger.debug('yScale lido:', options.yScale);
 
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
