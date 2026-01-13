@@ -297,8 +297,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
         
-        // Debug: verificar yScale e valores globais
-        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'globalMin:', boxplotData.globalStats.whiskerLower, 'globalMax:', boxplotData.globalStats.whiskerUpper);
+        // Debug: verificar yScale, valores globais e dimensões
+        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'globalMin:', boxplotData.globalStats.whiskerLower, 'globalMax:', boxplotData.globalStats.whiskerUpper, 'numGroups:', boxplotData.groups.length);
 
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
