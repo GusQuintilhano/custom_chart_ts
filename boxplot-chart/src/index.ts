@@ -297,8 +297,17 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
         
+        // Calcular range real para o eixo Y usando valores min/max reais dos dados
+        // (dentro dos whiskers) ao invés dos limites teóricos
+        const actualYMin = boxplotData.groups.length > 0
+            ? Math.min(...boxplotData.groups.map(g => g.stats.min))
+            : boxplotData.globalStats.whiskerLower;
+        const actualYMax = boxplotData.groups.length > 0
+            ? Math.max(...boxplotData.groups.map(g => g.stats.max))
+            : boxplotData.globalStats.whiskerUpper;
+
         // Debug: verificar yScale, valores globais e dimensões
-        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'globalMin:', boxplotData.globalStats.whiskerLower, 'globalMax:', boxplotData.globalStats.whiskerUpper, 'numGroups:', boxplotData.groups.length);
+        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'whiskerLower teórico:', boxplotData.globalStats.whiskerLower, 'whiskerUpper teórico:', boxplotData.globalStats.whiskerUpper, 'actualYMin (real):', actualYMin, 'actualYMax (real):', actualYMax, 'numGroups:', boxplotData.groups.length);
         
         // Avisar se há muitos grupos (pode causar sobreposição)
         if (boxplotData.groups.length > 100) {
@@ -319,8 +328,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Renderizar boxplot
         const boxplotHtml = renderBoxplot(boxplotData, dimensions, options);
         const yAxisHtml = renderYAxis(
-            boxplotData.globalStats.whiskerLower,
-            boxplotData.globalStats.whiskerUpper,
+            actualYMin,
+            actualYMax,
             dimensions,
             options
         );

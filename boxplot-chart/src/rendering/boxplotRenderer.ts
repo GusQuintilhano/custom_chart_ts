@@ -25,7 +25,8 @@ function renderGridLines(
     config: BoxplotRenderConfig,
     options: BoxplotOptions,
     globalMin: number,
-    globalMax: number
+    globalMax: number,
+    actualScale: 'linear' | 'log'
 ): string {
     if (!options.gridLines?.show) {
         return '';
@@ -33,7 +34,7 @@ function renderGridLines(
 
     const gridLines = options.gridLines as GridLinesConfig;
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin } = config;
-    const { orientation, yScale } = options;
+    const { orientation } = options;
 
     const color = gridLines.color || '#e5e7eb';
     const strokeWidth = gridLines.strokeWidth || 1;
@@ -47,7 +48,7 @@ function renderGridLines(
         // Linhas horizontais para orientação vertical
         for (let i = 0; i <= numLines; i++) {
             const value = globalMin + (globalMax - globalMin) * (i / numLines);
-            const y = valueToYCoordinate(value, globalMin, globalMax, topMargin, plotAreaHeight, yScale);
+            const y = valueToYCoordinate(value, globalMin, globalMax, topMargin, plotAreaHeight, actualScale);
             
             lines.push(`
                 <line
@@ -66,7 +67,7 @@ function renderGridLines(
         // Linhas verticais para orientação horizontal
         for (let i = 0; i <= numLines; i++) {
             const value = globalMin + (globalMax - globalMin) * (i / numLines);
-            const x = valueToXCoordinate(value, globalMin, globalMax, leftMargin, plotAreaWidth, yScale);
+            const x = valueToXCoordinate(value, globalMin, globalMax, leftMargin, plotAreaWidth, actualScale);
             
             lines.push(`
                 <line
@@ -116,12 +117,27 @@ export function renderBoxplot(
     // Debug: verificar dimensões
     console.log('[BOXPLOT RENDER] plotAreaWidth:', plotAreaWidth, 'leftMargin:', leftMargin, 'numGroups:', groups.length);
 
-    // Calcular range global para coordenadas
-    const globalMin = boxplotData.globalStats.whiskerLower;
-    const globalMax = boxplotData.globalStats.whiskerUpper;
+    // Calcular range global para coordenadas usando os valores reais min/max dos dados
+    // (dentro dos whiskers) ao invés dos limites teóricos, para evitar espaços vazios
+    const actualMin = groups.length > 0 
+        ? Math.min(...groups.map(g => g.stats.min))
+        : boxplotData.globalStats.whiskerLower;
+    const actualMax = groups.length > 0
+        ? Math.max(...groups.map(g => g.stats.max))
+        : boxplotData.globalStats.whiskerUpper;
+    const globalMin = actualMin;
+    const globalMax = actualMax;
+
+    // Determinar escala real: se logarítmica foi solicitada mas há valores não positivos, usar linear
+    let actualScale: 'linear' | 'log' = yScale;
+    if (yScale === 'log' && (globalMin <= 0 || globalMax <= 0)) {
+        actualScale = 'linear';
+        console.warn('[BOXPLOT] Escala logarítmica solicitada, mas há valores não positivos (min:', globalMin, 'max:', globalMax, '). Usando escala linear.');
+    }
+    console.log('[BOXPLOT RENDER] yScale solicitado:', yScale, 'actualScale aplicado:', actualScale, 'globalMin:', globalMin, 'globalMax:', globalMax);
 
     // Renderizar linhas de grade primeiro (vão para trás)
-    const gridLinesHtml = renderGridLines(config, options, globalMin, globalMax);
+    const gridLinesHtml = renderGridLines(config, options, globalMin, globalMax, actualScale);
     
     // Renderizar linhas divisórias entre grupos (depois das grid lines)
     const dividerLinesHtml = renderDividerLines(config, options, groups.length);
@@ -129,7 +145,7 @@ export function renderBoxplot(
     // Renderizar linhas de referência (depois das grid lines e divider lines, antes dos boxplots)
     const referenceLinesHtml = renderReferenceLines(
         config,
-        { referenceLines, yScale, orientation },
+        { referenceLines, yScale: actualScale, orientation },
         boxplotData.globalStats,
         globalMin,
         globalMax
@@ -157,12 +173,12 @@ export function renderBoxplot(
         // Para vertical: distribuir grupos horizontalmente dentro da área de plotagem
         // Usar distribuição uniforme simples começando após o eixo Y (leftMargin)
         const centerX = orientation === 'vertical'
-            ? leftMargin + (index + 0.5) * (plotAreaWidth / groups.length)
+            ? leftMargin + (index + 0.5) * (plotAreaWidth / Math.max(groups.length, 1))
             : baseCenterX;
         
         const centerY = orientation === 'vertical'
             ? baseCenterY
-            : topMargin + (index + 0.5) * (plotAreaHeight / groups.length);
+            : topMargin + (index + 0.5) * (plotAreaHeight / Math.max(groups.length, 1));
         
         // Armazenar posição do centro para jitter plot
         centerPositions.push({ centerX, centerY });
@@ -172,7 +188,7 @@ export function renderBoxplot(
         
         if (insufficientSample) {
             // Renderizar dot plot para amostra insuficiente
-            const dotPlotHtml = renderDotPlot(group, centerX, centerY, config, orientation, globalMin, globalMax, yScale);
+            const dotPlotHtml = renderDotPlot(group, centerX, centerY, config, orientation, globalMin, globalMax, actualScale);
             
             // Label da dimensão
             const labelY = orientation === 'vertical' 
@@ -228,16 +244,16 @@ export function renderBoxplot(
         };
 
         // Renderizar elementos do boxplot usando as novas configurações
-        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, groupConfig, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length, yScale);
-        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, groupConfig, orientation, whiskerStyle, globalMin, globalMax, yScale);
-        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, groupConfig, orientation, medianStyle, currentBoxWidth, globalMin, globalMax, yScale);
+        const boxHtml = renderBoxplotBox(group.stats, centerX, centerY, groupConfig, orientation, boxStyle, globalMin, globalMax, showNotch, group.values.length, actualScale);
+        const whiskersHtml = renderBoxplotWhiskers(group.stats, centerX, centerY, groupConfig, orientation, whiskerStyle, globalMin, globalMax, actualScale);
+        const medianHtml = renderBoxplotMedian(group.stats, centerX, centerY, groupConfig, orientation, medianStyle, currentBoxWidth, globalMin, globalMax, actualScale);
         
         // Renderizar média se habilitado
         const meanHtml = showMean && group.stats.mean !== undefined
-            ? renderBoxplotMean(group.stats, centerX, centerY, groupConfig, orientation, medianStyle.color, 3, currentBoxWidth, globalMin, globalMax, yScale)
+            ? renderBoxplotMean(group.stats, centerX, centerY, groupConfig, orientation, medianStyle.color, 3, currentBoxWidth, globalMin, globalMax, actualScale)
             : '';
         
-        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, yScale);
+        const outliersHtml = renderOutliers(group.stats, centerX, centerY, config, orientation, outlierStyle, globalMin, globalMax, actualScale);
 
         // Renderizar labels de valores (quartis)
         const valueLabelsHtml = renderValueLabels(
@@ -250,7 +266,7 @@ export function renderBoxplot(
             currentBoxWidth,
             globalMin,
             globalMax,
-            yScale
+            actualScale
         );
 
         // Label da dimensão
@@ -307,7 +323,7 @@ export function renderBoxplot(
 
     // Renderizar jitter plot se habilitado (antes dos boxplots, mas depois das linhas)
     const jitterHtml = showJitter
-        ? renderJitterPlot(groups, config, orientation, centerPositions, globalMin, globalMax, yScale, jitterOpacity, baseBoxWidth)
+        ? renderJitterPlot(groups, config, orientation, centerPositions, globalMin, globalMax, actualScale, jitterOpacity, baseBoxWidth)
         : '';
 
     return gridLinesHtml + dividerLinesHtml + referenceLinesHtml + jitterHtml + boxesHtml;
