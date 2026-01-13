@@ -140,13 +140,22 @@ export const renderChart = async (ctx: CustomChartContext) => {
             return;
         }
 
+        // Tentar obter chartConfig para identificar quais dimensões estão em cada seção
+        let chartConfig: any = null;
+        try {
+            const ctxAny = ctx as any;
+            chartConfig = ctxAny.getChartConfig?.() || ctxAny.chartConfig || (chartModel as any).chartConfig;
+        } catch (e) {
+            // Se não conseguir acessar chartConfig, continua com lógica alternativa
+        }
+
         // Obter colunas
         // O Chart Config Editor já filtra quais colunas são usadas nas queries
         // As colunas em chartModel.columns já são apenas as que o usuário arrastou para as seções
         const measureColumns = chartModel.columns.filter(col => col.type === ColumnType.MEASURE);
-        const dimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
+        const allDimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
 
-        if (measureColumns.length === 0 || dimensionColumns.length === 0) {
+        if (measureColumns.length === 0 || allDimensionColumns.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Boxplot requer pelo menos 1 medida e 1 dimensão</div>';
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
             return;
@@ -154,6 +163,30 @@ export const renderChart = async (ctx: CustomChartContext) => {
 
         // Usar primeira medida
         const measureColumn = measureColumns[0];
+        
+        // Identificar quais dimensões estão na seção 'x' (Categoria/Atributo) vs 'detail' (Granularidade)
+        let dimensionColumnsForGrouping: ChartColumn[] = [];
+        
+        if (chartConfig && Array.isArray(chartConfig) && chartConfig.length > 0) {
+            // Tentar encontrar a dimensão com key 'x' no chartConfig
+            const firstConfig = chartConfig[0];
+            if (firstConfig && firstConfig.dimensions && Array.isArray(firstConfig.dimensions)) {
+                const xDimension = firstConfig.dimensions.find((dim: any) => dim.key === 'x');
+                if (xDimension && xDimension.columns && Array.isArray(xDimension.columns)) {
+                    // Filtrar apenas as colunas que estão na seção 'x'
+                    const xColumnIds = new Set(xDimension.columns.map((col: any) => col.id || col.name));
+                    dimensionColumnsForGrouping = allDimensionColumns.filter(col => 
+                        xColumnIds.has(col.id) || xColumnIds.has(col.name)
+                    );
+                }
+            }
+        }
+        
+        // Fallback: se não conseguiu identificar através do chartConfig, usar todas as dimensões
+        // (comportamento antigo)
+        if (dimensionColumnsForGrouping.length === 0) {
+            dimensionColumnsForGrouping = allDimensionColumns;
+        }
         
         // Calcular dimensões do container
         const containerWidth = chartElement.clientWidth || 800;
@@ -165,7 +198,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
             sessionId,
             dataSize,
             measureColumns.length,
-            dimensionColumns.length,
+            dimensionColumnsForGrouping.length,
             containerWidth,
             containerHeight
         );
@@ -190,10 +223,6 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Ler opções primeiro (necessárias para cálculos)
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
-        
-        // Usar apenas a primeira dimensão para agrupamento (Eixo X)
-        // As dimensões da seção 'detail' (granularidade) não são usadas para agrupamento
-        const filteredDimensionColumns = dimensionColumns.length > 0 ? [dimensionColumns[0]] : [];
 
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
@@ -227,7 +256,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
         }, userId);
 
         // Calcular dados do boxplot com as opções configuradas
-        const boxplotData = calculateBoxplotData(chartModel, measureColumn, filteredDimensionColumns, options);
+        // Usar apenas as dimensões da seção 'x' (Categoria/Atributo) para agrupamento
+        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumnsForGrouping, options);
         if (!boxplotData || boxplotData.groups.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Não foi possível calcular os dados do Boxplot</div>';
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
