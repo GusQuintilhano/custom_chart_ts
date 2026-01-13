@@ -309,8 +309,16 @@ export const renderChart = async (ctx: CustomChartContext) => {
             // Incluir outliers: usar valores absolutos min/max de todos os dados
             const allDataValues = boxplotData.groups.flatMap(g => g.values);
             if (allDataValues.length > 0) {
-                actualYMin = Math.min(...allDataValues);
-                actualYMax = Math.max(...allDataValues);
+                // Usar loop ao invés de spread operator para evitar "Maximum call stack size exceeded" com arrays grandes
+                let min = allDataValues[0];
+                let max = allDataValues[0];
+                for (let i = 1; i < allDataValues.length; i++) {
+                    const val = allDataValues[i];
+                    if (val < min) min = val;
+                    if (val > max) max = val;
+                }
+                actualYMin = min;
+                actualYMax = max;
             } else {
                 actualYMin = boxplotData.globalStats.whiskerLower;
                 actualYMax = boxplotData.globalStats.whiskerUpper;
@@ -321,9 +329,6 @@ export const renderChart = async (ctx: CustomChartContext) => {
             actualYMax = boxplotData.globalStats.whiskerUpper;
         }
 
-        // Debug: verificar yScale, valores globais e dimensões
-        console.log('[BOXPLOT DEBUG] yScale:', options.yScale, 'showOutliers:', showOutliers, 'whiskerLower:', boxplotData.globalStats.whiskerLower, 'whiskerUpper:', boxplotData.globalStats.whiskerUpper, 'actualYMin:', actualYMin, 'actualYMax:', actualYMax, 'numGroups:', boxplotData.groups.length);
-        
         // Avisar se há muitos grupos (pode causar sobreposição)
         if (boxplotData.groups.length > 100) {
             console.warn('[BOXPLOT] Número de grupos muito alto (' + boxplotData.groups.length + '). A visualização pode estar comprometida devido à sobreposição.');
@@ -372,7 +377,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         chartElement.innerHTML = html;
         
         // Configurar tooltips customizados
-        setupCustomTooltips(chartElement, boxplotData);
+        setupCustomTooltips(chartElement, boxplotData, options.tooltip);
         
         // Adicionar event listeners para rastrear interações do usuário
         setupInteractionTracking(chartElement, userId);
