@@ -242,6 +242,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
             boxWidth: options.boxWidth,
             groupSpacing: options.layout.groupSpacing || options.padding,
             layout: options.layout,
+            fitWidth: options.fitWidth, // Passar fitWidth para cálculo de dimensões
         });
 
         // Renderizar boxplot

@@ -334,7 +334,7 @@ export function readBoxplotOptions(
         tooltip,
         valueLabels,
         padding,
-        fitWidth: false, // Sempre false (não usar largura 100%)
+        fitWidth: typeof layoutConfig.fitWidth === 'boolean' ? layoutConfig.fitWidth : false, // Por padrão false (largura calculada pela quantidade de itens)
         layout,
         axisLabels,
     };
