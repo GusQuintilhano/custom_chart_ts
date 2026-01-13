@@ -230,11 +230,18 @@ export function setupCustomTooltips(
             // Adicionar event listeners para todos os elementos filhos do grupo
             const handleMouseEnter = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
-                // Verificar se o target é um ponto (outlier ou jitter)
                 const target = e.target as Element;
-                // Se o elemento ou algum ancestral tem data-outlier ou data-jitter, pular
-                if (target.closest('[data-outlier], [data-jitter]')) {
-                    return; // Deixar que os handlers específicos de pontos tratem
+                
+                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
+                // Os handlers específicos dos pontos vão tratar (e já fizeram stopPropagation)
+                if (target.hasAttribute('data-jitter')) {
+                    return;
+                }
+                
+                // Verificar se o target está dentro de um grupo de outlier
+                const outlierGroup = target.closest('[data-outlier]');
+                if (outlierGroup) {
+                    return;
                 }
                 
                 if (tooltip.currentTarget === group) return; // Já está mostrando para este grupo
@@ -252,9 +259,16 @@ export function setupCustomTooltips(
             const handleMouseMove = (e: Event) => {
                 const mouseEvent = e as MouseEvent;
                 const target = e.target as Element;
-                // Se o elemento ou algum ancestral tem data-outlier ou data-jitter, pular
-                if (target.closest('[data-outlier], [data-jitter]')) {
-                    return; // Deixar que os handlers específicos de pontos tratem
+                
+                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
+                if (target.hasAttribute('data-jitter')) {
+                    return;
+                }
+                
+                // Verificar se o target está dentro de um grupo de outlier
+                const outlierGroup = target.closest('[data-outlier]');
+                if (outlierGroup) {
+                    return;
                 }
                 
                 if (tooltip.currentTarget === group) {
@@ -307,6 +321,7 @@ export function setupCustomTooltips(
             if (!groupData) return;
 
             const handleOutlierEnter = (e: Event) => {
+                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -318,6 +333,7 @@ export function setupCustomTooltips(
             };
 
             const handleOutlierMove = (e: Event) => {
+                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -347,6 +363,7 @@ export function setupCustomTooltips(
             if (!groupData) return;
 
             const handleJitterEnter = (e: Event) => {
+                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
@@ -358,6 +375,7 @@ export function setupCustomTooltips(
             };
 
             const handleJitterMove = (e: Event) => {
+                e.stopPropagation(); // Impedir que o evento chegue aos handlers do grupo
                 const mouseEvent = e as MouseEvent;
                 tooltip.showPoint(
                     pointValue,
