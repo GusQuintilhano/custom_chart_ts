@@ -48,8 +48,6 @@ COPY --from=dist /app /app/app
 
 EXPOSE 8080
 
-# Usar script de entrada que encontra server.js em qualquer localização
-# O script já está incluído na cópia acima, apenas garantir permissão
-RUN chmod +x /app/app/charts-router/start.sh
-
+# Usar script de entrada que encontra server.js em qualquer localização.
+# A permissão de execução do script é controlada no repositório (bit +x em start.sh)
 ENTRYPOINT [ "/executor", "/app/app/charts-router/start.sh" ]
