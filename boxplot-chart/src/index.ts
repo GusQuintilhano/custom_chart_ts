@@ -20,67 +20,89 @@ import { ChartToTSEvent, ColumnType, ChartColumn } from '@thoughtspot/ts-chart-s
 import { setupCustomTooltips } from './utils/customTooltip';
 
 function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
-    // Rastrear hover em caixas do boxplot
-    const boxes = chartElement.querySelectorAll('rect[class*="box"], path[class*="box"]');
-    boxes.forEach((box, index) => {
-        box.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `box-${index}`, {
-                elementType: 'box',
+    // Rastrear hover em grupos do boxplot
+    const groups = chartElement.querySelectorAll('g[data-group-index]');
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        
+        // Rastrear hover no grupo inteiro
+        group.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `group-${groupIndex}`, {
+                elementType: 'group',
+                groupIndex: groupIndex,
             });
         });
         
-        box.addEventListener('click', () => {
-            analytics.trackInteraction('boxplot', 'click', `box-${index}`, {
-                elementType: 'box',
-            });
-        });
-    });
-    
-    // Rastrear hover em outliers
-    const outliers = chartElement.querySelectorAll('circle[class*="outlier"], path[class*="outlier"]');
-    outliers.forEach((outlier, index) => {
-        outlier.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `outlier-${index}`, {
-                elementType: 'outlier',
-            });
-        });
-    });
-    
-    // Rastrear hover em pontos de jitter
-    const jitterPoints = chartElement.querySelectorAll('circle[class*="jitter-point"]');
-    jitterPoints.forEach((point, index) => {
-        point.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `jitter-point-${index}`, {
-                elementType: 'jitter-point',
-            });
-        });
-    });
-    
-    // Rastrear hover em pontos de dot plot (amostra insuficiente)
-    const dotPlotPoints = chartElement.querySelectorAll('circle[class*="dot-plot-point"]');
-    dotPlotPoints.forEach((point, index) => {
-        point.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `dot-plot-point-${index}`, {
-                elementType: 'dot-plot-point',
-            });
-        });
-    });
-    
-    // Rastrear tooltips
-    const elementsWithTooltips = chartElement.querySelectorAll('title');
-    elementsWithTooltips.forEach((title, index) => {
-        const parent = title.parentElement;
-        if (parent) {
-            parent.addEventListener('mouseenter', () => {
-                analytics.trackInteraction('boxplot', 'tooltip_open', `tooltip-${index}`, {
-                    elementType: 'tooltip',
+        // Rastrear elementos dentro do grupo (box, whiskers, median, mean)
+        const boxElements = group.querySelectorAll('rect, path, line');
+        boxElements.forEach((element, elemIndex) => {
+            // Pular outliers e jitter (têm tracking próprio)
+            if (element.closest('[data-outlier]') || element.hasAttribute('data-jitter')) {
+                return;
+            }
+            
+            element.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `box-element-${groupIndex}-${elemIndex}`, {
+                    elementType: 'box-element',
+                    groupIndex: groupIndex,
                 });
             });
-        }
+            
+            // Rastrear cliques em elementos do boxplot
+            element.addEventListener('click', () => {
+                analytics.trackInteraction('boxplot', 'click', `box-element-${groupIndex}-${elemIndex}`, {
+                    elementType: 'box-element',
+                    groupIndex: groupIndex,
+                });
+            });
+        });
     });
     
-    // Rastrear hover em linhas de referência
-    const referenceLines = chartElement.querySelectorAll('line[class*="reference-line"], .reference-line');
+    // Rastrear outliers usando data attributes
+    const outliers = chartElement.querySelectorAll('[data-outlier="true"]');
+    outliers.forEach((outlier, index) => {
+        const groupIndex = outlier.getAttribute('data-group-index');
+        const outlierValue = outlier.getAttribute('data-outlier-value');
+        
+        outlier.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `outlier-${groupIndex}-${index}`, {
+                elementType: 'outlier',
+                groupIndex: groupIndex,
+                outlierValue: outlierValue,
+            });
+        });
+    });
+    
+    // Rastrear pontos de jitter usando data attributes
+    const jitterPoints = chartElement.querySelectorAll('[data-jitter="true"]');
+    jitterPoints.forEach((point, index) => {
+        const groupIndex = point.getAttribute('data-group-index');
+        const pointValue = point.getAttribute('data-point-value');
+        
+        point.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `jitter-${groupIndex}-${index}`, {
+                elementType: 'jitter',
+                groupIndex: groupIndex,
+                pointValue: pointValue,
+            });
+        });
+    });
+    
+    // Rastrear pontos de dot plot (amostra insuficiente) - usar classe
+    const dotPlotGroups = chartElement.querySelectorAll('g.dot-plot');
+    dotPlotGroups.forEach((dotPlotGroup, index) => {
+        const groupIndex = dotPlotGroup.getAttribute('data-group-index');
+        
+        dotPlotGroup.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `dot-plot-${groupIndex || index}`, {
+                elementType: 'dot-plot',
+                groupIndex: groupIndex || String(index),
+            });
+        });
+    });
+    
+    // Rastrear linhas de referência usando classe
+    const referenceLines = chartElement.querySelectorAll('.reference-lines line');
     referenceLines.forEach((line, index) => {
         line.addEventListener('mouseenter', () => {
             analytics.trackInteraction('boxplot', 'hover', `reference-line-${index}`, {
@@ -89,32 +111,57 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
         });
     });
     
-    // Rastrear hover em linhas de mediana
-    const medianLines = chartElement.querySelectorAll('line[class*="median"]');
-    medianLines.forEach((line, index) => {
-        line.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `median-line-${index}`, {
-                elementType: 'median-line',
+    // Rastrear linhas de mediana - dentro dos grupos
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        // Mediana geralmente é uma linha dentro do grupo
+        const medianLines = group.querySelectorAll('line');
+        medianLines.forEach((line, lineIndex) => {
+            // Verificar se é linha de mediana (geralmente é uma linha horizontal/vertical no meio)
+            // Pular se for whisker ou outra linha
+            if (line.closest('[data-outlier]')) {
+                return;
+            }
+            
+            line.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `median-line-${groupIndex}-${lineIndex}`, {
+                    elementType: 'median-line',
+                    groupIndex: groupIndex,
+                });
             });
         });
     });
     
-    // Rastrear hover em whiskers (bigodes)
-    const whiskers = chartElement.querySelectorAll('line[class*="whisker"]');
-    whiskers.forEach((whisker, index) => {
-        whisker.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `whisker-${index}`, {
-                elementType: 'whisker',
+    // Rastrear whiskers - dentro dos grupos
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        // Whiskers são linhas dentro do grupo
+        const whiskers = group.querySelectorAll('line');
+        whiskers.forEach((whisker, whiskerIndex) => {
+            // Pular se for mediana ou outra linha
+            if (whisker.closest('[data-outlier]')) {
+                return;
+            }
+            
+            whisker.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `whisker-${groupIndex}-${whiskerIndex}`, {
+                    elementType: 'whisker',
+                    groupIndex: groupIndex,
+                });
             });
         });
     });
     
-    // Rastrear hover em labels/eixos
-    const labels = chartElement.querySelectorAll('text[class*="label"], text[class*="axis"]');
-    labels.forEach((label, index) => {
-        label.addEventListener('mouseenter', () => {
-            analytics.trackInteraction('boxplot', 'hover', `label-${index}`, {
-                elementType: 'label',
+    // Rastrear labels/eixos - textos dentro dos grupos
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        const labels = group.querySelectorAll('text');
+        labels.forEach((label, labelIndex) => {
+            label.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `label-${groupIndex}-${labelIndex}`, {
+                    elementType: 'label',
+                    groupIndex: groupIndex,
+                });
             });
         });
     });
@@ -219,8 +266,6 @@ export const renderChart = async (ctx: CustomChartContext) => {
             dimensionColumnsForGrouping = allDimensionColumns;
         }
         
-        // Log para debug (remover em produção se necessário)
-        logger.debug('Dimensões para agrupamento identificadas:', dimensionColumnsForGrouping.map(d => d.name || d.id).join(', '));
         
         // Calcular dimensões do container
         const containerWidth = chartElement.clientWidth || 800;
