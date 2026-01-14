@@ -271,20 +271,17 @@ function createMeasureColumnSettings(
                 label: 'Habilitar Coloração Condicional',
                 defaultValue: conditionalColorEnabled,
             },
+            {
+                type: 'dropdown',
+                key: 'conditionalColor_type',
+                label: 'Tipo de Coloração',
+                defaultValue: conditionalColorType,
+                values: ['conditional', 'dimension'],
+            },
         ];
         
-        if (conditionalColorEnabled) {
-            conditionalColorChildren.push(
-                {
-                    type: 'dropdown',
-                    key: 'conditionalColor_type',
-                    label: 'Tipo de Coloração',
-                    defaultValue: conditionalColorType,
-                    values: ['conditional', 'dimension'],
-                }
-            );
-            
-            if (conditionalColorType === 'conditional') {
+        // Sempre mostrar campos (limitação do SDK: não suporta campos condicionais dinâmicos)
+        if (conditionalColorType === 'conditional') {
                 // Configuração para coloração condicional (ex: >0.4)
                 const condition = conditionalColorConfig.condition || {};
                 // Verificar tanto condition.operator quanto conditionalColor_condition_operator (SDK pode salvar de ambas as formas)
