@@ -228,69 +228,75 @@ export function setupCustomTooltips(
             return;
         }
 
-        groups.forEach((group, index) => {
-            const groupIndex = parseInt(group.getAttribute('data-group-index') || String(index), 10);
+        groups.forEach((groupElement, index) => {
+            const groupIndex = parseInt(groupElement.getAttribute('data-group-index') || String(index), 10);
             const groupData = boxplotData.groups[groupIndex];
             if (!groupData) return;
 
-            // Armazenar referências locais para este grupo (evitar problemas de closure)
-            const currentGroup = group;
-            const currentGroupData = groupData;
-            const currentGroupIndex = groupIndex;
-
-            // Handler para mostrar tooltip do grupo
-            const showGroupTooltip = (e: MouseEvent) => {
-                tooltip.currentTarget = currentGroup;
+            // Usar event delegation no grupo para capturar eventos de todos os elementos filhos
+            const handleGroupMouseEnter = (e: Event) => {
+                const target = e.target as Element;
+                if (!target) return;
+                
+                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
+                if (target.hasAttribute('data-jitter') || target.closest('[data-outlier]')) {
+                    return;
+                }
+                
+                // Verificar se o target está dentro deste grupo
+                if (!groupElement.contains(target)) {
+                    return;
+                }
+                
+                const mouseEvent = e as MouseEvent;
+                tooltip.currentTarget = groupElement;
                 tooltip.show(
-                    currentGroupData.dimensionValue,
-                    currentGroupData.stats,
-                    currentGroupData.values.length,
-                    e.clientX,
-                    e.clientY
+                    groupData.dimensionValue,
+                    groupData.stats,
+                    groupData.values.length,
+                    mouseEvent.clientX,
+                    mouseEvent.clientY
                 );
             };
 
-            // Adicionar listeners aos elementos filhos do boxplot (rect, path, line, text)
-            // Mas não aos elementos que são outliers ou jitter
-            const boxplotElements = currentGroup.querySelectorAll('rect, path, line, text');
-            
-            // Filtrar elementos que são outliers ou jitter
-            boxplotElements.forEach(element => {
-                // Pular elementos que têm data-jitter diretamente
-                if (element.hasAttribute('data-jitter')) {
+            const handleGroupMouseMove = (e: Event) => {
+                const target = e.target as Element;
+                if (!target) return;
+                
+                // Verificar se o target é um ponto (outlier ou jitter) - se for, não fazer nada
+                if (target.hasAttribute('data-jitter') || target.closest('[data-outlier]')) {
                     return;
                 }
                 
-                // Pular elementos que estão dentro de grupos com data-outlier
-                if (element.closest('[data-outlier]')) {
+                // Verificar se o target está dentro deste grupo
+                if (!groupElement.contains(target)) {
                     return;
                 }
                 
-                const handleMouseEnter = (e: Event) => {
+                // Atualizar tooltip se estiver mostrando para este grupo
+                if (tooltip.currentTarget === groupElement) {
                     const mouseEvent = e as MouseEvent;
-                    // Sempre mostrar tooltip ao entrar, mesmo se já estiver mostrando para outro grupo
-                    showGroupTooltip(mouseEvent);
-                };
+                    tooltip.show(
+                        groupData.dimensionValue,
+                        groupData.stats,
+                        groupData.values.length,
+                        mouseEvent.clientX,
+                        mouseEvent.clientY
+                    );
+                }
+            };
 
-                const handleMouseMove = (e: Event) => {
-                    const mouseEvent = e as MouseEvent;
-                    // Atualizar tooltip se estiver mostrando para este grupo
-                    if (tooltip.currentTarget === currentGroup) {
-                        showGroupTooltip(mouseEvent);
-                    }
-                };
+            const handleGroupMouseLeave = (e: Event) => {
+                const relatedTarget = (e as MouseEvent).relatedTarget as Element;
+                // Esconder tooltip se o mouse sair do grupo e não entrar em um elemento filho
+                if (!groupElement.contains(relatedTarget) && tooltip.currentTarget === groupElement) {
+                    tooltip.hide();
+                }
+            };
 
-                const handleMouseLeave = () => {
-                    // Esconder tooltip apenas se estiver mostrando para este grupo
-                    if (tooltip.currentTarget === currentGroup) {
-                        tooltip.hide();
-                    }
-                };
-
-                element.addEventListener('mouseenter', handleMouseEnter);
-                element.addEventListener('mousemove', handleMouseMove);
-                element.addEventListener('mouseleave', handleMouseLeave);
-            });
+            groupElement.addEventListener('mouseenter', handleGroupMouseEnter);
+            groupElement.addEventListener('mousemove', handleGroupMouseMove);
+            groupElement.addEventListener('mouseleave', handleGroupMouseLeave);
         });
 
         // Adicionar tooltips para outliers
