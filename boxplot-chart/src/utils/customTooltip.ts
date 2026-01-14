@@ -212,6 +212,11 @@ export function setupCustomTooltips(
     boxplotData: { groups: Array<{ dimensionValue: string; stats: BoxplotStatistics; values: number[] }> },
     tooltipConfig?: TooltipConfig
 ): void {
+    // Se tooltips estão desabilitados, não fazer nada
+    if (tooltipConfig && tooltipConfig.enabled === false) {
+        return;
+    }
+
     // Aguardar um pouco para garantir que o DOM foi atualizado
     setTimeout(() => {
         const tooltip = new CustomTooltip(tooltipConfig);
@@ -241,10 +246,15 @@ export function setupCustomTooltips(
 
             // Adicionar listeners aos elementos filhos do boxplot (rect, path, line, text)
             // Mas não aos elementos que são outliers ou jitter
-            const boxplotElements = group.querySelectorAll('rect:not([data-jitter]), path:not([data-jitter]), line:not([data-jitter]), text:not([data-jitter])');
+            const boxplotElements = group.querySelectorAll('rect, path, line, text');
             
-            // Filtrar elementos que estão dentro de grupos de outliers
+            // Filtrar elementos que são outliers ou jitter
             boxplotElements.forEach(element => {
+                // Pular elementos que têm data-jitter diretamente
+                if (element.hasAttribute('data-jitter')) {
+                    return;
+                }
+                
                 // Pular elementos que estão dentro de grupos com data-outlier
                 if (element.closest('[data-outlier]')) {
                     return;
