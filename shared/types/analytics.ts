@@ -15,7 +15,7 @@ export type ChartType = 'trellis' | 'boxplot';
 /**
  * Tipos de interação do usuário
  */
-export type InteractionType = 'hover' | 'click' | 'tooltip_open';
+export type InteractionType = 'hover' | 'click' | 'tooltip_open' | 'tooltip_close';
 
 /**
  * Evento base para todos os tipos de analytics
