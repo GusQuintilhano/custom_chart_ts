@@ -576,23 +576,19 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
-    // TEMPORARIAMENTE REMOVIDA PARA DEBUG - verificar se erro desaparece
-    // Se o erro desaparecer, o problema está nesta seção (provavelmente no dropdown measureNameRotation)
-    // Se o erro persistir em elements[2], o problema está em outra seção
-    /*
-    const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 10;
-    const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 10;
-    const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 9;
+    const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 12;
+    const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 14;
+    const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 10;
     
-    let measureNameRotationValue = '-90';
+    let measureNameRotationValue = '0';
     if ((savedTextSizes as any)?.measureNameRotation !== undefined) {
         measureNameRotationValue = String((savedTextSizes as any).measureNameRotation);
     } else {
-        const savedValue = getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90');
-        measureNameRotationValue = savedValue !== undefined && savedValue !== null ? String(savedValue) : '-90';
+        const savedValue = getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '0');
+        measureNameRotationValue = savedValue !== undefined && savedValue !== null ? String(savedValue) : '0';
     }
     if (!['-90', '0', '45', '-45', '90'].includes(measureNameRotationValue)) {
-        measureNameRotationValue = '-90';
+        measureNameRotationValue = '0';
     }
     
     let forceLabelsValue = false;
@@ -612,19 +608,19 @@ function createEditorSections(
             {
                 type: 'number',
                 key: 'labelFontSize',
-                label: 'Tamanho da Dimensão (px)',
+                label: 'Tamanho da Fonte do Label (px)',
                 defaultValue: labelFontSizeValue,
             },
             {
                 type: 'number',
                 key: 'measureTitleFontSize',
-                label: 'Tamanho das Medidas (px)',
+                label: 'Tamanho da Fonte do Título da Medida (px)',
                 defaultValue: measureTitleFontSizeValue,
             },
             {
                 type: 'number',
                 key: 'valueLabelFontSize',
-                label: 'Tamanho dos Valores (px)',
+                label: 'Tamanho da Fonte do Label de Valor (px)',
                 defaultValue: valueLabelFontSizeValue,
             },
             {
@@ -632,7 +628,7 @@ function createEditorSections(
                 key: 'measureNameRotation',
                 label: 'Rotação do Nome da Medida',
                 defaultValue: measureNameRotationValue,
-                values: ['-90', '0', '45', '-45', '90'],
+                values: ['0', '45', '-45', '90', '-90'],
             },
             {
                 type: 'toggle',
@@ -642,88 +638,104 @@ function createEditorSections(
             },
         ],
     });
-    */
     
     // Seção 4: Dimensões e Espaçamento
-    // EXTREMAMENTE SIMPLIFICADA - apenas campos básicos mínimos para testar
-    // Se o erro desaparecer, sabemos que o problema está em algum campo específico
-    const fitWidthValue = (savedChartDimensions?.fitWidth === true || savedChartOptions?.fitWidth === true);
-    const fitHeightValue = (savedChartDimensions?.fitHeight === true || savedChartOptions?.fitHeight === true);
-    const showYAxisValue = (savedChartVisual?.showYAxis !== false && savedChartOptions?.showYAxis !== false);
-    const measureLabelSpaceNum = typeof savedChartDimensions?.measureLabelSpace === 'number' 
-        ? savedChartDimensions.measureLabelSpace 
-        : (typeof savedChartOptions?.measureLabelSpace === 'number' 
-            ? savedChartOptions.measureLabelSpace 
-            : (showYAxisValue ? 120 : 60));
+    const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
+    const savedFitHeight = getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true;
+    const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
+    
+    // Construir array de children sem usar spread operator (ThoughtSpot SDK não aceita)
+    const dimensionsChildren: any[] = [
+        {
+            type: 'toggle',
+            key: 'fitWidth',
+            label: 'Ajustar a 100% da Largura',
+            defaultValue: savedFitWidth,
+        },
+        {
+            type: 'toggle',
+            key: 'fitHeight',
+            label: 'Ajustar a 100% da Altura',
+            defaultValue: savedFitHeight,
+        },
+        {
+            type: 'number',
+            key: 'measureLabelSpace',
+            label: 'Espaço para Label da Medida (px)',
+            defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60) ?? (savedShowYAxis ? 120 : 60),
+        },
+    ];
+    
+    // Adicionar campos condicionalmente sem usar spread operator
+    if (!savedFitWidth) {
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'barWidth',
+            label: 'Largura da Barra (px)',
+            defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40) ?? 40,
+        });
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'barSpacing',
+            label: 'Espaçamento entre Barras (px)',
+            defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15) ?? (savedShowYAxis ? 20 : 15),
+        });
+    }
+    
+    if (!savedFitHeight) {
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'measureRowHeight',
+            label: 'Altura da Linha da Medida (px)',
+            defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50) ?? 50,
+        });
+    }
     
     elements.push({
         type: 'section',
         key: 'chart_dimensions',
         label: 'Dimensões e Espaçamento',
         isAccordianExpanded: false,
-        children: [
-            {
-                type: 'toggle',
-                key: 'fitWidth',
-                label: 'Ajustar a 100% da Largura',
-                defaultValue: Boolean(fitWidthValue),
-            },
-            {
-                type: 'toggle',
-                key: 'fitHeight',
-                label: 'Ajustar a 100% da Altura',
-                defaultValue: Boolean(fitHeightValue),
-            },
-            {
-                type: 'number',
-                key: 'measureLabelSpace',
-                label: 'Espaço das Labels das Medidas (px)',
-                defaultValue: Number(measureLabelSpaceNum),
-            },
-        ],
+        children: dimensionsChildren,
     });
     
     
-    // Seção para cores e estilo - TEMPORARIAMENTE REMOVIDA PARA DEBUG DO ERRO elements[4]
-    // TODO: Investigar por que o ThoughtSpot SDK está rejeitando esta seção no índice 4
-    // elements.push({
-    //     type: 'section',
-    //     key: 'chart_colors_style',
-    //     label: 'Cores e Estilo',
-    //     isAccordianExpanded: false,
-    //     children: [
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'yAxisColor',
-    //             label: 'Cor do Eixo Y',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
-    //         },
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'xAxisColor',
-    //             label: 'Cor do Eixo X',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
-    //         },
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'backgroundColor',
-    //             label: 'Cor de Fundo',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
-    //         },
-    //         {
-    //             type: 'number',
-    //             key: 'axisStrokeWidth',
-    //             label: 'Espessura dos Eixos (px)',
-    //             defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
-    //             min: 0.5,
-    //             max: 5,
-    //             step: 0.1,
-    //         },
-    //     ],
-    // });
+    // Seção 5: Cores e Estilo
+    elements.push({
+        type: 'section',
+        key: 'chart_colors_style',
+        label: 'Cores e Estilo',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'colorpicker',
+                key: 'yAxisColor',
+                label: 'Cor do Eixo Y',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
+            },
+            {
+                type: 'colorpicker',
+                key: 'xAxisColor',
+                label: 'Cor do Eixo X',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
+            },
+            {
+                type: 'colorpicker',
+                key: 'backgroundColor',
+                label: 'Cor de Fundo',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.backgroundColor || 'transparent',
+            },
+            {
+                type: 'number',
+                key: 'axisStrokeWidth',
+                label: 'Espessura dos Eixos (px)',
+                defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
+            },
+        ],
+    });
     
     // Seção para tooltip
     // Usar valor atual se disponível (para condicionais dinâmicas), senão usar valor salvo
