@@ -282,65 +282,64 @@ function createMeasureColumnSettings(
         
         // Sempre mostrar campos (limitação do SDK: não suporta campos condicionais dinâmicos)
         if (conditionalColorType === 'conditional') {
-                // Configuração para coloração condicional (ex: >0.4)
-                const condition = conditionalColorConfig.condition || {};
-                // Verificar tanto condition.operator quanto conditionalColor_condition_operator (SDK pode salvar de ambas as formas)
-                const operator = condition.operator ?? (savedConfig as any)?.conditionalColor_condition_operator ?? '>';
-                const value = condition.value ?? (savedConfig as any)?.conditionalColor_condition_value ?? 0.4;
-                const trueColor = condition.trueColor ?? (savedConfig as any)?.conditionalColor_condition_trueColor ?? '#10b981';
-                const falseColor = condition.falseColor ?? (savedConfig as any)?.conditionalColor_condition_falseColor ?? defaultColor;
-                conditionalColorChildren.push(
-                    {
-                        type: 'dropdown',
-                        key: 'conditionalColor_condition_operator',
-                        label: 'Operador',
-                        defaultValue: operator,
-                        values: ['>', '<', '>=', '<=', '==', '!='],
-                    },
-                    {
-                        type: 'number',
-                        key: 'conditionalColor_condition_value',
-                        label: 'Valor de Comparação',
-                        defaultValue: value,
-                    },
-                    {
-                        type: 'colorpicker',
-                        key: 'conditionalColor_condition_trueColor',
-                        label: 'Cor quando Verdadeiro',
-                        selectorType: 'COLOR',
-                        defaultValue: trueColor,
-                    },
-                    {
-                        type: 'colorpicker',
-                        key: 'conditionalColor_condition_falseColor',
-                        label: 'Cor quando Falso (opcional)',
-                        selectorType: 'COLOR',
-                        defaultValue: falseColor,
-                    }
-                );
-            } else if (conditionalColorType === 'dimension') {
-                // Configuração para coloração por dimensão
-                const dimensionOptions = dimensionColumns.map(d => ({
-                    value: d.id,
-                    label: d.name || d.id,
-                }));
-                // Verificar tanto conditionalColor.dimensionId quanto conditionalColor_dimensionId
-                const dimensionId = conditionalColorConfig.dimensionId ?? (savedConfig as any)?.conditionalColor_dimensionId ?? (dimensionOptions[0]?.value || '');
-                conditionalColorChildren.push(
-                    {
-                        type: 'dropdown',
-                        key: 'conditionalColor_dimensionId',
-                        label: 'Dimensão para Coloração',
-                        defaultValue: dimensionId,
-                        values: dimensionOptions.map(d => d.value),
-                        valueLabels: dimensionOptions.map(d => d.label),
-                    }
-                );
-                
-                // Para coloração por dimensão, o usuário pode definir cores para valores específicos
-                // Por enquanto, vamos usar cores padrão baseadas nos valores únicos da dimensão
-                // (Isso pode ser expandido no futuro para permitir edição manual)
-            }
+            // Configuração para coloração condicional (ex: >0.4)
+            const condition = conditionalColorConfig.condition || {};
+            // Verificar tanto condition.operator quanto conditionalColor_condition_operator (SDK pode salvar de ambas as formas)
+            const operator = condition.operator ?? (savedConfig as any)?.conditionalColor_condition_operator ?? '>';
+            const value = condition.value ?? (savedConfig as any)?.conditionalColor_condition_value ?? 0.4;
+            const trueColor = condition.trueColor ?? (savedConfig as any)?.conditionalColor_condition_trueColor ?? '#10b981';
+            const falseColor = condition.falseColor ?? (savedConfig as any)?.conditionalColor_condition_falseColor ?? defaultColor;
+            conditionalColorChildren.push(
+                {
+                    type: 'dropdown',
+                    key: 'conditionalColor_condition_operator',
+                    label: 'Operador',
+                    defaultValue: operator,
+                    values: ['>', '<', '>=', '<=', '==', '!='],
+                },
+                {
+                    type: 'number',
+                    key: 'conditionalColor_condition_value',
+                    label: 'Valor de Comparação',
+                    defaultValue: value,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'conditionalColor_condition_trueColor',
+                    label: 'Cor quando Verdadeiro',
+                    selectorType: 'COLOR',
+                    defaultValue: trueColor,
+                },
+                {
+                    type: 'colorpicker',
+                    key: 'conditionalColor_condition_falseColor',
+                    label: 'Cor quando Falso (opcional)',
+                    selectorType: 'COLOR',
+                    defaultValue: falseColor,
+                }
+            );
+        } else if (conditionalColorType === 'dimension') {
+            // Configuração para coloração por dimensão
+            const dimensionOptions = dimensionColumns.map(d => ({
+                value: d.id,
+                label: d.name || d.id,
+            }));
+            // Verificar tanto conditionalColor.dimensionId quanto conditionalColor_dimensionId
+            const dimensionId = conditionalColorConfig.dimensionId ?? (savedConfig as any)?.conditionalColor_dimensionId ?? (dimensionOptions[0]?.value || '');
+            conditionalColorChildren.push(
+                {
+                    type: 'dropdown',
+                    key: 'conditionalColor_dimensionId',
+                    label: 'Dimensão para Coloração',
+                    defaultValue: dimensionId,
+                    values: dimensionOptions.map(d => d.value),
+                    valueLabels: dimensionOptions.map(d => d.label),
+                }
+            );
+            
+            // Para coloração por dimensão, o usuário pode definir cores para valores específicos
+            // Por enquanto, vamos usar cores padrão baseadas nos valores únicos da dimensão
+            // (Isso pode ser expandido no futuro para permitir edição manual)
         }
         
         measureElements.push({
