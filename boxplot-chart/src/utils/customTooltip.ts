@@ -5,6 +5,7 @@
 import type { BoxplotStatistics } from '@shared/utils/statistical';
 import { formatValue } from '@shared/utils/formatters';
 import type { TooltipConfig } from '../types/boxplotTypes';
+import { analytics } from '@shared/utils/analytics';
 
 /**
  * Cria e gerencia tooltips customizados para elementos SVG
@@ -112,6 +113,14 @@ export class CustomTooltip {
 
         this.tooltipElement.innerHTML = this.generateTooltipContent(categoryName, stats, count);
         this.positionTooltip(x, y);
+        
+        // Rastrear abertura de tooltip
+        analytics.trackInteraction('boxplot', 'tooltip_open', `tooltip-group-${categoryName}`, {
+            elementType: 'tooltip',
+            tooltipType: 'group',
+            categoryName: categoryName,
+            format: this.tooltipFormat,
+        });
     }
 
     /**
@@ -134,6 +143,15 @@ export class CustomTooltip {
 
         this.tooltipElement.innerHTML = content;
         this.positionTooltip(x, y);
+        
+        // Rastrear abertura de tooltip de ponto
+        analytics.trackInteraction('boxplot', 'tooltip_open', `tooltip-point-${groupName}`, {
+            elementType: 'tooltip',
+            tooltipType: 'point',
+            groupName: groupName,
+            pointValue: pointValue,
+            dimensionValue: dimensionValue,
+        });
     }
 
     /**
@@ -178,6 +196,13 @@ export class CustomTooltip {
      * Esconde o tooltip
      */
     hide(): void {
+        // Rastrear fechamento de tooltip (se houver target)
+        if (this.currentTarget) {
+            analytics.trackInteraction('boxplot', 'tooltip_close', 'tooltip', {
+                elementType: 'tooltip',
+            });
+        }
+        
         if (this.tooltipElement) {
             this.tooltipElement.style.opacity = '0';
         }

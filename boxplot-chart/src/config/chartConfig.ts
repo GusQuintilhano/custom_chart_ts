@@ -10,8 +10,6 @@ import { logger } from '@shared/utils/logger';
  * Boxplot requer: 1 medida + múltiplas dimensões
  */
 export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
-    logger.debug('===== getDefaultChartConfig (Boxplot) CHAMADO =====');
-    
     const cols = chartModel.columns;
 
     const measureColumns = cols.filter(
@@ -22,12 +20,8 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
         (col) => col.type === ColumnType.ATTRIBUTE,
     );
 
-    logger.debug('Medidas encontradas:', measureColumns.length);
-    logger.debug('Dimensões encontradas:', attributeColumns.length);
-
     // Boxplot requer pelo menos 1 medida e 1 dimensão
     if (attributeColumns.length === 0 || measureColumns.length === 0) {
-        logger.debug('Sem colunas válidas, retornando []');
         return [];
     }
 
@@ -50,7 +44,6 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
         ],
     };
 
-    logger.debug('ChartConfig gerado com 1 medida e', attributeColumns.length, 'dimensões');
     return [axisConfig];
 }
 
@@ -58,8 +51,6 @@ export function getDefaultChartConfig(chartModel: ChartModel): ChartConfig[] {
  * Gera queries baseadas no ChartConfig
  */
 export function getQueriesFromChartConfig(chartConfig: ChartConfig[]): Array<Query> {
-    logger.debug('getQueriesFromChartConfig (Boxplot) chamado');
-
     const queries = chartConfig.map(
         (config: ChartConfig): Query =>
             config.dimensions.reduce(
@@ -75,7 +66,6 @@ export function getQueriesFromChartConfig(chartConfig: ChartConfig[]): Array<Que
             ),
     );
 
-    logger.debug('Queries geradas:', queries.length);
     return queries;
 }
 
