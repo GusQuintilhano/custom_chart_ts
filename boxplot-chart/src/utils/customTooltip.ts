@@ -229,16 +229,22 @@ export function setupCustomTooltips(
         }
 
         groups.forEach((group, index) => {
-            const groupData = boxplotData.groups[index];
+            const groupIndex = parseInt(group.getAttribute('data-group-index') || String(index), 10);
+            const groupData = boxplotData.groups[groupIndex];
             if (!groupData) return;
+
+            // Armazenar referências locais para este grupo (evitar problemas de closure)
+            const currentGroup = group;
+            const currentGroupData = groupData;
+            const currentGroupIndex = groupIndex;
 
             // Handler para mostrar tooltip do grupo
             const showGroupTooltip = (e: MouseEvent) => {
-                tooltip.currentTarget = group;
+                tooltip.currentTarget = currentGroup;
                 tooltip.show(
-                    groupData.dimensionValue,
-                    groupData.stats,
-                    groupData.values.length,
+                    currentGroupData.dimensionValue,
+                    currentGroupData.stats,
+                    currentGroupData.values.length,
                     e.clientX,
                     e.clientY
                 );
@@ -246,7 +252,7 @@ export function setupCustomTooltips(
 
             // Adicionar listeners aos elementos filhos do boxplot (rect, path, line, text)
             // Mas não aos elementos que são outliers ou jitter
-            const boxplotElements = group.querySelectorAll('rect, path, line, text');
+            const boxplotElements = currentGroup.querySelectorAll('rect, path, line, text');
             
             // Filtrar elementos que são outliers ou jitter
             boxplotElements.forEach(element => {
@@ -269,14 +275,14 @@ export function setupCustomTooltips(
                 const handleMouseMove = (e: Event) => {
                     const mouseEvent = e as MouseEvent;
                     // Atualizar tooltip se estiver mostrando para este grupo
-                    if (tooltip.currentTarget === group) {
+                    if (tooltip.currentTarget === currentGroup) {
                         showGroupTooltip(mouseEvent);
                     }
                 };
 
                 const handleMouseLeave = () => {
                     // Esconder tooltip apenas se estiver mostrando para este grupo
-                    if (tooltip.currentTarget === group) {
+                    if (tooltip.currentTarget === currentGroup) {
                         tooltip.hide();
                     }
                 };
