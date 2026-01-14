@@ -262,19 +262,20 @@ export function setupCustomTooltips(
                 
                 const handleMouseEnter = (e: Event) => {
                     const mouseEvent = e as MouseEvent;
-                    if (tooltip.currentTarget !== group) {
-                        showGroupTooltip(mouseEvent);
-                    }
+                    // Sempre mostrar tooltip ao entrar, mesmo se já estiver mostrando para outro grupo
+                    showGroupTooltip(mouseEvent);
                 };
 
                 const handleMouseMove = (e: Event) => {
                     const mouseEvent = e as MouseEvent;
+                    // Atualizar tooltip se estiver mostrando para este grupo
                     if (tooltip.currentTarget === group) {
                         showGroupTooltip(mouseEvent);
                     }
                 };
 
                 const handleMouseLeave = () => {
+                    // Esconder tooltip apenas se estiver mostrando para este grupo
                     if (tooltip.currentTarget === group) {
                         tooltip.hide();
                     }
