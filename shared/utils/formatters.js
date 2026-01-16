@@ -51,6 +51,10 @@ export function formatValue(value, formatType, decimals = 2, useThousandsSeparat
     // Se formato compacto, aplicar antes do tipo
     if (valueFormat === 'compacto' && formatType !== 'percentage' && formatType !== 'porcentagem') {
         formatted = formatCompact(value, decimals);
+        // Para moeda, adicionar prefixo R$ antes do valor compacto
+        if (formatType === 'currency' || formatType === 'moeda') {
+            return `${prefix}R$ ${formatted}${suffix}`;
+        }
         return `${prefix}${formatted}${suffix}`;
     }
     switch (formatType) {
@@ -153,6 +157,13 @@ export function formatDimension(value, formatType = 'auto') {
                 return date.toLocaleDateString('pt-BR', { weekday: 'long' });
             case 'mês':
                 return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            case 'mes/ano':
+            case 'MM/yyyy':
+                // Formato conciso: 01/2024
+                const month = date.getMonth() + 1; // getMonth() retorna 0-11
+                const year = date.getFullYear();
+                const monthStr = month.toString().padStart(2, '0');
+                return `${monthStr}/${year}`;
             case 'ano':
                 return date.toLocaleDateString('pt-BR', { year: 'numeric' });
             case 'date':

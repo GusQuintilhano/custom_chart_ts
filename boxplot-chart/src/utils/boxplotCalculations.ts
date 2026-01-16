@@ -110,14 +110,14 @@ export function calculateBoxplotData(
             case 'Alfabética':
             default:
                 // Ordenação alfabética (tentativa numérica primeiro)
-                const aVal = a.dimensionValue;
-                const bVal = b.dimensionValue;
-                const aNum = parseFloat(aVal);
-                const bNum = parseFloat(bVal);
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return aNum - bNum;
-                }
-                return aVal.localeCompare(bVal);
+        const aVal = a.dimensionValue;
+        const bVal = b.dimensionValue;
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return aNum - bNum;
+        }
+        return aVal.localeCompare(bVal);
         }
     });
 

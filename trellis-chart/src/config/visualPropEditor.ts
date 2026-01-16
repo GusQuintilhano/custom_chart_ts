@@ -127,7 +127,7 @@ function createMeasureColumnSettings(
                     key: 'valueFormat',
                     label: 'Formato de Valor',
                     defaultValue: savedConfig?.valueFormat || 'normal',
-                    values: ['normal', 'compacto'],
+                    values: ['normal', 'compacto', 'rotacionado'],
                 },
                 {
                     type: 'toggle',
