@@ -112,7 +112,7 @@ export function renderBoxplot(
     } = options;
 
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin, bottomMargin, groupSpacing } = config;
-    
+
     // Calcular range global para coordenadas:
     // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
     // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)
@@ -178,7 +178,7 @@ export function renderBoxplot(
     
     // Armazenar posições dos centros para jitter plot
     const centerPositions: Array<{ centerX: number; centerY: number }> = [];
-    
+
     // Renderizar cada grupo
     const boxesHtml = groups.map((group, index) => {
         // Calcular largura variável se habilitado (precisa ser feito antes para calcular centerX)

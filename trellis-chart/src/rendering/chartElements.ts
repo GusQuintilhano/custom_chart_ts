@@ -22,6 +22,8 @@ export function renderLineChart(
     barWidth: number,
     barSpacing: number,
     measureConfig: MeasureConfig,
+    primaryDimension: ChartColumn,
+    secondaryDimensions: ChartColumn[],
     valueLabelFontSize: number,
     forceLabels: boolean
 ): string {
@@ -40,13 +42,40 @@ export function renderLineChart(
         const value = item.values[measureIdx] || 0;
         const x = calculateBarCenterX(itemIdx, leftMargin, barWidth, barSpacing);
         const y = valueToY(value, minValue, maxValue, measureRowTop, measureRowHeight);
-        return { x, y, value, dataIndex: itemIdx };
+        // Identificar o grupo usando secondaryLabels (concatenado como string para comparação)
+        const groupKey = secondaryDimensions.length > 0 ? item.secondaryLabels.join('|') : 'default';
+        return { x, y, value, dataIndex: itemIdx, groupKey };
     });
     
-    // Criar path para a linha
-    const pathData = points.map((point, idx) => 
-        `${idx === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-    ).join(' ');
+    // Separar pontos por grupo e criar paths separados
+    const groupPaths: string[] = [];
+    let currentGroupKey: string | null = null;
+    let currentGroupPoints: Array<{ x: number; y: number }> = [];
+    
+    points.forEach((point, idx) => {
+        if (currentGroupKey === null || point.groupKey !== currentGroupKey) {
+            // Novo grupo: salvar path do grupo anterior e iniciar novo
+            if (currentGroupPoints.length > 0) {
+                const pathData = currentGroupPoints.map((p, i) => 
+                    `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+                ).join(' ');
+                groupPaths.push(pathData);
+            }
+            currentGroupKey = point.groupKey;
+            currentGroupPoints = [{ x: point.x, y: point.y }];
+        } else {
+            // Mesmo grupo: adicionar ponto
+            currentGroupPoints.push({ x: point.x, y: point.y });
+        }
+    });
+    
+    // Adicionar o último grupo
+    if (currentGroupPoints.length > 0) {
+        const pathData = currentGroupPoints.map((p, i) => 
+            `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+        ).join(' ');
+        groupPaths.push(pathData);
+    }
     
     // Renderizar círculos nos pontos
     const circles = points.map(point => {
@@ -64,12 +93,14 @@ export function renderLineChart(
             labelY = point.y + 20;
         }
         
+        // Para rotação, usar 'normal' no formatValue e aplicar rotação no SVG
+        const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
         const formattedValue = formatValue(
             point.value,
             format,
             decimals,
             useThousandsSeparator,
-            valueFormat,
+            formatValueForFormatting as 'normal' | 'compacto',
             valuePrefix,
             valueSuffix,
             showZeroValues
@@ -98,19 +129,25 @@ export function renderLineChart(
                 font-size="${valueLabelFontSize}"
                 fill="#374151"
                 font-weight="500"
+                ${valueFormat === 'rotacionado' ? `transform="rotate(-90 ${point.x} ${labelY})"` : ''}
             >${formattedValue}</text>
         `;
     }).join('');
     
+    // Renderizar paths separados para cada grupo
+    const pathsHtml = groupPaths.map(pathData => `
+        <path 
+            d="${pathData}"
+            stroke="${color}"
+            stroke-width="2"
+            fill="none"
+            opacity="${opacity}"
+        />
+    `).join('');
+    
     return `
         <g>
-            <path 
-                d="${pathData}"
-                stroke="${color}"
-                stroke-width="2"
-                fill="none"
-                opacity="${opacity}"
-            />
+            ${pathsHtml}
             ${circles}
         </g>
     `;
@@ -190,12 +227,14 @@ export function renderBars(
             // 'acima' mantém o padrão (barY - 5)
         }
         
+        // Para rotação, usar 'normal' no formatValue e aplicar rotação no SVG
+        const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
         const formattedValue = shouldShowLabel ? formatValue(
             value,
             format,
             decimals,
             useThousandsSeparator,
-            valueFormat,
+            formatValueForFormatting as 'normal' | 'compacto',
             valuePrefix,
             valueSuffix,
             showZeroValues
@@ -222,6 +261,7 @@ export function renderBars(
                     font-size="${valueLabelFontSize}"
                     fill="#374151"
                     font-weight="500"
+                    ${valueFormat === 'rotacionado' ? `transform="rotate(-90 ${labelX} ${labelY})"` : ''}
                 >${formattedValue}</text>
                 ` : ''}
             </g>
@@ -293,6 +333,8 @@ export function renderAllChartElements(params: RenderChartElementsParams): strin
                 barWidth,
                 barSpacing,
                 measureConfig,
+                primaryDimension,
+                secondaryDimensions,
                 valueLabelFontSize,
                 forceLabels
             );

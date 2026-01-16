@@ -732,7 +732,7 @@ export function createVisualPropEditorDefinition(
     const measureColumns = chartModel.columns.filter(
         (col) => col.type === ColumnType.MEASURE
     );
-    
+
     const dimensionColumns = chartModel.columns.filter(
         (col) => col.type === ColumnType.ATTRIBUTE
     );
