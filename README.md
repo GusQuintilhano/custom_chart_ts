@@ -37,6 +37,13 @@ Utilitários e funções comuns estão em `shared/`:
 
 ## 📚 Documentação
 
+### Documentação dos Charts
+
+- **Trellis Chart**: [`docs/TRELLIS_CHART.md`](./docs/TRELLIS_CHART.md) - Documentação completa do Trellis Chart
+- **Boxplot Chart**: [`docs/BOXPLOT.md`](./docs/BOXPLOT.md) - Documentação completa do Boxplot Chart
+
+### Documentação do SDK
+
 Documentação completa disponível em [`docs/sdk/`](./docs/sdk/):
 - **Aprendizados**: [`docs/sdk/aprendizados/`](./docs/sdk/aprendizados/)
 - **Guias**: [`docs/sdk/guias/`](./docs/sdk/guias/)
