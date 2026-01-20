@@ -63,9 +63,10 @@ build-charts:
     when: on_success
     # Não falhar se não houver artifacts (diretório não existe)
     if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_TAG'
-  only:
-    - main
-    - tags
+  # Roda em todos os branches e merge requests para detectar problemas cedo
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
 
 # Build e publicação da imagem Docker (desenvolvimento/MR)
 build:
