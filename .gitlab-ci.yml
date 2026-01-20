@@ -18,11 +18,22 @@ validate:
   image: node:${NODE_VERSION}
   script:
     - echo "Validando estrutura do projeto..."
-    - test -f README.md || (echo "README.md não encontrado" && exit 1)
-    - test -f package.json || (echo "package.json não encontrado" && exit 1)
-    - test -f Dockerfile.gitlab || (echo "Dockerfile.gitlab não encontrado" && exit 1)
-    - test -f docker-compose.yml || (echo "docker-compose.yml não encontrado" && exit 1)
-    - echo "Validacao de estrutura concluida"
+    - |
+      # Verificar arquivos essenciais
+      MISSING_FILES=()
+      [ ! -f README.md ] && MISSING_FILES+=("README.md")
+      [ ! -f package.json ] && MISSING_FILES+=("package.json")
+      [ ! -f Dockerfile.gitlab ] && MISSING_FILES+=("Dockerfile.gitlab")
+      [ ! -f docker-compose.yml ] && MISSING_FILES+=("docker-compose.yml")
+      
+      if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+        echo "❌ Arquivos essenciais não encontrados:"
+        printf '  - %s\n' "${MISSING_FILES[@]}"
+        exit 1
+      fi
+      
+      echo "✅ Todos os arquivos essenciais encontrados"
+      echo "Validacao de estrutura concluida"
   only:
     - main
     - merge_requests
@@ -48,6 +59,8 @@ build-charts:
       - dev/charts/*/dist/*.zip
     expire_in: 1 week
     when: on_success
+    # Não falhar se não houver artifacts (diretório não existe)
+    if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_TAG'
   only:
     - main
     - tags
