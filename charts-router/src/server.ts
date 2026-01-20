@@ -34,7 +34,8 @@ let boxplotDistPath: string = '/app/boxplot-chart/dist';
 
 // Tentar diferentes caminhos possíveis
 const possibleRoots = [
-    '/app',  // Caminho absoluto no Docker
+    '/app/app',  // Caminho na golden image do iFood (arquivos copiados para /app/app)
+    '/app',  // Caminho absoluto no Docker padrão
     path.resolve(__dirname, '../../../'),  // Se estamos em dist/charts-router/src/
     path.resolve(__dirname, '../../'),    // Se estamos em dist/src/
     path.resolve(__dirname, '../../..'),  // Alternativa
@@ -76,7 +77,7 @@ console.log('  boxplotDistPath exists:', fs.existsSync(boxplotDistPath));
 if (!fs.existsSync(trellisDistPath)) {
     console.error(`ERROR: Trellis dist path does not exist: ${trellisDistPath}`);
     console.error('  Searching for trellis-chart...');
-    const searchPaths = ['/app', '/app/charts-router', process.cwd()];
+    const searchPaths = ['/app/app', '/app', '/app/charts-router', process.cwd()];
     for (const searchRoot of searchPaths) {
         const searchPath = path.join(searchRoot, 'trellis-chart/dist');
         console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
@@ -86,7 +87,7 @@ if (!fs.existsSync(trellisDistPath)) {
 if (!fs.existsSync(boxplotDistPath)) {
     console.error(`ERROR: Boxplot dist path does not exist: ${boxplotDistPath}`);
     console.error('  Searching for boxplot-chart...');
-    const searchPaths = ['/app', '/app/charts-router', process.cwd()];
+    const searchPaths = ['/app/app', '/app', '/app/charts-router', process.cwd()];
     for (const searchRoot of searchPaths) {
         const searchPath = path.join(searchRoot, 'boxplot-chart/dist');
         console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
