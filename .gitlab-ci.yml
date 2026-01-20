@@ -13,6 +13,7 @@ variables:
   NODE_VERSION: "18"
 
 # Validação de estrutura e arquivos
+# Roda em todos os branches para detectar problemas cedo
 validate:
   stage: test
   image: node:${NODE_VERSION}
@@ -34,9 +35,10 @@ validate:
       
       echo "✅ Todos os arquivos essenciais encontrados"
       echo "Validacao de estrutura concluida"
-  only:
-    - main
-    - merge_requests
+  # Roda em todos os branches e merge requests
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
 
 # Build dos charts
 build-charts:
