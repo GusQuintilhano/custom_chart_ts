@@ -1,0 +1,29 @@
+{
+  "enabled": true,
+  "extends": ["config:base"],
+  "enabledManagers": ["regex"],
+
+  "dependencyDashboardApproval": true,
+
+  "branchPrefix": "dependency/",
+  "labels": ["dependencies"],
+  "prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}\n\n## Additional changes\nExplain here any changes you had to make manually to make the project compatible with the update. If nothing was needed, please delete this section.\n\n## How was this change tested?\n- Explain here the test plan you did for this change.\n- Make sure you covered every scenario, including edge cases\n\n## Evidence\n| Before | After |\n|---|---|\n| <img src=\"Insert your image/GIF here. Local images must start with /uploads/\" width=\"315\"/> | <img src=\"Insert your image/GIF here. Local images must start with /uploads/\" width=\"315\"/> |",
+  "gitAuthor": "GitLab Bot <devx@ifood.com.br>",
+  "rebaseWhen": "conflicted",
+
+  "gitlabci-include": {
+    "versioning": "regex:^ifood-(?<compatibility>[^-]+)-(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)$"
+  },
+
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "node-\\d\\d\/gitlab-ci\\.ya?ml$"
+      ],
+      "matchStrings": ["_NODE_VERSION:.+v(?<currentValue>.*?)\n"],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver",
+      "depNameTemplate": "node"
+    }
+  ]
+}

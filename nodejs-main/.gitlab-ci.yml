@@ -1,0 +1,83 @@
+include:
+  - project: ifood/pipelines/gitlab-pipelines
+    ref: ifood-security-4-stable
+    file: pipelines/ifood-security/main.yml
+
+node-18:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - changes:
+      - node-18/.VERSION
+      when: always
+    - when: never
+  trigger:
+    strategy: depend
+    include:
+      - local: node-18/gitlab-ci.yml
+
+node-20:
+   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - changes:
+      - node-20/.VERSION
+      when: always
+    - when: never
+   trigger:
+     strategy: depend
+     include:
+       - local: node-20/gitlab-ci.yml
+
+node-22:
+  rules:
+    - changes:
+      - node-22/.VERSION
+  trigger:
+    strategy: depend
+    include:
+      - local: node-22/gitlab-ci.yml
+
+node-24:
+  rules:
+    - changes:
+      - node-24/.VERSION
+  trigger:
+    strategy: depend
+    include:
+      - local: node-24/gitlab-ci.yml
+
+# Pipeline workflow behavior
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - when: never
+  trigger:
+    strategy: depend
+    include:
+    - project: ifood/docker-images/golden/pipelines
+      ref: v1.0.0
+      file: ifood-periodic-security-check/main.yml
+  parallel:
+    matrix:
+      - CONTAINER_IMAGE_NAME: 
+        - "registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/16"
+        - "registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18"
+        - "registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/20"
+        CONTAINER_IMAGE_TAG: 
+        - "1-edge"
+        - "1-stable"
+        - "latest"
+
+sonarqube:
+  variables:
+    SERVICE_NAME: "nodejs-golden-image"
+
+quality_gates_checkpoint:
+  variables:
+    SERVICE_NAME: "nodejs-golden-image"
+
+quality_gates_validation:
+  variables:
+    SERVICE_NAME: "nodejs-golden-image"

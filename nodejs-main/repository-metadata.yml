@@ -1,0 +1,21 @@
+apiVersion: ifood/v2
+kind: Repository
+tags:
+  - docker
+  - golden
+  - node
+  - nodejs
+spec:
+  contents:
+    - name: nodejs-golden-image
+      description: Repository for the Node.JS golden image.
+      type: other
+      ownerLayerSlug: sec-eng
+      subType:
+        - other
+      impactLevel: 3
+      deployment:
+        type: container_registry
+      certifications:
+        - name: irc-mtdt
+          version: v1.1

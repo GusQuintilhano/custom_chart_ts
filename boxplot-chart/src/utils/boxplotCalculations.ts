@@ -110,6 +110,7 @@ export function calculateBoxplotData(
             case 'Alfabética':
             default:
                 // Ordenação alfabética (tentativa numérica primeiro)
+<<<<<<< HEAD
         const aVal = a.dimensionValue;
         const bVal = b.dimensionValue;
         const aNum = parseFloat(aVal);

@@ -1,0 +1,76 @@
+include:
+  - project: ifood/pipelines/gitlab-pipelines
+    ref: ifood-docker-1-edge
+    file: pipelines/ifood-docker/main.yml
+
+variables:
+  DOCKER_SIGN: "true"
+  BUILD_MULTIARCH: "true"
+  BASE_IMG_VERSION: "1.3.2"
+  
+  SERVICE_NAME: nodejs-golden-image
+  BUILD_ARGS: "VERSION=$_NODE_VERSION BASE_IMG_VERSION=$BASE_IMG_VERSION"
+  BUILD_DOCKERFILE_PATH: "../Dockerfile"
+
+stages:
+  - test
+  - security publish report
+  - code analysis
+  - build
+  - manifest
+  - container scan
+  - security publish container report
+  - sign golden image
+  - test golden image
+  - release
+
+# Fix BUILD_ARGS being overwritten
+.before_build:
+  before_script:
+    - cp node_downloader.sh $BUILD_CONTEXT/
+    - cp .executor $BUILD_CONTEXT/
+    - cp 01-permissions.yaml $BUILD_CONTEXT/
+    - export _BUILD_ARGS=$BUILD_ARGS
+    - !reference [.golden_image, before_script]
+    - export BUILD_ARGS="${BUILD_ARGS} ${_BUILD_ARGS}"
+
+build_image:
+  before_script:
+    - !reference [.before_build, before_script]
+
+build_image_multiarch:
+  before_script:
+    - !reference [.before_build, before_script]
+
+.bridge_simple_project:
+  stage: test golden image
+  variables:
+    GOLDEN_IMG_NODE_VERSION: "16"
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+      variables:
+        GOLDEN_IMG_TAG: "$CI_PIPELINE_IID"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        GOLDEN_IMG_TAG: "latest"
+  inherit:
+    variables: false
+  trigger:
+    branch: main
+    strategy: depend
+
+bridge_node:
+  extends: .bridge_simple_project
+  trigger:
+    project: ifood/docker-images/golden/test-projects/simple-project-gi-nodejs
+
+# Prevent us from triggering the pipeline when tagging the image
+# Prevent us from updating the image without bumping its version
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: never

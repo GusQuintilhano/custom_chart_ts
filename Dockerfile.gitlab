@@ -33,7 +33,7 @@ COPY trellis-chart/ ./trellis-chart/
 COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
-# Copiar start.js também
+# Copiar start.js também (se existir)
 COPY charts-router/start.js ./charts-router/start.js
 
 # Garantir que os scripts têm permissão de execução (no stage de build que tem shell)

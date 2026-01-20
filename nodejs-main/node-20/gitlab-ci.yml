@@ -1,0 +1,14 @@
+include:
+  - project: ifood/pipelines/gitlab-pipelines
+    ref: ifood-docker-1-stable
+    file: pipelines/ifood-docker/main.yml
+  - local: node-gitlab-ci.yml
+
+variables:
+  _NODE_VERSION: v20.17.0
+  CONTAINER_IMAGE_NAME: "$CI_REGISTRY_IMAGE/20"
+  BUILD_CONTEXT: "node-20"
+
+.bridge_simple_project:
+  variables:
+    GOLDEN_IMG_NODE_VERSION: "20"

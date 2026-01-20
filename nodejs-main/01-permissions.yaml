@@ -1,0 +1,28 @@
+#File containing additional node permissions
+- rootDir: "/app"
+  relativePaths:
+    #This relative path is going to ignore /app/.*/node_modules/.*
+    - path: "/.*/node_modules"
+      action: ignore
+    # Only the .next folder will allow 'write' for other users, because of the .cache sometimes created in runtime
+    - path: "/.*/\\.next$"
+      action: enforce
+      uid: 0
+      gid: 0
+      mode: 0666
+    - path: "/.*/\\.next/cache"
+      action: enforce
+      uid: 1000
+      gid: 1000
+      mode: 0660
+    - path: "/.*/\\.next/server/pages"
+      action: enforce
+      uid: 1000
+      gid: 1000
+      mode: 0770
+    # Specific to strapi, because framework has an issue.
+    - path: "/app/.tmp"
+      action: enforce
+      uid: 1000
+      gid: 1000
+      mode: 0660

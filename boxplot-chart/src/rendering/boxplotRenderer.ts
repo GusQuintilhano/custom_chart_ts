@@ -112,7 +112,39 @@ export function renderBoxplot(
     } = options;
 
     const { plotAreaWidth, plotAreaHeight, topMargin, leftMargin, bottomMargin, groupSpacing } = config;
+    
+    // Calcular range global para coordenadas:
+    // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
+    // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)
+    const showOutliers = options.showOutliers !== false;
+    let globalMin: number;
+    let globalMax: number;
+    
+    if (showOutliers) {
+        // Incluir outliers: usar valores absolutos min/max de todos os dados
+        const allDataValues = groups.flatMap(g => g.values);
+        if (allDataValues.length > 0) {
+            // Usar loop ao invés de spread operator para evitar "Maximum call stack size exceeded" com arrays grandes
+            let min = allDataValues[0];
+            let max = allDataValues[0];
+            for (let i = 1; i < allDataValues.length; i++) {
+                const val = allDataValues[i];
+                if (val < min) min = val;
+                if (val > max) max = val;
+            }
+            globalMin = min;
+            globalMax = max;
+        } else {
+            globalMin = boxplotData.globalStats.whiskerLower;
+            globalMax = boxplotData.globalStats.whiskerUpper;
+        }
+    } else {
+        // Sem outliers: usar limites dos whiskers
+        globalMin = boxplotData.globalStats.whiskerLower;
+        globalMax = boxplotData.globalStats.whiskerUpper;
+    }
 
+<<<<<<< HEAD
     // Calcular range global para coordenadas:
     // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
     // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)

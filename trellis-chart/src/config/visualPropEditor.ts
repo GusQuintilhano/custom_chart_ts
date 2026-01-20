@@ -576,6 +576,7 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
+<<<<<<< HEAD
     const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 12;
     const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 14;
     const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 10;
@@ -628,7 +629,7 @@ function createEditorSections(
                 key: 'measureNameRotation',
                 label: 'Rotação do Nome da Medida',
                 defaultValue: measureNameRotationValue,
-                values: ['0', '45', '-45', '90', '-90'],
+                values: ['-90', '0', '45', '-45', '90'],
             },
             {
                 type: 'toggle',
@@ -638,6 +639,7 @@ function createEditorSections(
             },
         ],
     });
+    */
     
     // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
@@ -697,6 +699,20 @@ function createEditorSections(
         label: 'Dimensões e Espaçamento',
         isAccordianExpanded: false,
         children: dimensionsChildren,
+            {
+                type: 'toggle',
+                key: 'fitHeight',
+                label: 'Ajustar a 100% da Altura',
+                defaultValue: Boolean(fitHeightValue),
+            },
+            {
+                type: 'number',
+                key: 'measureLabelSpace',
+                label: 'Espaço das Labels das Medidas (px)',
+                defaultValue: Number(measureLabelSpaceNum),
+            },
+        ],
+>>>>>>> c72bc741d0c8786d5a0e2913e227dca5fcb8fab3
     });
     
     

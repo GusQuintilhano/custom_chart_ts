@@ -483,7 +483,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
     // Adicionar event listeners para rastrear interações do usuário
     setupInteractionTracking(chartElement, userId);
 
-        // Finalizar monitoramento e rastrear performance
+    // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'trellis';
