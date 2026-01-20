@@ -33,14 +33,21 @@ build-charts:
   image: node:${NODE_VERSION}
   script:
     - echo "Empacotando charts..."
-    - cd dev/integration-tests/A3.1-empacotamento
-    - chmod +x build-all.sh
-    - ./build-all.sh || echo "Alguns charts podem ter falhado no build"
-    - echo "Build concluido"
+    - |
+      if [ -d "dev/integration-tests/A3.1-empacotamento" ]; then
+        cd dev/integration-tests/A3.1-empacotamento
+        chmod +x build-all.sh
+        ./build-all.sh || echo "Alguns charts podem ter falhado no build"
+        echo "Build concluido"
+      else
+        echo "Diretório dev/integration-tests/A3.1-empacotamento não encontrado. Pulando empacotamento."
+        echo "Os charts serão construídos durante o build da imagem Docker."
+      fi
   artifacts:
     paths:
       - dev/charts/*/dist/*.zip
     expire_in: 1 week
+    when: on_success
   only:
     - main
     - tags
