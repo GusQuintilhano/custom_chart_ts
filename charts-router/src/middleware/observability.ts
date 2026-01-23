@@ -5,6 +5,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { getObservabilityStorage } from '../utils/observabilityStorage';
+import { getCachedUserInfo } from '../utils/thoughtspotAPI';
 import type { UserContext } from '../../../shared/utils/observability';
 
 /**
@@ -174,13 +175,47 @@ function extractSessionId(req: Request): string {
  * Extrai ID do usuário do request
  */
 function extractUserId(req: Request): string | undefined {
-    // Tenta extrair de headers de autenticação, JWT, etc.
-    const authHeader = req.get('Authorization');
-    if (authHeader) {
-        // Implementar extração real baseada no sistema de auth
-        return req.get('X-User-ID') || undefined;
+    // Tenta extrair de headers que o ThoughtSpot pode enviar
+    return req.get('X-User-ID') ||
+        req.get('X-TS-User-ID') ||
+        req.get('X-ThoughtSpot-User') ||
+        req.get('X-Username') ||
+        req.get('X-User-Name') ||
+        req.get('X-User-Email') ||
+        // Headers de autenticação SAML/SSO
+        req.get('X-SAML-User') ||
+        req.get('X-SSO-User') ||
+        // Headers de proxy reverso
+        req.get('X-Remote-User') ||
+        req.get('X-Forwarded-User') ||
+        // Tentar extrair de JWT se disponível
+        extractUserFromJWT(req.get('Authorization')) ||
+        undefined;
+}
+
+/**
+ * Extrai usuário de JWT token se disponível
+ */
+function extractUserFromJWT(authHeader?: string): string | undefined {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return undefined;
     }
-    return undefined;
+
+    try {
+        const token = authHeader.substring(7);
+        // Decodifica JWT sem verificar assinatura (apenas para extrair dados)
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+
+        return payload.sub ||
+            payload.user_id ||
+            payload.userId ||
+            payload.username ||
+            payload.email ||
+            payload.preferred_username ||
+            undefined;
+    } catch (error) {
+        return undefined;
+    }
 }
 
 /**
