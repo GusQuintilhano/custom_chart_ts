@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Dashboard Analytics - ThoughtSpot Custom Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-card h3 {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.9rem;
+            color: #10b981;
+        }
+
+        .charts-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+
+        .users-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .users-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .users-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #fecaca;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
+            margin-bottom: 2rem;
+        }
+
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>📊 Dashboard Analytics</h1>
+        <p>Métricas de uso dos Custom Charts do ThoughtSpot</p>
+    </div>
+
+    <div class="container">
+        <button class="refresh-btn" onclick="loadDashboard()">🔄 Atualizar Dados</button>
+
+        <div id="loading" class="loading">
+            <p>Carregando métricas...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- Métricas Principais -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Total de Acessos</h3>
+                    <div class="metric-value" id="totalAccesses">-</div>
+                    <div class="metric-change">Últimos 7 dias</div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Usuários Únicos</h3>
+                    <div class="metric-value" id="uniqueUsers">-</div>
+                    <div class="metric-change">Usuários diferentes</div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Tempo Médio de Sessão</h3>
+                    <div class="metric-value" id="avgSession">-</div>
+                    <div class="metric-change">Minutos por sessão</div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Chart Mais Usado</h3>
+                    <div class="metric-value" id="topChart">-</div>
+                    <div class="metric-change">Tipo de gráfico</div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="charts-section">
+                <h2 class="section-title">📈 Análise de Uso</h2>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Acessos por Hora do Dia</div>
+                        <canvas id="accessByHourChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-title">Acessos por Dia da Semana</div>
+                        <canvas id="accessByDayChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-title">Dispositivos Utilizados</div>
+                        <canvas id="deviceBreakdownChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-title">Tipos de Charts</div>
+                        <canvas id="chartTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Usuários -->
+            <div class="charts-section">
+                <h2 class="section-title">👥 Top Usuários</h2>
+                <div class="users-table-container">
+                    <div class="table-header">
+                        <h3>Usuários Mais Ativos</h3>
+                    </div>
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Acessos</th>
+                                <th>Tempo Total</th>
+                                <th>Último Acesso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated" id="lastUpdated"></div>
+    </div>
+
+    <script>
+        let charts = {};
+
+        async function loadDashboard() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const content = document.getElementById('dashboard-content');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            content.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/analytics/dashboard-stats');
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Erro ao carregar dados');
+                }
+
+                const stats = result.data;
+                updateMetrics(stats);
+                updateCharts(stats);
+                updateUsersTable(stats.topUsers);
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+
+                document.getElementById('lastUpdated').textContent =
+                    `Última atualização: ${new Date().toLocaleString('pt-BR')}`;
+
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = `Erro: ${err.message}`;
+            }
+        }
+
+        function updateMetrics(stats) {
+            document.getElementById('totalAccesses').textContent = stats.totalAccesses.toLocaleString('pt-BR');
+            document.getElementById('uniqueUsers').textContent = stats.uniqueUsers.toLocaleString('pt-BR');
+
+            const avgMinutes = Math.round(stats.averageSessionDuration / 60000);
+            document.getElementById('avgSession').textContent = `${avgMinutes}min`;
+
+            const topChartType = Object.entries(stats.chartTypeBreakdown)
+                .sort(([, a], [, b]) => b - a)[0];
+            document.getElementById('topChart').textContent = topChartType ? topChartType[0] : '-';
+        }
+
+        function updateCharts(stats) {
+            // Destruir gráficos existentes
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // Acessos por hora
+            const hourCtx = document.getElementById('accessByHourChart').getContext('2d');
+            charts.hourChart = new Chart(hourCtx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(stats.accessByHour).map(h => `${h}:00`),
+                    datasets: [{
+                        label: 'Acessos',
+                        data: Object.values(stats.accessByHour),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Acessos por dia da semana
+            const dayCtx = document.getElementById('accessByDayChart').getContext('2d');
+            const dayLabels = {
+                'sunday': 'Dom', 'monday': 'Seg', 'tuesday': 'Ter', 'wednesday': 'Qua',
+                'thursday': 'Qui', 'friday': 'Sex', 'saturday': 'Sáb'
+            };
+
+            charts.dayChart = new Chart(dayCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(stats.accessByDay).map(d => dayLabels[d]),
+                    datasets: [{
+                        label: 'Acessos',
+                        data: Object.values(stats.accessByDay),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Dispositivos
+            const deviceCtx = document.getElementById('deviceBreakdownChart').getContext('2d');
+            charts.deviceChart = new Chart(deviceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(stats.deviceBreakdown),
+                    datasets: [{
+                        data: Object.values(stats.deviceBreakdown),
+                        backgroundColor: ['#667eea', '#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Tipos de charts
+            const chartTypeCtx = document.getElementById('chartTypeChart').getContext('2d');
+            charts.chartTypeChart = new Chart(chartTypeCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(stats.chartTypeBreakdown),
+                    datasets: [{
+                        data: Object.values(stats.chartTypeBreakdown),
+                        backgroundColor: ['#8b5cf6', '#06b6d4']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function updateUsersTable(topUsers) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            topUsers.forEach(user => {
+                const row = document.createElement('tr');
+
+                const totalMinutes = Math.round(user.totalTime / 60000);
+                const lastAccess = new Date(user.lastAccess).toLocaleString('pt-BR');
+
+                row.innerHTML = `
+                    <td>${user.username || user.userId}</td>
+                    <td>${user.accessCount}</td>
+                    <td>${totalMinutes}min</td>
+                    <td>${lastAccess}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Carregar dashboard ao inicializar
+        loadDashboard();
+
+        // Atualizar a cada 5 minutos
+        setInterval(loadDashboard, 5 * 60 * 1000);
+    </script>
+</body>
+
+</html>

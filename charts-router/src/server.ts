@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { analyticsMiddleware } from './middleware/analytics.js';
 import analyticsRouter from './routes/analytics.js';
+import dashboardMetricsRouter from './routes/dashboard-metrics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -97,7 +98,14 @@ if (!fs.existsSync(boxplotDistPath)) {
     }
 }
 
-// Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
+// Servir arquivos estáticos (dashboard)
+app.use('/public', express.static(path.join(__dirname, '../public')));
+
+// Dashboard de analytics
+app.get('/dashboard', (req, res) => {
+    const dashboardPath = path.join(__dirname, '../public/dashboard.html');
+    res.sendFile(dashboardPath);
+});
 // Isso permite que /trellis/assets/... funcione
 app.use('/trellis', express.static(trellisDistPath, { index: false }));
 
@@ -110,15 +118,15 @@ app.get('/trellis', (req, res) => {
     const indexPath = path.join(trellisDistPath, 'index.html');
     console.log(`Serving trellis index from: ${indexPath}`);
     console.log(`File exists: ${fs.existsSync(indexPath)}`);
-    
+
     // Ler o arquivo e modificar os caminhos dos assets se necessário
     let htmlContent = fs.readFileSync(indexPath, 'utf8');
-    
+
     // Substituir /assets/ por /trellis/assets/ para garantir que funcione
     // Mas também manteremos /assets/ funcionando através do app.use acima
     htmlContent = htmlContent.replace(/src="\/assets\//g, 'src="/trellis/assets/');
     htmlContent = htmlContent.replace(/href="\/assets\//g, 'href="/trellis/assets/');
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(htmlContent);
 });
@@ -132,7 +140,7 @@ app.get('/boxplot', (req, res) => {
     console.log(`Serving boxplot index from: ${indexPath}`);
     console.log(`Boxplot dist path exists: ${fs.existsSync(boxplotDistPath)}`);
     console.log(`Boxplot index.html exists: ${fs.existsSync(indexPath)}`);
-    
+
     if (!fs.existsSync(indexPath)) {
         console.error(`ERROR: Boxplot index.html not found at: ${indexPath}`);
         console.error(`  boxplotDistPath: ${boxplotDistPath}`);
@@ -158,14 +166,14 @@ app.get('/boxplot', (req, res) => {
         `);
         return;
     }
-    
+
     // Ler o arquivo e modificar os caminhos dos assets se necessário
     let htmlContent = fs.readFileSync(indexPath, 'utf8');
-    
+
     // Substituir /assets/ por /boxplot/assets/
     htmlContent = htmlContent.replace(/src="\/assets\//g, 'src="/boxplot/assets/');
     htmlContent = htmlContent.replace(/href="\/assets\//g, 'href="/boxplot/assets/');
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(htmlContent);
 });
@@ -173,10 +181,13 @@ app.get('/boxplot', (req, res) => {
 // API de analytics
 app.use('/api/analytics', analyticsRouter);
 
+// API de métricas de dashboard
+app.use('/api/analytics', dashboardMetricsRouter);
+
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
+    res.json({
+        status: 'ok',
         charts: ['trellis', 'boxplot'],
         paths: {
             trellisDistPath,
