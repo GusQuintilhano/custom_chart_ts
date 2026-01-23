@@ -2,9 +2,10 @@
  * Cálculos específicos para Boxplot Chart
  */
 
-import { calculateBoxplotStats, type BoxplotStatistics } from '@shared/utils/statistical';
-import type { BoxplotDataGroup, BoxplotData } from '../types/boxplotTypes';
+import { calculateBoxplotStats, type BoxplotStatistics, type CalculationMethod, type WhiskerType } from '@shared/utils/statistical';
+import type { BoxplotDataGroup, BoxplotData, SortType } from '../types/boxplotTypes';
 import type { ChartColumn, ChartModel, DataPointsArray } from '@thoughtspot/ts-chart-sdk';
+import type { BoxplotOptions } from './boxplotOptions';
 
 /**
  * Converte valores do ThoughtSpot para números
@@ -33,7 +34,8 @@ function extractValue(value: unknown): number {
 export function calculateBoxplotData(
     chartModel: ChartModel,
     measureColumn: ChartColumn,
-    dimensionColumns: ChartColumn[]
+    dimensionColumns: ChartColumn[],
+    options?: BoxplotOptions
 ): BoxplotData | null {
     const data = chartModel.data?.[0]?.data;
     if (!data || !data.dataValue || data.dataValue.length === 0) {
@@ -67,36 +69,60 @@ export function calculateBoxplotData(
         }
     }
 
+    // Obter configurações de cálculo
+    const calculationMethod: CalculationMethod = options?.calculationMethod || 'auto';
+    const whiskerType: WhiskerType = options?.whiskerType || 'iqr_1_5';
+    const includeMean = options?.showMean || false;
+
     // Calcular estatísticas para cada grupo
     const groups: BoxplotDataGroup[] = [];
     let allValues: number[] = [];
 
     for (const [dimensionKey, values] of groupsMap.entries()) {
-        const stats = calculateBoxplotStats(values, true);
+        const stats = calculateBoxplotStats(values, includeMean, calculationMethod, whiskerType);
         allValues = allValues.concat(values);
         
         groups.push({
             dimensionValue: dimensionKey.split('|')[0], // Usar primeira dimensão como label principal
             values,
             stats,
+            mean: includeMean ? stats.mean : undefined,
         });
     }
 
-    // Ordenar grupos por valor da dimensão (para ordem consistente)
+    // Ordenar grupos conforme configuração
+    const sortType: SortType = options?.sortType || 'Alfabética';
+    
     groups.sort((a, b) => {
+        switch (sortType) {
+            case 'Média (Crescente)':
+                return (a.stats.mean || 0) - (b.stats.mean || 0);
+            case 'Média (Decrescente)':
+                return (b.stats.mean || 0) - (a.stats.mean || 0);
+            case 'Mediana (Crescente)':
+                return a.stats.q2 - b.stats.q2;
+            case 'Mediana (Decrescente)':
+                return b.stats.q2 - a.stats.q2;
+            case 'Variabilidade (Crescente)':
+                return a.stats.iqr - b.stats.iqr;
+            case 'Variabilidade (Decrescente)':
+                return b.stats.iqr - a.stats.iqr;
+            case 'Alfabética':
+            default:
+                // Ordenação alfabética (tentativa numérica primeiro)
         const aVal = a.dimensionValue;
         const bVal = b.dimensionValue;
-        // Tentar ordenação numérica se possível
         const aNum = parseFloat(aVal);
         const bNum = parseFloat(bVal);
         if (!isNaN(aNum) && !isNaN(bNum)) {
             return aNum - bNum;
         }
         return aVal.localeCompare(bVal);
+        }
     });
 
     // Calcular estatísticas globais
-    const globalStats = calculateBoxplotStats(allValues, true);
+    const globalStats = calculateBoxplotStats(allValues, includeMean, calculationMethod, whiskerType);
 
     return {
         measure: measureColumn,
@@ -107,6 +133,7 @@ export function calculateBoxplotData(
 
 /**
  * Converte valor para coordenada Y (vertical) ou X (horizontal)
+ * Suporta escala linear e logarítmica
  */
 export function valueToCoordinate(
     value: number,
@@ -114,13 +141,64 @@ export function valueToCoordinate(
     max: number,
     start: number,
     length: number,
-    orientation: 'vertical' | 'horizontal'
+    orientation: 'vertical' | 'horizontal',
+    scale: 'linear' | 'log' = 'linear'
 ): number {
     if (max === min) return start + length / 2;
-    const ratio = (value - min) / (max - min);
+    
+    let ratio: number;
+    
+    if (scale === 'log') {
+        // Para escala logarítmica, garantir valores positivos
+        // Se há valores não positivos, usar escala linear como fallback
+        if (min <= 0 || max <= 0 || value <= 0) {
+            // Usar escala linear como fallback se há valores não positivos
+            ratio = (value - min) / (max - min);
+        } else {
+            // Escala logarítmica: log(value) entre log(min) e log(max)
+            const logMin = Math.log10(min);
+            const logMax = Math.log10(max);
+            const logValue = Math.log10(value);
+            ratio = (logValue - logMin) / (logMax - logMin);
+        }
+    } else {
+        // Escala linear (padrão)
+        ratio = (value - min) / (max - min);
+    }
+    
     return orientation === 'vertical' 
         ? start + length - (ratio * length)
         : start + (ratio * length);
+}
+
+/**
+ * Converte um valor para coordenada Y usando escala logarítmica ou linear
+ * Helper para renderização vertical
+ */
+export function valueToYCoordinate(
+    value: number,
+    min: number,
+    max: number,
+    topMargin: number,
+    plotAreaHeight: number,
+    scale: 'linear' | 'log' = 'linear'
+): number {
+    return valueToCoordinate(value, min, max, topMargin, plotAreaHeight, 'vertical', scale);
+}
+
+/**
+ * Converte um valor para coordenada X usando escala logarítmica ou linear
+ * Helper para renderização horizontal
+ */
+export function valueToXCoordinate(
+    value: number,
+    min: number,
+    max: number,
+    leftMargin: number,
+    plotAreaWidth: number,
+    scale: 'linear' | 'log' = 'linear'
+): number {
+    return valueToCoordinate(value, min, max, leftMargin, plotAreaWidth, 'horizontal', scale);
 }
 
 /**

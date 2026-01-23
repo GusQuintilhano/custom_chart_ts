@@ -52,6 +52,7 @@ export interface DynamicResizeParams {
     primaryDateFormat: string;
     secondaryDateFormat: string;
     hasSecondaryDimension: boolean;
+    primaryDimension: ChartColumn;
     secondaryDimensions: ChartColumn[];
     measureLabelSpace: number;
     yAxisColor: string;
@@ -103,6 +104,7 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         primaryDateFormat,
         secondaryDateFormat,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         measureLabelSpace,
         yAxisColor,
@@ -120,16 +122,91 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         chartElement.__resizeObserver.disconnect();
     }
 
+    // Garantir que o chartElement ocupe 100% da largura quando fitWidth está ativo
+    if (fitWidth) {
+        chartElement.style.width = '100%';
+        chartElement.style.minWidth = '100%';
+        chartElement.style.maxWidth = '100%';
+        chartElement.style.boxSizing = 'border-box';
+        chartElement.style.margin = '0';
+        chartElement.style.padding = '0';
+    }
+    
     const containerDiv = chartElement.querySelector('div') as HTMLElement;
     const wrapperDiv = containerDiv?.querySelector('div') as HTMLElement;
 
     if (!containerDiv || !wrapperDiv) {
         return;
     }
+    
+    // Armazenar as últimas dimensões para evitar re-renderizações desnecessárias
+    let lastContainerWidth = 0;
+    let lastContainerHeight = 0;
+    let lastChartWidth = chartWidth;
+    let lastChartHeight = chartHeight;
 
     const adjustDimensions = () => {
-        const containerWidth = containerDiv.clientWidth;
-        const containerHeight = containerDiv.clientHeight;
+        // Tentar obter dimensões do container de várias formas
+        // IMPORTANTE: Quando fitWidth está ativo, usar clientWidth (espaço útil) como prioridade
+        // Isso garante que o SVG seja calculado para o espaço útil disponível, sem criar barra de rolagem
+        // O SVG com width: 100% vai escalar para ocupar exatamente o espaço útil do container
+        let containerWidth = fitWidth 
+            ? (containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0)
+            : containerDiv.clientWidth;
+        let containerHeight = fitHeight
+            ? (containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0)
+            : containerDiv.clientHeight;
+        
+        // Se ainda não temos dimensões, tentar outras formas
+        if (fitWidth && containerWidth === 0) {
+            containerWidth = containerDiv.clientWidth || containerDiv.getBoundingClientRect().width || containerDiv.offsetWidth || 0;
+        }
+        if (fitHeight && containerHeight === 0) {
+            containerHeight = containerDiv.clientHeight || containerDiv.getBoundingClientRect().height || containerDiv.offsetHeight || 0;
+        }
+        
+        // Se ainda não temos dimensões e fitWidth está ativo, tentar obter do elemento pai
+        if (fitWidth && containerWidth === 0 && containerDiv.parentElement) {
+            const parentWidth = containerDiv.parentElement.offsetWidth || 
+                              containerDiv.parentElement.getBoundingClientRect().width ||
+                              containerDiv.parentElement.clientWidth || 0;
+            if (parentWidth > 0) {
+                containerWidth = parentWidth;
+            }
+        }
+        
+        // Se fitWidth está ativo mas o container ainda não tem dimensões, aguardar
+        if (fitWidth && containerWidth === 0) {
+            console.log('[FitWidth] adjustDimensions: containerWidth ainda é 0, aguardando...', {
+                containerDivClientWidth: containerDiv.clientWidth,
+                containerDivOffsetWidth: containerDiv.offsetWidth,
+                containerDivBoundingRect: containerDiv.getBoundingClientRect().width,
+                parentWidth: containerDiv.parentElement?.clientWidth,
+            });
+            return;
+        }
+
+        // Verificar se as dimensões mudaram significativamente (diferença maior que 1px)
+        // Isso evita re-renderizações desnecessárias quando há apenas pequenas variações
+        // IMPORTANTE: Sempre renderizar na primeira vez (lastContainerWidth === 0)
+        const isFirstRender = lastContainerWidth === 0;
+        const widthChanged = Math.abs(containerWidth - lastContainerWidth) > 1;
+        const heightChanged = Math.abs(containerHeight - lastContainerHeight) > 1;
+        const chartSizeChanged = lastChartWidth !== chartWidth || lastChartHeight !== chartHeight;
+        
+        // Se não houve mudança significativa e já renderizamos com essas dimensões, não atualizar
+        // MAS sempre renderizar na primeira vez (isFirstRender)
+        // IMPORTANTE: Se fitWidth está ativo e ainda não renderizamos com essas dimensões, sempre atualizar
+        if (!isFirstRender && !widthChanged && !heightChanged && !chartSizeChanged) {
+            console.log('[FitWidth] adjustDimensions: Pulando atualização - dimensões não mudaram', {
+                containerWidth,
+                lastContainerWidth,
+                widthChanged,
+                heightChanged,
+                chartSizeChanged,
+            });
+            return;
+        }
 
         let newChartWidth = chartWidth;
         let newChartHeight = chartHeight;
@@ -137,10 +214,38 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         let shouldUpdate = false;
 
         // Ajustar largura se fitWidth está ativo
-        // Quando fitWidth está ativo, SEMPRE usar containerWidth (ajustar independente do valor anterior)
         if (fitWidth && containerWidth > 0) {
-            newChartWidth = containerWidth;
+            // IMPORTANTE: O conteúdo do gráfico deve ser renderizado no mesmo tamanho do viewBox
+            // Para isso, precisamos usar o espaço real disponível do wrapper
+            // Primeiro, garantir que o wrapper está configurado corretamente
+            let actualWidth = containerWidth;
+            if (wrapperDiv) {
+                // Configurar o wrapper primeiro
+                wrapperDiv.style.width = '100%';
+                wrapperDiv.style.boxSizing = 'border-box';
+                // Forçar um reflow para garantir que o DOM seja atualizado
+                void wrapperDiv.offsetWidth;
+                // Obter o tamanho real do wrapper após o reflow
+                const wrapperRect = wrapperDiv.getBoundingClientRect();
+                const wrapperClientWidth = wrapperDiv.clientWidth || wrapperRect.width || containerWidth;
+                actualWidth = wrapperClientWidth;
+            }
+            newChartWidth = actualWidth;
             shouldUpdate = true;
+            
+            console.log('[FitWidth] adjustDimensions: Ajustando largura do gráfico', {
+                containerWidth,
+                wrapperClientWidth: wrapperDiv?.clientWidth,
+                wrapperBoundingRect: wrapperDiv?.getBoundingClientRect().width,
+                actualWidth,
+                chartWidth,
+                newChartWidth,
+                lastContainerWidth,
+                widthChanged,
+                isFirstRender,
+                shouldUpdate,
+                info: 'newChartWidth será usado tanto para o viewBox quanto para renderizar o conteúdo',
+            });
         } else if (!fitWidth) {
             const numBars = chartData.length;
             const totalBarWidth = barWidth * numBars;
@@ -164,11 +269,56 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
         let newBarSpacing = barSpacing;
 
         // Quando fitWidth está ativo, SEMPRE recalcular barWidth e barSpacing baseado no novo tamanho
+        // IGNORAR configurações de largura de barras e calcular para que ocupe exatamente a largura disponível
+        // Estratégia: usar espaçamento mínimo fixo e distribuir o restante entre as barras
         if (fitWidth && containerWidth > 0) {
             const newPlotAreaWidth = newChartWidth - leftMargin - rightMargin;
-            newBarSpacing = showYAxis ? 20 : Math.max(15, newPlotAreaWidth / (chartData.length * 3));
-            const newTotalSpacing = newBarSpacing * (chartData.length - 1);
-            newBarWidth = showYAxis ? 40 : Math.max(30, (newPlotAreaWidth - newTotalSpacing) / chartData.length);
+            const numBars = chartData.length;
+            
+            if (numBars === 0) {
+                newBarWidth = 0;
+                newBarSpacing = 0;
+            } else if (numBars === 1) {
+                // Se há apenas uma barra, usar toda a largura disponível
+                newBarWidth = newPlotAreaWidth;
+                newBarSpacing = 0;
+            } else {
+                // Usar espaçamento mínimo fixo (2px) e distribuir o restante entre as barras
+                // Isso garante que o gráfico caiba exatamente na largura disponível
+                const minBarSpacing = 2;
+                const totalSpacing = minBarSpacing * (numBars - 1);
+                const availableWidthForBars = newPlotAreaWidth - totalSpacing;
+                
+                if (availableWidthForBars <= 0) {
+                    // Se não há espaço suficiente, usar espaçamento mínimo e dividir o restante
+                    newBarSpacing = minBarSpacing;
+                    newBarWidth = Math.max(1, newPlotAreaWidth / (numBars * 2)); // Dividir espaço igualmente
+                } else {
+                    newBarSpacing = minBarSpacing;
+                    newBarWidth = availableWidthForBars / numBars;
+                }
+                
+                // Garantir que a soma seja exatamente newPlotAreaWidth (ajuste fino)
+                const calculatedTotal = (newBarWidth * numBars) + (newBarSpacing * (numBars - 1));
+                const diff = newPlotAreaWidth - calculatedTotal;
+                if (Math.abs(diff) > 0.01) {
+                    // Ajustar barWidth para compensar qualquer diferença
+                    newBarWidth += diff / numBars;
+                }
+            }
+            
+            // Garantir que sempre atualizamos quando fitWidth está ativo
+            shouldUpdate = true;
+            
+            console.log('[FitWidth] adjustDimensions: Recalculando barWidth e barSpacing para fitWidth', {
+                newPlotAreaWidth,
+                numBars,
+                newBarWidth,
+                newBarSpacing,
+                calculatedTotal: (newBarWidth * numBars) + (newBarSpacing * (numBars - 1)),
+                shouldEqual: newPlotAreaWidth,
+                diff: newPlotAreaWidth - ((newBarWidth * numBars) + (newBarSpacing * (numBars - 1))),
+            });
         }
 
         // Se há mudanças (ou fitWidth está ativo e temos containerWidth), recalcular e atualizar
@@ -226,6 +376,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 spacingBetweenMeasures,
                 dividerLinesColor: dividerLinesBetweenBarsColor,
                 dividerLinesWidth: dividerLinesBetweenBarsWidth,
+                hasSecondaryDimension,
+                secondaryDateFormat,
             });
 
             const newAllChartElementsHtml = renderAllChartElements({
@@ -233,6 +385,8 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
                 measureCols,
                 measureRanges,
                 measureConfigs,
+                primaryDimension,
+                secondaryDimensions,
                 leftMargin,
                 barWidth: newBarWidth,
                 barSpacing: newBarSpacing,
@@ -300,44 +454,347 @@ export function setupDynamicResize(params: DynamicResizeParams): void {
             // Quando fitWidth está ativo, wrapper deve ser 100% da largura
             if (wrapperDiv) {
                 if (fitWidth) {
+                    // Usar clientWidth (espaço útil) em vez de offsetWidth para evitar barra de rolagem
+                    // O wrapper deve ocupar 100% do container, sem margens negativas
                     wrapperDiv.style.width = '100%';
+                    wrapperDiv.style.marginLeft = '0';
+                    wrapperDiv.style.marginRight = '0';
+                    wrapperDiv.style.minWidth = '100%';
+                    wrapperDiv.style.maxWidth = '100%';
+                    wrapperDiv.style.boxSizing = 'border-box';
                 } else {
                     wrapperDiv.style.width = `${newChartWidth}px`;
+                    wrapperDiv.style.minWidth = '';
+                    wrapperDiv.style.maxWidth = '';
+                    wrapperDiv.style.marginLeft = '';
+                    wrapperDiv.style.marginRight = '';
                 }
+                // Quando apenas fitWidth está ativo, o wrapper deve ter altura fixa para permitir scroll
+                // Quando fitHeight está ativo, o wrapper deve ter altura 100%
                 wrapperDiv.style.height = fitHeight ? '100%' : `${newChartHeight}px`;
+                wrapperDiv.style.flexShrink = '0';
+            }
+            
+            // Garantir que o container também tenha width: 100% quando fitWidth está ativo
+            if (fitWidth) {
+                // Remover qualquer padding/margin que possa estar limitando a largura
+                // IMPORTANTE: Remover explicitamente todos os lados para garantir que não há padding/border
+                containerDiv.style.width = '100%';
+                containerDiv.style.minWidth = '100%';
+                containerDiv.style.maxWidth = '100%';
+                containerDiv.style.boxSizing = 'border-box';
+                containerDiv.style.position = 'relative';
+                containerDiv.style.margin = '0';
+                containerDiv.style.padding = '0';
+                containerDiv.style.border = 'none';
+                containerDiv.style.borderLeft = 'none';
+                containerDiv.style.borderRight = 'none';
+                containerDiv.style.borderTop = 'none';
+                containerDiv.style.borderBottom = 'none';
+                containerDiv.style.paddingLeft = '0';
+                containerDiv.style.paddingRight = '0';
+                containerDiv.style.paddingTop = '0';
+                containerDiv.style.paddingBottom = '0';
+                containerDiv.style.marginLeft = '0';
+                containerDiv.style.marginRight = '0';
+                containerDiv.style.marginTop = '0';
+                containerDiv.style.marginBottom = '0';
+                containerDiv.style.display = 'block';
+                // Manter overflow correto: se apenas fitWidth, permitir scroll vertical
+                // Se ambos fitWidth e fitHeight, esconder overflow
+                containerDiv.style.overflow = fitHeight ? 'hidden' : 'auto';
+                
+                // Verificar se ainda há diferença entre offsetWidth e clientWidth após remover padding/border
+                const computedStyle = window.getComputedStyle(containerDiv);
+                const actualClientWidth = containerDiv.clientWidth;
+                const actualOffsetWidth = containerDiv.offsetWidth;
+                const diff = actualOffsetWidth - actualClientWidth;
+                
+                if (diff > 0) {
+                    console.log('[FitWidth] adjustDimensions: Ainda há diferença entre offsetWidth e clientWidth após remover padding/border', {
+                        offsetWidth: actualOffsetWidth,
+                        clientWidth: actualClientWidth,
+                        diff,
+                        computedPaddingLeft: computedStyle.paddingLeft,
+                        computedPaddingRight: computedStyle.paddingRight,
+                        computedBorderLeft: computedStyle.borderLeftWidth,
+                        computedBorderRight: computedStyle.borderRightWidth,
+                        info: 'Usando offsetWidth (' + actualOffsetWidth + 'px) para ocupar todo o espaço disponível',
+                    });
+                }
             }
 
             const svgElement = wrapperDiv?.querySelector('svg') as SVGSVGElement;
             if (svgElement) {
-                // SVG sempre usa viewBox para scaling responsivo
-                svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
                 if (fitWidth) {
+                    // Quando fitWidth está ativo, primeiro definir width: 100% para obter o tamanho real
                     svgElement.setAttribute('width', '100%');
                     svgElement.setAttribute('height', fitHeight ? '100%' : `${newChartHeight}px`);
+                    
+                    // Forçar reflow para obter o tamanho real do SVG
+                    // SVGSVGElement não tem offsetWidth, usar getBoundingClientRect() diretamente
+                    void svgElement.getBoundingClientRect();
+                    
+                    // Obter o tamanho real do SVG após renderização
+                    const svgRect = svgElement.getBoundingClientRect();
+                    const actualSvgWidth = svgRect.width || svgElement.clientWidth || newChartWidth;
+                    
+                    // Ajustar newChartWidth para corresponder ao tamanho real do SVG
+                    // Isso garante que o viewBox e o conteúdo sejam renderizados no mesmo tamanho
+                    if (Math.abs(actualSvgWidth - newChartWidth) > 1) {
+                        newChartWidth = actualSvgWidth;
+                        // Recalcular plotAreaWidth e barWidth/barSpacing com o tamanho real
+                        const newPlotAreaWidth = newChartWidth - leftMargin - rightMargin;
+                        const numBars = chartData.length;
+                        
+                        if (numBars > 1) {
+                            const minBarSpacing = 2;
+                            const totalSpacing = minBarSpacing * (numBars - 1);
+                            const availableWidthForBars = newPlotAreaWidth - totalSpacing;
+                            newBarWidth = availableWidthForBars > 0 ? availableWidthForBars / numBars : Math.max(1, newPlotAreaWidth / (numBars * 2));
+                            newBarSpacing = minBarSpacing;
+                            
+                            // Ajuste fino para garantir que a soma seja exatamente newPlotAreaWidth
+                            const calculatedTotal = (newBarWidth * numBars) + (newBarSpacing * (numBars - 1));
+                            const diff = newPlotAreaWidth - calculatedTotal;
+                            if (Math.abs(diff) > 0.01) {
+                                newBarWidth += diff / numBars;
+                            }
+                        } else if (numBars === 1) {
+                            newBarWidth = newPlotAreaWidth;
+                            newBarSpacing = 0;
+                        }
+                        
+                        // Re-renderizar todos os elementos com o tamanho correto
+                        const lastMeasureRowTop = calculateLastMeasureRowTop(
+                            measureCols.length,
+                            topMargin,
+                            newMeasureRowHeight,
+                            spacingBetweenMeasures
+                        );
+                        
+                        const newYAxesHtml = renderYAxes(
+                            measureRanges,
+                            measureCols,
+                            measureConfigs,
+                            topMargin,
+                            newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            leftMargin,
+                            measureLabelSpace,
+                            measureTitleFontSize,
+                            measureNameRotation,
+                            showYAxis,
+                            yAxisColor,
+                            axisStrokeWidth,
+                            valueLabelFontSize
+                        );
+                        
+                        const newDividerLinesBetweenMeasuresHtml = renderDividerLinesBetweenMeasures({
+                            showGridLines,
+                            dividerLinesBetweenMeasures,
+                            measureCols,
+                            topMargin,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            leftMargin,
+                            plotAreaWidth: newPlotAreaWidth,
+                            dividerLinesColor: dividerLinesBetweenMeasuresColor,
+                            dividerLinesWidth: dividerLinesBetweenMeasuresWidth,
+                            measureLabelSpace,
+                        });
+                        
+                        const newDividerLinesBetweenBarsHtml = renderDividerLinesBetweenBars({
+                            showGridLines,
+                            dividerLinesBetweenBars,
+                            chartData,
+                            leftMargin,
+                            barWidth: newBarWidth,
+                            barSpacing: newBarSpacing,
+                            topMargin,
+                            measureCols,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            dividerLinesColor: dividerLinesBetweenBarsColor,
+                            dividerLinesWidth: dividerLinesBetweenBarsWidth,
+                            hasSecondaryDimension,
+                            secondaryDateFormat,
+                        });
+                        
+                        const newAllChartElementsHtml = renderAllChartElements({
+                            chartData,
+                            measureCols,
+                            measureRanges,
+                            measureConfigs,
+                            primaryDimension,
+                            secondaryDimensions,
+                            leftMargin,
+                            barWidth: newBarWidth,
+                            barSpacing: newBarSpacing,
+                            topMargin,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            valueLabelFontSize,
+                            forceLabels,
+                        });
+                        
+                        const newReferenceLinesHtml = renderReferenceLines({
+                            measureConfigs,
+                            measureRanges,
+                            measureColsCount: measureCols.length,
+                            topMargin,
+                            measureRowHeight: newMeasureRowHeight,
+                            spacingBetweenMeasures,
+                            leftMargin,
+                            plotAreaWidth: newPlotAreaWidth,
+                            valueLabelFontSize,
+                        });
+                        
+                        let newSecondaryXAxisHtml = '';
+                        let newSecondaryXAxisLabelsHtml = '';
+                        if (hasSecondaryDimension && secondaryDimensions.length >= 1) {
+                            const secondaryAxisResult = renderSecondaryXAxis(
+                                chartData,
+                                leftMargin,
+                                newBarWidth,
+                                newBarSpacing,
+                                measureCols,
+                                topMargin,
+                                newMeasureRowHeight,
+                                spacingBetweenMeasures,
+                                labelFontSize,
+                                dividerLinesBetweenGroupsColor,
+                                dividerLinesBetweenGroupsWidth,
+                                showGridLines,
+                                dividerLinesBetweenGroups,
+                                secondaryDateFormat
+                            );
+                            newSecondaryXAxisHtml = secondaryAxisResult.axisHtml;
+                            newSecondaryXAxisLabelsHtml = secondaryAxisResult.labelsHtml;
+                        }
+                        
+                        const { xAxisLabels: newXAxisLabels, xAxis: newXAxis } = renderXAxis({
+                            chartData,
+                            primaryDateFormat,
+                            formatDimension,
+                            leftMargin,
+                            barWidth: newBarWidth,
+                            barSpacing: newBarSpacing,
+                            lastMeasureRowTop,
+                            measureRowHeight: newMeasureRowHeight,
+                            labelFontSize,
+                            plotAreaWidth: newPlotAreaWidth,
+                            xAxisColor,
+                            axisStrokeWidth,
+                        });
+                        
+                        svgElement.innerHTML = newSecondaryXAxisLabelsHtml + newYAxesHtml + 
+                            newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newSecondaryXAxisHtml + 
+                            newAllChartElementsHtml + newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
+                    }
+                    
+                    // SVG sempre usa viewBox para scaling responsivo
+                    // IMPORTANTE: viewBox deve refletir as dimensões reais do gráfico (tamanho real do SVG)
+                    svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
+                    
+                    // preserveAspectRatio: quando apenas fitWidth, usar 'none' para permitir escala independente
+                    const preserveAspectRatio = fitWidth && fitHeight ? 'xMidYMid meet' 
+                        : fitWidth ? 'none' 
+                        : fitHeight ? 'xMidYMid meet' 
+                        : 'none';
+                    svgElement.setAttribute('preserveAspectRatio', preserveAspectRatio);
+                    
+                    console.log('[FitWidth] adjustDimensions: SVG atualizado com fitWidth', {
+                        viewBox: svgElement.getAttribute('viewBox'),
+                        width: svgElement.getAttribute('width'),
+                        height: svgElement.getAttribute('height'),
+                        preserveAspectRatio: svgElement.getAttribute('preserveAspectRatio'),
+                        svgBoundingRect: svgElement.getBoundingClientRect().width,
+                        actualSvgWidth,
+                        wrapperClientWidth: wrapperDiv?.clientWidth,
+                        wrapperOffsetWidth: wrapperDiv?.offsetWidth,
+                        containerClientWidth: containerDiv.clientWidth,
+                        containerOffsetWidth: containerDiv.offsetWidth,
+                        newChartWidth,
+                        newPlotAreaWidth: newChartWidth - leftMargin - rightMargin,
+                        newBarWidth,
+                        newBarSpacing,
+                    });
                 } else {
+                    // SVG sempre usa viewBox para scaling responsivo
+                    // IMPORTANTE: viewBox deve refletir as dimensões reais do gráfico
+                    svgElement.setAttribute('viewBox', `0 0 ${newChartWidth} ${newChartHeight}`);
                     svgElement.setAttribute('width', `${newChartWidth}px`);
                     svgElement.setAttribute('height', `${newChartHeight}px`);
+                    svgElement.setAttribute('preserveAspectRatio', fitHeight ? 'xMidYMid meet' : 'none');
                 }
-                svgElement.innerHTML = newSecondaryXAxisHtml + newSecondaryXAxisLabelsHtml + newYAxesHtml + 
-                    newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newAllChartElementsHtml + 
-                    newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
+                
+                svgElement.innerHTML = newSecondaryXAxisLabelsHtml + newYAxesHtml + 
+                    newDividerLinesBetweenMeasuresHtml + newDividerLinesBetweenBarsHtml + newSecondaryXAxisHtml + 
+                    newAllChartElementsHtml + newReferenceLinesHtml + newXAxis + newXAxisLabels + `<rect width="100%" height="100%" fill="${backgroundColor}" />`;
             }
+            
+            // Atualizar variáveis de controle para evitar re-renderizações desnecessárias
+            lastContainerWidth = containerWidth;
+            lastContainerHeight = containerHeight;
+            lastChartWidth = newChartWidth;
+            lastChartHeight = newChartHeight;
+            
+            console.log('[FitWidth] adjustDimensions: Atualização concluída', {
+                containerWidth,
+                containerHeight,
+                newChartWidth,
+                newChartHeight,
+                lastContainerWidth,
+                lastContainerHeight,
+                lastChartWidth,
+                lastChartHeight,
+                shouldUpdate,
+            });
         }
     };
 
-    // Ajustar imediatamente e também após um pequeno delay para garantir
+    // Ajustar imediatamente (primeira renderização)
+    // A função adjustDimensions verifica internamente se o container tem dimensões
+    // Se não tiver, retorna sem fazer nada e tentamos novamente após o DOM ser atualizado
+    console.log('[FitWidth] setupDynamicResize: Iniciando, containerDiv tem dimensões?', {
+        containerDivClientWidth: containerDiv.clientWidth,
+        containerDivOffsetWidth: containerDiv.offsetWidth,
+        fitWidth,
+        fitHeight,
+    });
+    
     adjustDimensions();
     
-    // Também observar mudanças no container
+    // Se fitWidth está ativo, garantir que ajustamos novamente quando o DOM estiver completamente estável
+    // Isso é importante porque na primeira renderização o container pode ainda não ter dimensões finais
+    if (fitWidth) {
+        // Usar requestAnimationFrame para garantir que o DOM foi atualizado antes de tentar novamente
+        requestAnimationFrame(() => {
+            console.log('[FitWidth] setupDynamicResize: requestAnimationFrame callback, containerDiv tem dimensões?', {
+                containerDivClientWidth: containerDiv.clientWidth,
+                containerDivOffsetWidth: containerDiv.offsetWidth,
+            });
+            adjustDimensions();
+            
+            // Se ainda não tem dimensões após requestAnimationFrame, tentar mais uma vez após um pequeno delay
+            if (containerDiv.clientWidth === 0) {
+                setTimeout(() => {
+                    console.log('[FitWidth] setupDynamicResize: setTimeout callback, containerDiv tem dimensões?', {
+                        containerDivClientWidth: containerDiv.clientWidth,
+                        containerDivOffsetWidth: containerDiv.offsetWidth,
+                    });
+                    adjustDimensions();
+                }, 50);
+            }
+        });
+    }
+    
+    // Também observar mudanças no container para ajustes futuros
     const resizeObserver = new ResizeObserver(() => {
         adjustDimensions();
     });
     resizeObserver.observe(containerDiv);
     chartElement.__resizeObserver = resizeObserver;
-    
-    // Ajustar novamente após um delay para casos onde o container ainda não tem dimensões finais
-    setTimeout(() => {
-        adjustDimensions();
-    }, 100);
 }
 

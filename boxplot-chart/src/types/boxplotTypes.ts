@@ -6,6 +6,138 @@ import type { ChartColumn } from '@thoughtspot/ts-chart-sdk';
 import type { BoxplotStatistics } from '@shared/utils/statistical';
 
 /**
+ * Método de cálculo dos quartis
+ */
+export type CalculationMethod = 'auto' | 'tukey' | 'exclusive' | 'inclusive';
+
+/**
+ * Tipo de bigode (whisker)
+ */
+export type WhiskerType = 'data_extremes' | 'iqr_1_5' | 'iqr_3' | 'percentile_5_95' | 'min_max';
+
+/**
+ * Formato do outlier
+ */
+export type OutlierShape = 'circle' | 'cross' | 'diamond' | 'square' | 'triangle';
+
+/**
+ * Orientação do boxplot
+ */
+export type BoxplotOrientation = 'vertical' | 'horizontal';
+
+/**
+ * Tipo de ordenação dos grupos
+ */
+export type SortType = 'Alfabética' | 'Média (Crescente)' | 'Média (Decrescente)' | 'Mediana (Crescente)' | 'Mediana (Decrescente)' | 'Variabilidade (Crescente)' | 'Variabilidade (Decrescente)';
+
+/**
+ * Estilo da linha da mediana
+ */
+export interface MedianStyle {
+    color: string;
+    strokeWidth: number;
+    strokeDasharray?: string; // Ex: "5,5" para tracejado
+}
+
+/**
+ * Estilo dos bigodes (whiskers)
+ */
+export interface WhiskerStyle {
+    color: string;
+    strokeWidth: number;
+    capWidth: number; // Largura do "T" na ponta do bigode
+    strokeDasharray?: string;
+}
+
+/**
+ * Configuração da caixa (box)
+ */
+export interface BoxStyle {
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    borderRadius?: number; // Em pixels
+    opacity: number;
+}
+
+/**
+ * Configuração de outliers
+ */
+export interface OutlierStyle {
+    show: boolean;
+    shape: OutlierShape;
+    size: number;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+}
+
+/**
+ * Configuração de linha de grade
+ */
+export interface GridLinesConfig {
+    show: boolean;
+    color: string;
+    strokeWidth: number;
+    strokeDasharray?: string;
+}
+
+/**
+ * Configuração de linhas divisórias entre grupos
+ */
+export interface DividerLinesConfig {
+    show: boolean;
+    color: string;
+    strokeWidth: number;
+    strokeDasharray?: string;
+}
+
+/**
+ * Tipo de linha de referência
+ */
+export type ReferenceLineType = 'fixed' | 'global_mean' | 'global_median' | 'none';
+
+/**
+ * Configuração de linhas de referência
+ */
+export interface ReferenceLinesConfig {
+    show: boolean;
+    type: ReferenceLineType;
+    value?: number; // Valor fixo (quando type === 'fixed')
+    color: string;
+    strokeWidth: number;
+    strokeDasharray?: string;
+    label?: string; // Label opcional para a linha
+}
+
+/**
+ * Configuração de tooltip
+ */
+export interface TooltipConfig {
+    enabled: boolean;
+    format?: 'simple' | 'detailed' | 'custom';
+    customTemplate?: string; // Para formatos customizados
+}
+
+/**
+ * Configuração de labels de valores plotados no boxplot
+ */
+export interface ValueLabelsConfig {
+    show: boolean; // Mostrar valores
+    showMin: boolean; // Mostrar valor mínimo
+    showQ1: boolean; // Mostrar Q1
+    showMedian: boolean; // Mostrar mediana
+    showMean: boolean; // Mostrar média
+    showQ3: boolean; // Mostrar Q3
+    showMax: boolean; // Mostrar valor máximo
+    position: 'inside' | 'outside' | 'both'; // Posição dos labels (dentro da caixa, fora, ou ambos)
+    color: string; // Cor do texto
+    fontSize: number; // Tamanho da fonte
+    format: 'decimal' | 'integer' | 'auto'; // Formato numérico
+    decimals: number; // Número de casas decimais
+}
+
+/**
  * Configuração de uma medida para boxplot
  */
 export interface BoxplotMeasureConfig {
@@ -13,10 +145,20 @@ export interface BoxplotMeasureConfig {
     name: string;
     color?: string;
     showOutliers?: boolean;
-    orientation?: 'vertical' | 'horizontal';
+    orientation?: BoxplotOrientation;
     boxWidth?: number;
     whiskerWidth?: number;
     opacity?: number;
+    
+    // Novas configurações expandidas
+    calculationMethod?: CalculationMethod;
+    whiskerType?: WhiskerType;
+    showMean?: boolean;
+    meanStyle?: MedianStyle;
+    medianStyle?: MedianStyle;
+    whiskerStyle?: WhiskerStyle;
+    boxStyle?: BoxStyle;
+    outlierStyle?: OutlierStyle;
 }
 
 /**
@@ -26,6 +168,7 @@ export interface BoxplotDataGroup {
     dimensionValue: string;
     values: number[];
     stats: BoxplotStatistics;
+    mean?: number; // Média calculada, se necessário
 }
 
 /**
@@ -35,6 +178,18 @@ export interface BoxplotData {
     measure: ChartColumn;
     groups: BoxplotDataGroup[];
     globalStats: BoxplotStatistics;
+}
+
+/**
+ * Configurações de layout
+ */
+export interface LayoutConfig {
+    marginTop?: number;
+    marginBottom?: number;
+    marginLeft?: number;
+    marginRight?: number;
+    groupSpacing?: number; // Espaçamento entre grupos
+    layoutStyle?: 'compact' | 'normal' | 'spacious' | 'custom'; // Estilo de layout pré-definido
 }
 
 /**
@@ -54,5 +209,11 @@ export interface BoxplotRenderConfig {
     showYAxis: boolean;
     labelFontSize: number;
     valueLabelFontSize: number;
+    padding?: number; // Espaçamento entre grupos (deprecated, usar groupSpacing)
+    gridLines?: GridLinesConfig;
+    axisLabels?: {
+        x?: string;
+        y?: string;
+    };
 }
 

@@ -110,14 +110,152 @@ export interface BoxplotStatistics {
 }
 
 /**
+ * Tipo de método de cálculo dos quartis
+ */
+export type CalculationMethod = 'auto' | 'tukey' | 'exclusive' | 'inclusive';
+
+/**
+ * Tipo de bigode (whisker)
+ */
+export type WhiskerType = 'data_extremes' | 'iqr_1_5' | 'iqr_3' | 'percentile_5_95' | 'min_max';
+
+/**
+ * Calcula quartis usando diferentes métodos
+ * @param sorted Array ordenado de números
+ * @param method Método de cálculo
+ * @returns Quartis calculados
+ */
+function calculateQuartilesByMethod(sorted: number[], method: CalculationMethod): { q1: number; q2: number; q3: number } {
+    if (sorted.length === 0) {
+        return { q1: 0, q2: 0, q3: 0 };
+    }
+
+    const n = sorted.length;
+    const mid = Math.floor(n / 2);
+
+    switch (method) {
+        case 'tukey':
+        case 'auto': // Usar Tukey como padrão
+            // Método de Tukey (método mais comum): usar a mediana da metade inferior/superior
+            const lowerHalf = sorted.slice(0, mid);
+            const upperHalf = n % 2 === 0 ? sorted.slice(mid) : sorted.slice(mid + 1);
+            
+            const q1 = calculatePercentile(lowerHalf, 50); // Mediana da metade inferior
+            const q2 = calculatePercentile(sorted, 50); // Mediana geral
+            const q3 = calculatePercentile(upperHalf, 50); // Mediana da metade superior
+            
+            return { q1, q2, q3 };
+
+        case 'inclusive':
+            // Método inclusivo: inclui a mediana em ambas as metades
+            const lowerHalfInc = sorted.slice(0, mid + 1);
+            const upperHalfInc = sorted.slice(mid);
+            
+            const q1Inc = calculatePercentile(lowerHalfInc, 50);
+            const q2Inc = calculatePercentile(sorted, 50);
+            const q3Inc = calculatePercentile(upperHalfInc, 50);
+            
+            return { q1: q1Inc, q2: q2Inc, q3: q3Inc };
+
+        case 'exclusive':
+            // Método exclusivo: exclui a mediana das metades
+            const lowerHalfExc = sorted.slice(0, mid);
+            const upperHalfExc = n % 2 === 0 ? sorted.slice(mid) : sorted.slice(mid + 1);
+            
+            const q1Exc = calculatePercentile(lowerHalfExc, 50);
+            const q2Exc = calculatePercentile(sorted, 50);
+            const q3Exc = calculatePercentile(upperHalfExc, 50);
+            
+            return { q1: q1Exc, q2: q2Exc, q3: q3Exc };
+
+        default:
+            // Fallback para método padrão
+            return calculateQuartiles(sorted);
+    }
+}
+
+/**
+ * Calcula limites dos bigodes usando diferentes métodos
+ * @param data Array de números (ordenado)
+ * @param q1 Quartil 1
+ * @param q3 Quartil 3
+ * @param iqr Interquartile Range
+ * @param whiskerType Tipo de cálculo do bigode
+ * @returns Limites inferior e superior dos bigodes
+ */
+function calculateWhiskersByType(
+    data: number[],
+    q1: number,
+    q3: number,
+    iqr: number,
+    whiskerType: WhiskerType
+): { lower: number; upper: number } {
+    if (data.length === 0) {
+        return { lower: 0, upper: 0 };
+    }
+
+    const sorted = [...data].sort((a, b) => a - b);
+    const dataMin = sorted[0];
+    const dataMax = sorted[sorted.length - 1];
+
+    switch (whiskerType) {
+        case 'iqr_1_5':
+            // Método padrão: Q1 - 1.5*IQR e Q3 + 1.5*IQR
+            return {
+                lower: q1 - 1.5 * iqr,
+                upper: q3 + 1.5 * iqr,
+            };
+
+        case 'iqr_3':
+            // Método mais conservador: Q1 - 3*IQR e Q3 + 3*IQR
+            return {
+                lower: q1 - 3 * iqr,
+                upper: q3 + 3 * iqr,
+            };
+
+        case 'data_extremes':
+            // Usar extremos dos dados
+            return {
+                lower: dataMin,
+                upper: dataMax,
+            };
+
+        case 'percentile_5_95':
+            // Usar percentis 5 e 95
+            return {
+                lower: calculatePercentile(sorted, 5),
+                upper: calculatePercentile(sorted, 95),
+            };
+
+        case 'min_max':
+            // Min e Max dos dados (sem outliers)
+            // Filtrar outliers usando IQR 1.5 primeiro
+            const { lower: tempLower, upper: tempUpper } = calculateWhiskers(q1, q3, iqr);
+            const filtered = sorted.filter(v => v >= tempLower && v <= tempUpper);
+            return {
+                lower: filtered.length > 0 ? filtered[0] : dataMin,
+                upper: filtered.length > 0 ? filtered[filtered.length - 1] : dataMax,
+            };
+
+        default:
+            // Fallback para método padrão
+            return calculateWhiskers(q1, q3, iqr);
+    }
+}
+
+/**
  * Calcula todas as estatísticas necessárias para um boxplot
  * @param data Array de números
  * @param includeMean Se deve calcular a média também
+ * @param calculationMethod Método de cálculo dos quartis (default: 'auto')
+ * @param whiskerType Tipo de cálculo dos bigodes (default: 'iqr_1_5')
  * @returns Estatísticas completas do boxplot
  */
 export function calculateBoxplotStats(
     data: number[],
-    includeMean: boolean = false
+    includeMean: boolean = false,
+    calculationMethod: CalculationMethod = 'auto',
+    whiskerType: WhiskerType = 'iqr_1_5'
 ): BoxplotStatistics {
     if (data.length === 0) {
         return {
@@ -133,18 +271,19 @@ export function calculateBoxplotStats(
         };
     }
 
-    const { q1, q2, q3 } = calculateQuartiles(data);
+    const sorted = [...data].sort((a, b) => a - b);
+    const { q1, q2, q3 } = calculateQuartilesByMethod(sorted, calculationMethod);
     const iqr = calculateIQR(q1, q3);
-    const { lower: whiskerLower, upper: whiskerUpper } = calculateWhiskers(q1, q3, iqr);
+    const { lower: whiskerLower, upper: whiskerUpper } = calculateWhiskersByType(sorted, q1, q3, iqr, whiskerType);
 
     // Valores mínimo e máximo dentro dos bigodes (não outliers)
-    const valuesWithinWhiskers = data.filter(
+    const valuesWithinWhiskers = sorted.filter(
         value => value >= whiskerLower && value <= whiskerUpper
     );
     const min = valuesWithinWhiskers.length > 0 ? Math.min(...valuesWithinWhiskers) : whiskerLower;
     const max = valuesWithinWhiskers.length > 0 ? Math.max(...valuesWithinWhiskers) : whiskerUpper;
 
-    const outliers = identifyOutliers(data, whiskerLower, whiskerUpper);
+    const outliers = identifyOutliers(sorted, whiskerLower, whiskerUpper);
 
     const stats: BoxplotStatistics = {
         q1,

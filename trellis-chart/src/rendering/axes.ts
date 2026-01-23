@@ -89,12 +89,14 @@ export function renderYAxes(
                 const tickY = valueToY(tickValue, minValue, maxValue, measureRowTop, measureRowHeight);
                 const tickX = axisX;
                 const tickLabelX = axisX - 5;
+                // Para rotação, usar 'normal' no formatValue (eixos não rotacionam)
+                const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
                 const formattedTick = formatValue(
                     tickValue,
                     format,
                     decimals,
                     useThousandsSeparator,
-                    valueFormat,
+                    formatValueForFormatting as 'normal' | 'compacto',
                     valuePrefix,
                     valueSuffix,
                     true

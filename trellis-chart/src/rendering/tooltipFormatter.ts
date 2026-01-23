@@ -24,12 +24,14 @@ export function formatCustomSimpleTooltip(
     const valuePrefix = measureConfig.valuePrefix || '';
     const valueSuffix = measureConfig.valueSuffix || '';
 
+    // Para rotação, usar 'normal' no formatValue (tooltips não rotacionam)
+    const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
     const formattedValue = formatValue(
         value,
         format,
         decimals,
         useThousandsSeparator,
-        valueFormat,
+        formatValueForFormatting as 'normal' | 'compacto',
         valuePrefix,
         valueSuffix,
         true
@@ -79,12 +81,14 @@ export function formatCustomDetailedTooltip(
         const valuePrefix = measureConfig.valuePrefix || '';
         const valueSuffix = measureConfig.valueSuffix || '';
 
+        // Para rotação, usar 'normal' no formatValue (tooltips não rotacionam)
+        const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
         const formattedValue = formatValue(
             value,
             format,
             decimals,
             useThousandsSeparator,
-            valueFormat,
+            formatValueForFormatting as 'normal' | 'compacto',
             valuePrefix,
             valueSuffix,
             true

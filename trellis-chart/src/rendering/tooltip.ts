@@ -104,12 +104,14 @@ function formatSimpleTooltip(
     const valuePrefix = measureConfig.valuePrefix || '';
     const valueSuffix = measureConfig.valueSuffix || '';
 
+    // Para rotação, usar 'normal' no formatValue (tooltips não rotacionam)
+    const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
     const formattedValue = formatValue(
         value,
         format,
         decimals,
         useThousandsSeparator,
-        valueFormat,
+        formatValueForFormatting as 'normal' | 'compacto',
         valuePrefix,
         valueSuffix,
         true
@@ -155,12 +157,14 @@ function formatDetailedTooltip(
         const valuePrefix = measureConfig.valuePrefix || '';
         const valueSuffix = measureConfig.valueSuffix || '';
 
+        // Para rotação, usar 'normal' no formatValue (tooltips não rotacionam)
+        const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
         const formattedValue = formatValue(
             value,
             format,
             decimals,
             useThousandsSeparator,
-            valueFormat,
+            formatValueForFormatting as 'normal' | 'compacto',
             valuePrefix,
             valueSuffix,
             true
@@ -269,18 +273,32 @@ export function setupTooltips(
             return;
         }
 
+        // IMPORTANTE: Se tooltipConfig for null, significa que tooltip está desabilitado no nível global
+        // Neste caso, não mostrar tooltip mesmo que a medida tenha configuração individual
+        if (!tooltipConfig || tooltipConfig.enabled === false) {
+            return;
+        }
+        
         // Usar configuração da medida se disponível, senão usar configuração global
         const measureTooltipConfig = measureConfig.tooltip;
-        const enabled = measureTooltipConfig?.enabled !== false && (tooltipConfig?.enabled !== false);
+        // Verificar se tooltip está habilitado para esta medida específica
+        // Se measureTooltipConfig existe e enabled é false, desabilitar para esta medida
+        // Se measureTooltipConfig não existe, usar configuração global (que já sabemos que está habilitada)
+        const measureEnabled = measureTooltipConfig !== undefined 
+            ? measureTooltipConfig.enabled !== false 
+            : true; // Se não há configuração individual, usar global (que já está habilitada)
         
-        if (!enabled) {
+        if (!measureEnabled) {
             return;
         }
 
-        const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        // Mapear formato de português para inglês se necessário
+        const formatRaw = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        const format = (formatRaw === 'detalhado' || formatRaw === 'detailed') ? 'detailed' : 
+                      (formatRaw === 'simples' || formatRaw === 'simple') ? 'simple' : formatRaw;
         const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
         const customTemplate = tooltipConfig?.customTemplate || '';
-
+        
         rect.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
             const bbox = target.getBoundingClientRect();
@@ -290,10 +308,19 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
-            const content = format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            // Usar formatação customizada que aplica layout
+            let content: string;
+            if (customTemplate && customTemplate !== 'default' && customTemplate.trim() !== '') {
+                // Se há template personalizado, usar formatação padrão (sem layout customizado)
+                content = format === 'detailed'
+                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            } else {
+                // Usar formatação customizada que aplica layout
+                content = format === 'detailed'
+                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
+                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+            }
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);
@@ -320,18 +347,32 @@ export function setupTooltips(
             return;
         }
 
+        // IMPORTANTE: Se tooltipConfig for null, significa que tooltip está desabilitado no nível global
+        // Neste caso, não mostrar tooltip mesmo que a medida tenha configuração individual
+        if (!tooltipConfig || tooltipConfig.enabled === false) {
+            return;
+        }
+        
         // Usar configuração da medida se disponível, senão usar configuração global
         const measureTooltipConfig = measureConfig.tooltip;
-        const enabled = measureTooltipConfig?.enabled !== false && (tooltipConfig?.enabled !== false);
+        // Verificar se tooltip está habilitado para esta medida específica
+        // Se measureTooltipConfig existe e enabled é false, desabilitar para esta medida
+        // Se measureTooltipConfig não existe, usar configuração global (que já sabemos que está habilitada)
+        const measureEnabled = measureTooltipConfig !== undefined 
+            ? measureTooltipConfig.enabled !== false 
+            : true; // Se não há configuração individual, usar global (que já está habilitada)
         
-        if (!enabled) {
+        if (!measureEnabled) {
             return;
         }
 
-        const format = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        // Mapear formato de português para inglês se necessário
+        const formatRaw = measureTooltipConfig?.format || tooltipConfig?.format || 'simple';
+        const format = (formatRaw === 'detalhado' || formatRaw === 'detailed') ? 'detailed' : 
+                      (formatRaw === 'simples' || formatRaw === 'simple') ? 'simple' : formatRaw;
         const backgroundColor = measureTooltipConfig?.backgroundColor || tooltipConfig?.backgroundColor || '#ffffff';
         const customTemplate = tooltipConfig?.customTemplate || '';
-
+        
         circle.addEventListener('mouseenter', (e) => {
             const target = e.target as SVGElement;
             const bbox = target.getBoundingClientRect();
@@ -341,10 +382,19 @@ export function setupTooltips(
                 (tooltip as HTMLElement).style.background = backgroundColor;
             }
             
-            // Sempre usar formatação padrão (layout customizado pode ser aplicado no futuro se necessário)
-            const content = format === 'detailed'
-                ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
-                : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            // Usar formatação customizada que aplica layout
+            let content: string;
+            if (customTemplate && customTemplate !== 'default' && customTemplate.trim() !== '') {
+                // Se há template personalizado, usar formatação padrão (sem layout customizado)
+                content = format === 'detailed'
+                    ? formatDetailedTooltip(dataPoint, measureCols, measureConfigs, false, primaryDateFormat, secondaryDateFormat)
+                    : formatSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat, customTemplate);
+            } else {
+                // Usar formatação customizada que aplica layout
+                content = format === 'detailed'
+                    ? formatCustomDetailedTooltip(dataPoint, measureCols, measureConfigs, primaryDateFormat, secondaryDateFormat)
+                    : formatCustomSimpleTooltip(dataPoint, measureIdx, measureConfig, measureCol, primaryDateFormat);
+            }
             
             if (tooltip) {
                 showTooltip(tooltip, content, bbox.left, bbox.top, bbox.width, bbox.height);

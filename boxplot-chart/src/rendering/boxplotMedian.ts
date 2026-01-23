@@ -1,25 +1,40 @@
 /**
- * Renderização da linha mediana (Q2) do boxplot
+ * Renderização da linha mediana (Q2) e média do boxplot
  */
 
 import type { BoxplotStatistics } from '@shared/utils/statistical';
-import type { BoxplotRenderConfig } from '../types/boxplotTypes';
+import type { BoxplotRenderConfig, MedianStyle, BoxplotOrientation } from '../types/boxplotTypes';
+import { valueToYCoordinate, valueToXCoordinate } from '../utils/boxplotCalculations';
 
 export function renderBoxplotMedian(
     stats: BoxplotStatistics,
     centerX: number,
     centerY: number,
     config: BoxplotRenderConfig,
-    orientation: 'vertical' | 'horizontal',
+    orientation: BoxplotOrientation,
+    medianStyle: MedianStyle,
+    boxWidth: number,
     globalMin: number,
     globalMax: number,
-    color: string = '#000000'
+    scale: 'linear' | 'log' = 'linear'
 ): string {
-    const { boxWidth, plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
+    const { plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
     const globalRange = globalMax - globalMin;
 
+    const color = medianStyle.color;
+    const strokeWidth = medianStyle.strokeWidth;
+    const strokeDash = medianStyle.strokeDasharray || 'none';
+
     if (orientation === 'vertical') {
-        const medianY = topMargin + plotAreaHeight - ((stats.q2 - globalMin) / globalRange) * plotAreaHeight;
+        // Proteger contra divisão por zero (apenas para escala linear)
+        if (scale === 'linear' && globalRange <= 0) {
+            return '';
+        }
+        
+        const medianY = valueToYCoordinate(stats.q2, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        
+        const dashAttr = strokeDash !== 'none' ? `stroke-dasharray="${strokeDash}"` : '';
+        
         return `
             <line
                 x1="${centerX - boxWidth / 2}"
@@ -27,12 +42,19 @@ export function renderBoxplotMedian(
                 x2="${centerX + boxWidth / 2}"
                 y2="${medianY}"
                 stroke="${color}"
-                stroke-width="2"
+                stroke-width="${strokeWidth}"
+                ${dashAttr}
             />
         `;
     } else {
         // Horizontal
-        const medianX = leftMargin + ((stats.q2 - globalMin) / globalRange) * plotAreaWidth;
+        if (scale === 'linear' && globalRange <= 0) {
+            return '';
+        }
+        const medianX = valueToXCoordinate(stats.q2, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        
+        const dashAttr = strokeDash !== 'none' ? `stroke-dasharray="${strokeDash}"` : '';
+        
         return `
             <line
                 x1="${medianX}"
@@ -40,7 +62,67 @@ export function renderBoxplotMedian(
                 x2="${medianX}"
                 y2="${centerY + boxWidth / 2}"
                 stroke="${color}"
-                stroke-width="2"
+                stroke-width="${strokeWidth}"
+                ${dashAttr}
+            />
+        `;
+    }
+}
+
+/**
+ * Renderiza a média (mean) como um ponto ou linha adicional
+ */
+export function renderBoxplotMean(
+    stats: BoxplotStatistics,
+    centerX: number,
+    centerY: number,
+    config: BoxplotRenderConfig,
+    orientation: BoxplotOrientation,
+    meanColor: string,
+    meanSize: number,
+    boxWidth: number,
+    globalMin: number,
+    globalMax: number,
+    scale: 'linear' | 'log' = 'linear'
+): string {
+    if (stats.mean === undefined) {
+        return '';
+    }
+
+    const { plotAreaHeight, plotAreaWidth, topMargin, leftMargin } = config;
+    const globalRange = globalMax - globalMin;
+
+    if (orientation === 'vertical') {
+        // Proteger contra divisão por zero (apenas para escala linear)
+        if (scale === 'linear' && globalRange <= 0) {
+            return '';
+        }
+        
+        const meanY = valueToYCoordinate(stats.mean!, globalMin, globalMax, topMargin, plotAreaHeight, scale);
+        return `
+            <circle
+                cx="${centerX}"
+                cy="${meanY}"
+                r="${meanSize}"
+                fill="${meanColor}"
+                stroke="#ffffff"
+                stroke-width="1"
+            />
+        `;
+    } else {
+        // Horizontal
+        if (scale === 'linear' && globalRange <= 0) {
+            return '';
+        }
+        const meanX = valueToXCoordinate(stats.mean!, globalMin, globalMax, leftMargin, plotAreaWidth, scale);
+        return `
+            <circle
+                cx="${meanX}"
+                cy="${centerY}"
+                r="${meanSize}"
+                fill="${meanColor}"
+                stroke="#ffffff"
+                stroke-width="1"
             />
         `;
     }

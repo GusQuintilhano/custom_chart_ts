@@ -41,7 +41,8 @@ function isDateColumn(column: ChartColumn): boolean {
  */
 function createMeasureColumnSettings(
     measureColumns: ChartColumn[],
-    currentVisualProps: ChartModel
+    currentVisualProps: ChartModel,
+    dimensionColumns: ChartColumn[] = []
 ): { [columnId: string]: { elements: any[] } } {
     const measureColumnSettings: { [columnId: string]: { elements: any[] } } = {};
     
@@ -126,7 +127,7 @@ function createMeasureColumnSettings(
                     key: 'valueFormat',
                     label: 'Formato de Valor',
                     defaultValue: savedConfig?.valueFormat || 'normal',
-                    values: ['normal', 'compacto'],
+                    values: ['normal', 'compacto', 'rotacionado'],
                 },
                 {
                     type: 'toggle',
@@ -150,6 +151,8 @@ function createMeasureColumnSettings(
             ? (currentConfig as any).referenceLine_enabled === true
             : ((savedConfig as any)?.referenceLine_enabled === true);
         
+        // Sempre incluir todos os campos - o toggle controla se a linha é renderizada, não se os campos devem aparecer
+        // Isso garante que o campo de valor sempre esteja disponível quando o usuário habilita o toggle
         const referenceLineChildren: any[] = [
             {
                 type: 'toggle',
@@ -157,39 +160,33 @@ function createMeasureColumnSettings(
                 label: 'Habilitar Linha de Referência',
                 defaultValue: referenceLineEnabled,
             },
+            {
+                type: 'number',
+                key: 'referenceLine_value',
+                label: 'Valor da Linha de Referência',
+                defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
+            },
+            {
+                type: 'colorpicker',
+                key: 'referenceLine_color',
+                label: 'Cor da Linha de Referência',
+                selectorType: 'COLOR',
+                defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
+            },
+            {
+                type: 'dropdown',
+                key: 'referenceLine_style',
+                label: 'Estilo da Linha',
+                defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
+                values: ['sólida', 'tracejada', 'pontilhada'],
+            },
+            {
+                type: 'toggle',
+                key: 'referenceLine_showLabel',
+                label: 'Exibir Label na Linha',
+                defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
+            },
         ];
-        
-        // Mostrar opções somente se linha de referência estiver habilitada
-        if (referenceLineEnabled) {
-            referenceLineChildren.push(
-                {
-                    type: 'number',
-                    key: 'referenceLine_value',
-                    label: 'Valor da Linha de Referência',
-                    defaultValue: (savedConfig as any)?.referenceLine_value ?? 0,
-                },
-                {
-                    type: 'colorpicker',
-                    key: 'referenceLine_color',
-                    label: 'Cor da Linha de Referência',
-                    selectorType: 'COLOR',
-                    defaultValue: (savedConfig as any)?.referenceLine_color || '#ef4444',
-                },
-                {
-                    type: 'dropdown',
-                    key: 'referenceLine_style',
-                    label: 'Estilo da Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_style || 'sólida',
-                    values: ['sólida', 'tracejada', 'pontilhada'],
-                },
-                {
-                    type: 'toggle',
-                    key: 'referenceLine_showLabel',
-                    label: 'Exibir Label na Linha',
-                    defaultValue: (savedConfig as any)?.referenceLine_showLabel !== false,
-                }
-            );
-        }
         
         measureElements.push({
             type: 'section',
@@ -200,54 +197,192 @@ function createMeasureColumnSettings(
         });
         
         // Seção 5: Dica de Contexto (Tooltip)
-        // Ler valor atual (se disponível) ou valor salvo
-        const currentConfigTooltip = (currentVisualProps.visualProps as any)?.[measure.id] || savedConfig;
-        const tooltipEnabledMeasure = (currentConfigTooltip as any)?.tooltip_enabled !== undefined
-            ? (currentConfigTooltip as any).tooltip_enabled !== false
-            : ((savedConfig as any)?.tooltip_enabled !== false);
+        // IMPORTANTE: Só mostrar esta seção se o tooltip estiver habilitado no nível do gráfico
+        // Verificar se tooltip está habilitado no nível global (chart_tooltip.enabled)
+        const chartTooltipConfig = (currentVisualProps.visualProps as any)?.chart_tooltip || {};
+        const tooltipEnabledGlobal = chartTooltipConfig.enabled === true || 
+            ((currentVisualProps.visualProps as any)?.chart_tooltip?.enabled === true);
         
-        const tooltipChildrenMeasure: any[] = [
+        // Se o tooltip global estiver habilitado, mostrar configurações por medida
+        if (tooltipEnabledGlobal) {
+            // Ler valor atual (se disponível) ou valor salvo
+            const currentConfigTooltip = (currentVisualProps.visualProps as any)?.[measure.id] || savedConfig;
+            const tooltipEnabledMeasure = (currentConfigTooltip as any)?.tooltip_enabled !== undefined
+                ? (currentConfigTooltip as any).tooltip_enabled !== false
+                : ((savedConfig as any)?.tooltip_enabled !== false);
+            
+            const tooltipChildrenMeasure: any[] = [
+                {
+                    type: 'toggle',
+                    key: 'tooltip_enabled',
+                    label: 'Habilitar Dica de Contexto',
+                    defaultValue: tooltipEnabledMeasure,
+                },
+            ];
+            
+            // Mostrar opções somente se tooltip estiver habilitado na medida
+            if (tooltipEnabledMeasure) {
+                tooltipChildrenMeasure.push(
+                    {
+                        type: 'dropdown',
+                        key: 'tooltip_format',
+                        label: 'Formato da Dica',
+                        defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
+                        values: ['simples', 'detalhado'],
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'tooltip_backgroundColor',
+                        label: 'Cor de Fundo da Dica',
+                        selectorType: 'COLOR',
+                        defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
+                    },
+                    {
+                        type: 'dropdown',
+                        key: 'tooltip_layout',
+                        label: 'Layout da Dica de Contexto',
+                        defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
+                        values: ['vertical', 'horizontal', 'grade'],
+                    }
+                );
+            }
+            
+            measureElements.push({
+                type: 'section',
+                key: 'tooltip',
+                label: 'Dica de Contexto',
+                isAccordianExpanded: false,
+                children: tooltipChildrenMeasure,
+            });
+        }
+        // Se tooltip global não estiver habilitado, não mostrar seção de tooltip nas medidas
+        
+        // Seção 6: Coloração Condicional
+        const conditionalColorConfig = (savedConfig as any)?.conditionalColor || {};
+        const conditionalColorEnabled = conditionalColorConfig.enabled === true;
+        const conditionalColorType = conditionalColorConfig.type || 'conditional';
+        
+        const conditionalColorChildren: any[] = [
             {
                 type: 'toggle',
-                key: 'tooltip_enabled',
-                label: 'Habilitar Dica de Contexto',
-                defaultValue: tooltipEnabledMeasure,
+                key: 'conditionalColor_enabled',
+                label: 'Habilitar Coloração Condicional',
+                defaultValue: conditionalColorEnabled,
             },
         ];
         
-        // Mostrar opções somente se tooltip estiver habilitado
-        if (tooltipEnabledMeasure) {
-            tooltipChildrenMeasure.push(
+        if (conditionalColorEnabled) {
+            conditionalColorChildren.push(
                 {
                     type: 'dropdown',
-                    key: 'tooltip_format',
-                    label: 'Formato da Dica',
-                    defaultValue: (savedConfig as any)?.tooltip_format || 'simples',
-                    values: ['simples', 'detalhado'],
-                },
-                {
-                    type: 'colorpicker',
-                    key: 'tooltip_backgroundColor',
-                    label: 'Cor de Fundo da Dica',
-                    selectorType: 'COLOR',
-                    defaultValue: (savedConfig as any)?.tooltip_backgroundColor || '#ffffff',
-                },
+                    key: 'conditionalColor_type',
+                    label: 'Tipo de Coloração',
+                    defaultValue: conditionalColorType,
+                    values: ['conditional', 'dimension'],
+                }
+            );
+            
+            if (conditionalColorType === 'conditional') {
+                // Configuração para coloração condicional (ex: >0.4)
+                const condition = conditionalColorConfig.condition || {};
+                conditionalColorChildren.push(
+                    {
+                        type: 'dropdown',
+                        key: 'conditionalColor_condition_operator',
+                        label: 'Operador',
+                        defaultValue: condition.operator || '>',
+                        values: ['>', '<', '>=', '<=', '==', '!='],
+                    },
+                    {
+                        type: 'number',
+                        key: 'conditionalColor_condition_value',
+                        label: 'Valor de Comparação',
+                        defaultValue: condition.value ?? 0.4,
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'conditionalColor_condition_trueColor',
+                        label: 'Cor quando Verdadeiro',
+                        selectorType: 'COLOR',
+                        defaultValue: condition.trueColor || '#10b981',
+                    },
+                    {
+                        type: 'colorpicker',
+                        key: 'conditionalColor_condition_falseColor',
+                        label: 'Cor quando Falso (opcional)',
+                        selectorType: 'COLOR',
+                        defaultValue: condition.falseColor || defaultColor,
+                    }
+                );
+            } else if (conditionalColorType === 'dimension') {
+                // Configuração para coloração por dimensão
+                const dimensionOptions = dimensionColumns.map(d => ({
+                    value: d.id,
+                    label: d.name || d.id,
+                }));
+                
+                conditionalColorChildren.push(
+                    {
+                        type: 'dropdown',
+                        key: 'conditionalColor_dimensionId',
+                        label: 'Dimensão para Coloração',
+                        defaultValue: conditionalColorConfig.dimensionId || (dimensionOptions[0]?.value || ''),
+                        values: dimensionOptions.map(d => d.value),
+                        valueLabels: dimensionOptions.map(d => d.label),
+                    }
+                );
+                
+                // Para coloração por dimensão, o usuário pode definir cores para valores específicos
+                // Por enquanto, vamos usar cores padrão baseadas nos valores únicos da dimensão
+                // (Isso pode ser expandido no futuro para permitir edição manual)
+            }
+        }
+        
+        measureElements.push({
+            type: 'section',
+            key: 'conditionalColor',
+            label: 'Coloração Condicional',
+            isAccordianExpanded: false,
+            children: conditionalColorChildren,
+        });
+        
+        // Seção 7: Cálculo de Porcentagem do Total
+        const percentageOfTotalConfig = (savedConfig as any)?.percentageOfTotal || {};
+        const percentageOfTotalEnabled = percentageOfTotalConfig.enabled === true;
+        
+        const percentageOfTotalChildren: any[] = [
+            {
+                type: 'toggle',
+                key: 'percentageOfTotal_enabled',
+                label: 'Calcular como % do Total',
+                defaultValue: percentageOfTotalEnabled,
+            },
+        ];
+        
+        if (percentageOfTotalEnabled) {
+            const dimensionOptions = dimensionColumns.map(d => ({
+                value: d.id,
+                label: d.name || d.id,
+            }));
+            
+            percentageOfTotalChildren.push(
                 {
                     type: 'dropdown',
-                    key: 'tooltip_layout',
-                    label: 'Layout da Dica de Contexto',
-                    defaultValue: (savedConfig as any)?.tooltip_layout || 'vertical',
-                    values: ['vertical', 'horizontal', 'grade'],
+                    key: 'percentageOfTotal_dimensionId',
+                    label: 'Dimensão para Agrupamento (opcional)',
+                    defaultValue: percentageOfTotalConfig.dimensionId || '',
+                    values: ['', ...dimensionOptions.map(d => d.value)],
+                    valueLabels: ['Total Geral', ...dimensionOptions.map(d => d.label)],
                 }
             );
         }
         
         measureElements.push({
             type: 'section',
-            key: 'tooltip',
-            label: 'Dica de Contexto',
+            key: 'percentageOfTotal',
+            label: 'Cálculo de Porcentagem',
             isAccordianExpanded: false,
-            children: tooltipChildrenMeasure,
+            children: percentageOfTotalChildren,
         });
         
         measureColumnSettings[measure.id] = {
@@ -441,6 +576,29 @@ function createEditorSections(
     });
     
     // Seção 3: Tipografia e Textos
+    const labelFontSizeValue = typeof savedTextSizes?.labelFontSize === 'number' ? savedTextSizes.labelFontSize : 12;
+    const measureTitleFontSizeValue = typeof savedTextSizes?.measureTitleFontSize === 'number' ? savedTextSizes.measureTitleFontSize : 14;
+    const valueLabelFontSizeValue = typeof savedTextSizes?.valueLabelFontSize === 'number' ? savedTextSizes.valueLabelFontSize : 10;
+    
+    let measureNameRotationValue = '0';
+    if ((savedTextSizes as any)?.measureNameRotation !== undefined) {
+        measureNameRotationValue = String((savedTextSizes as any).measureNameRotation);
+    } else {
+        const savedValue = getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '0');
+        measureNameRotationValue = savedValue !== undefined && savedValue !== null ? String(savedValue) : '0';
+    }
+    if (!['-90', '0', '45', '-45', '90'].includes(measureNameRotationValue)) {
+        measureNameRotationValue = '0';
+    }
+    
+    let forceLabelsValue = false;
+    if ((savedTextSizes as any)?.forceLabels !== undefined) {
+        forceLabelsValue = Boolean((savedTextSizes as any).forceLabels);
+    } else {
+        const savedValue = getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false);
+        forceLabelsValue = savedValue !== undefined && savedValue !== null ? Boolean(savedValue) : false;
+    }
+    
     elements.push({
         type: 'section',
         key: 'text_sizes',
@@ -450,132 +608,134 @@ function createEditorSections(
             {
                 type: 'number',
                 key: 'labelFontSize',
-                label: 'Tamanho da Dimensão (px)',
-                defaultValue: savedTextSizes?.labelFontSize ?? 10,
+                label: 'Tamanho da Fonte do Label (px)',
+                defaultValue: labelFontSizeValue,
             },
             {
                 type: 'number',
                 key: 'measureTitleFontSize',
-                label: 'Tamanho das Medidas (px)',
-                defaultValue: savedTextSizes?.measureTitleFontSize ?? 10,
+                label: 'Tamanho da Fonte do Título da Medida (px)',
+                defaultValue: measureTitleFontSizeValue,
             },
             {
                 type: 'number',
                 key: 'valueLabelFontSize',
-                label: 'Tamanho dos Valores (px)',
-                defaultValue: savedTextSizes?.valueLabelFontSize ?? 9,
+                label: 'Tamanho da Fonte do Label de Valor (px)',
+                defaultValue: valueLabelFontSizeValue,
             },
             {
                 type: 'dropdown',
                 key: 'measureNameRotation',
                 label: 'Rotação do Nome da Medida',
-                defaultValue: (savedTextSizes as any).measureNameRotation !== undefined
-                    ? (savedTextSizes as any).measureNameRotation
-                    : getSavedValue(savedChartVisual.measureNameRotation, savedChartOptions.measureNameRotation, '-90'),
-                values: ['-90', '0', '45', '-45', '90'],
+                defaultValue: measureNameRotationValue,
+                values: ['0', '45', '-45', '90', '-90'],
             },
             {
                 type: 'toggle',
                 key: 'forceLabels',
                 label: 'Forçar Exibição de Labels',
-                defaultValue: (savedTextSizes as any).forceLabels !== undefined
-                    ? (savedTextSizes as any).forceLabels === true
-                    : getSavedValue(savedChartVisual.forceLabels, savedChartOptions.forceLabels, false) === true,
+                defaultValue: forceLabelsValue,
             },
         ],
     });
     
     // Seção 4: Dimensões e Espaçamento
     const savedFitWidth = getSavedValue(savedChartDimensions.fitWidth, savedChartOptions.fitWidth, false) === true;
+    const savedFitHeight = getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true;
     const savedShowYAxis = getSavedValue(savedChartVisual.showYAxis, savedChartOptions.showYAxis, true) !== false;
+    
+    // Construir array de children sem usar spread operator (ThoughtSpot SDK não aceita)
+    const dimensionsChildren: any[] = [
+        {
+            type: 'toggle',
+            key: 'fitWidth',
+            label: 'Ajustar a 100% da Largura',
+            defaultValue: savedFitWidth,
+        },
+        {
+            type: 'toggle',
+            key: 'fitHeight',
+            label: 'Ajustar a 100% da Altura',
+            defaultValue: savedFitHeight,
+        },
+        {
+            type: 'number',
+            key: 'measureLabelSpace',
+            label: 'Espaço para Label da Medida (px)',
+            defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60) ?? (savedShowYAxis ? 120 : 60),
+        },
+    ];
+    
+    // Adicionar campos condicionalmente sem usar spread operator
+    if (!savedFitWidth) {
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'barWidth',
+            label: 'Largura da Barra (px)',
+            defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40) ?? 40,
+        });
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'barSpacing',
+            label: 'Espaçamento entre Barras (px)',
+            defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15) ?? (savedShowYAxis ? 20 : 15),
+        });
+    }
+    
+    if (!savedFitHeight) {
+        dimensionsChildren.push({
+            type: 'number',
+            key: 'measureRowHeight',
+            label: 'Altura da Linha da Medida (px)',
+            defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50) ?? 50,
+        });
+    }
+    
     elements.push({
         type: 'section',
         key: 'chart_dimensions',
         label: 'Dimensões e Espaçamento',
         isAccordianExpanded: false,
-        children: [
-            {
-                type: 'toggle',
-                key: 'fitWidth',
-                label: 'Ajustar a 100% da Largura',
-                defaultValue: savedFitWidth,
-            },
-            {
-                type: 'toggle',
-                key: 'fitHeight',
-                label: 'Ajustar a 100% da Altura',
-                defaultValue: getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true,
-            },
-            {
-                type: 'number',
-                key: 'measureLabelSpace',
-                label: 'Espaço das Labels das Medidas (px)',
-                defaultValue: getSavedValue(savedChartDimensions.measureLabelSpace, savedChartOptions.measureLabelSpace, savedShowYAxis ? 120 : 60),
-            },
-            // Campo de largura da barra - só aparece se fitWidth não está ativo
-            ...(savedFitWidth ? [] : [{
-                type: 'number',
-                key: 'barWidth',
-                label: 'Largura da Barra (px)',
-                defaultValue: getSavedValue(savedChartDimensions.barWidth, savedChartOptions.barWidth, 40),
-            },
-            {
-                type: 'number',
-                key: 'barSpacing',
-                label: 'Espaçamento Entre Barras (px)',
-                defaultValue: getSavedValue(savedChartDimensions.barSpacing, savedChartOptions.barSpacing, savedShowYAxis ? 20 : 15),
-            }]),
-            // Campo de altura da linha - só aparece se fitHeight não está ativo
-            ...(getSavedValue(savedChartDimensions.fitHeight, savedChartOptions.fitHeight, false) === true ? [] : [{
-                type: 'number',
-                key: 'measureRowHeight',
-                label: 'Altura da Linha (px)',
-                defaultValue: getSavedValue(savedChartDimensions.measureRowHeight, savedChartOptions.measureRowHeight, 50),
-            }]),
-        ],
+        children: dimensionsChildren,
     });
     
     
-    // Seção para cores e estilo - TEMPORARIAMENTE REMOVIDA PARA DEBUG DO ERRO elements[4]
-    // TODO: Investigar por que o ThoughtSpot SDK está rejeitando esta seção no índice 4
-    // elements.push({
-    //     type: 'section',
-    //     key: 'chart_colors_style',
-    //     label: 'Cores e Estilo',
-    //     isAccordianExpanded: false,
-    //     children: [
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'yAxisColor',
-    //             label: 'Cor do Eixo Y',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
-    //         },
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'xAxisColor',
-    //             label: 'Cor do Eixo X',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
-    //         },
-    //         {
-    //             type: 'colorpicker',
-    //             key: 'backgroundColor',
-    //             label: 'Cor de Fundo',
-    //             selectorType: 'COLOR',
-    //             defaultValue: savedChartColorsStyle?.backgroundColor || '#ffffff',
-    //         },
-    //         {
-    //             type: 'number',
-    //             key: 'axisStrokeWidth',
-    //             label: 'Espessura dos Eixos (px)',
-    //             defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
-    //             min: 0.5,
-    //             max: 5,
-    //             step: 0.1,
-    //         },
-    //     ],
-    // });
+    // Seção 5: Cores e Estilo
+    elements.push({
+        type: 'section',
+        key: 'chart_colors_style',
+        label: 'Cores e Estilo',
+        isAccordianExpanded: false,
+        children: [
+            {
+                type: 'colorpicker',
+                key: 'yAxisColor',
+                label: 'Cor do Eixo Y',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.yAxisColor || '#374151',
+            },
+            {
+                type: 'colorpicker',
+                key: 'xAxisColor',
+                label: 'Cor do Eixo X',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.xAxisColor || '#374151',
+            },
+            {
+                type: 'colorpicker',
+                key: 'backgroundColor',
+                label: 'Cor de Fundo',
+                selectorType: 'COLOR',
+                defaultValue: savedChartColorsStyle?.backgroundColor || 'transparent',
+            },
+            {
+                type: 'number',
+                key: 'axisStrokeWidth',
+                label: 'Espessura dos Eixos (px)',
+                defaultValue: savedChartColorsStyle?.axisStrokeWidth ?? 1.5,
+            },
+        ],
+    });
     
     // Seção para tooltip
     // Usar valor atual se disponível (para condicionais dinâmicas), senão usar valor salvo
@@ -651,92 +811,114 @@ export function createVisualPropEditorDefinition(
     currentVisualProps: ChartModel,
     ctx: CustomChartContext,
 ): VisualPropEditorDefinition {
-    logger.debug('🎨 [DEBUG] visualPropEditorDefinition chamado');
-    logger.debug('🎨 [DEBUG] currentVisualProps:', currentVisualProps);
-    
-    const columns = currentVisualProps.columns || [];
-    const measureColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.MEASURE);
-    const dimensionColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.ATTRIBUTE);
-    
-    logger.debug('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
-    logger.debug('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
-    
-    // Ler valores salvos
-    const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
-    const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes, chartColorsStyle: savedChartColorsStyle, chartTooltip: savedChartTooltip } = readSavedValues(allSavedProps);
-    
-    // Criar seções do editor (passar allSavedProps para permitir condicionais dinâmicas)
-    const elements = createEditorSections(
-        savedChartVisual,
-        savedChartDimensions,
-        savedChartDividerLines,
-        savedChartOptions,
-        savedTextSizes,
-        savedChartColorsStyle,
-        savedChartTooltip,
-        allSavedProps
-    );
-    
-    // Criar configurações por coluna para aparecer na aba "Configure"
-    const columnsVizPropDefinition: any[] = [];
-    
-    if (measureColumns.length > 0) {
-        const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps);
-        if (Object.keys(measureColumnSettings).length > 0) {
-            columnsVizPropDefinition.push({
-                type: ColumnType.MEASURE,
-                columnSettingsDefinition: measureColumnSettings,
-            });
-        }
-    }
-    
-    if (dimensionColumns.length > 0) {
-        const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, currentVisualProps);
-        if (Object.keys(dimensionColumnSettings).length > 0) {
-            columnsVizPropDefinition.push({
-                type: ColumnType.ATTRIBUTE,
-                columnSettingsDefinition: dimensionColumnSettings,
-            });
-        }
-    }
-    
-    // Criar assinatura baseada nas colunas para forçar o ThoughtSpot a re-executar getDefaultChartConfig
-    const columnIds = columns.map(col => col.id).sort();
-    const columnSignature = columnIds.join(',');
-    const measureIds = measureColumns.map(m => m.id).sort();
-    const measureSignature = measureIds.join(',');
-    
-    logger.debug('===== ASSINATURA DAS COLUNAS =====');
-    logger.debug('Total de colunas:', columns.length);
-    logger.debug('Total de medidas:', measureColumns.length);
-    logger.debug('Total de dimensões:', dimensionColumns.length);
-    logger.debug('IDs das medidas:', measureIds);
-    logger.debug('Assinatura das colunas:', columnSignature);
-    logger.debug('Assinatura das medidas:', measureSignature);
-    
-    const result: VisualPropEditorDefinition = {
-        elements,
-        ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
-    };
-    
-    logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', JSON.stringify(result, null, 2));
-    logger.debug('🎨 [DEBUG] columnsVizPropDefinition:', columnsVizPropDefinition.length > 0 ? 'SIM - ' + columnsVizPropDefinition.length + ' colunas' : 'NÃO');
-    logger.debug('🎨 [DEBUG] Medidas processadas:', measureColumns.map(m => m.id));
-    
-    if (columnsVizPropDefinition.length > 0) {
-        const measuresInConfig = Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}).length || 0;
-        logger.debug('🎨 [DEBUG] Medidas no columnsVizPropDefinition:', measuresInConfig);
+    try {
+        logger.debug('🎨 [DEBUG] visualPropEditorDefinition chamado');
+        // Não fazer log de currentVisualProps completo (pode ser muito grande e causar timeout)
+        logger.debug('🎨 [DEBUG] currentVisualProps keys:', Object.keys(currentVisualProps));
         
-        if (measureColumns.length !== measuresInConfig) {
-            logger.debug(`DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
-            logger.debug('Isso indica que getDefaultChartConfig precisa ser re-executado!');
-            logger.debug('Medidas no chartModel:', measureColumns.map(m => ({ id: m.id, name: m.name })));
-            logger.debug('IDs no columnsVizPropDefinition:', Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}));
+        const columns = currentVisualProps.columns || [];
+        const measureColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.MEASURE);
+        const dimensionColumns = columns.filter((col: ChartColumn) => col.type === ColumnType.ATTRIBUTE);
+        
+        logger.debug('🎨 [DEBUG] Medidas encontradas para configuração:', measureColumns.map((m: ChartColumn) => m.name));
+        logger.debug('🎨 [DEBUG] Dimensões encontradas para configuração:', dimensionColumns.map((d: ChartColumn) => d.name));
+        
+        // Ler valores salvos
+        const allSavedProps = (currentVisualProps.visualProps as Record<string, unknown>) || {};
+        const { chartVisual: savedChartVisual, chartDimensions: savedChartDimensions, chartDividerLines: savedChartDividerLines, chartOptions: savedChartOptions, textSizes: savedTextSizes, chartColorsStyle: savedChartColorsStyle, chartTooltip: savedChartTooltip } = readSavedValues(allSavedProps);
+        
+        // Criar seções do editor (passar allSavedProps para permitir condicionais dinâmicas)
+        const elements = createEditorSections(
+            savedChartVisual,
+            savedChartDimensions,
+            savedChartDividerLines,
+            savedChartOptions,
+            savedTextSizes,
+            savedChartColorsStyle,
+            savedChartTooltip,
+            allSavedProps
+        );
+        
+        // Log de debug para identificar qual elemento está causando problema
+        if (elements.length > 2) {
+            logger.debug('🎨 [DEBUG] elements[2]:', JSON.stringify({
+                type: elements[2]?.type,
+                key: elements[2]?.key,
+                label: elements[2]?.label,
+                hasChildren: !!elements[2]?.children,
+                childrenLength: elements[2]?.children?.length,
+                childrenTypes: elements[2]?.children?.map((c: any) => c?.type),
+            }));
         }
+        
+        // Criar configurações por coluna para aparecer na aba "Configure"
+        const columnsVizPropDefinition: any[] = [];
+        
+        if (measureColumns.length > 0) {
+            const measureColumnSettings = createMeasureColumnSettings(measureColumns, currentVisualProps, dimensionColumns);
+            if (Object.keys(measureColumnSettings).length > 0) {
+                columnsVizPropDefinition.push({
+                    type: ColumnType.MEASURE,
+                    columnSettingsDefinition: measureColumnSettings,
+                });
+            }
+        }
+        
+        if (dimensionColumns.length > 0) {
+            const dimensionColumnSettings = createDimensionColumnSettings(dimensionColumns, currentVisualProps);
+            if (Object.keys(dimensionColumnSettings).length > 0) {
+                columnsVizPropDefinition.push({
+                    type: ColumnType.ATTRIBUTE,
+                    columnSettingsDefinition: dimensionColumnSettings,
+                });
+            }
+        }
+        
+        // Criar assinatura baseada nas colunas para forçar o ThoughtSpot a re-executar getDefaultChartConfig
+        const columnIds = columns.map(col => col.id).sort();
+        const columnSignature = columnIds.join(',');
+        const measureIds = measureColumns.map(m => m.id).sort();
+        const measureSignature = measureIds.join(',');
+        
+        logger.debug('===== ASSINATURA DAS COLUNAS =====');
+        logger.debug('Total de colunas:', columns.length);
+        logger.debug('Total de medidas:', measureColumns.length);
+        logger.debug('Total de dimensões:', dimensionColumns.length);
+        logger.debug('IDs das medidas:', measureIds);
+        logger.debug('Assinatura das colunas:', columnSignature);
+        logger.debug('Assinatura das medidas:', measureSignature);
+        
+        const result: VisualPropEditorDefinition = {
+            elements,
+            ...(columnsVizPropDefinition.length > 0 && { columnsVizPropDefinition }),
+        };
+        
+        // Log resumido para evitar timeout (não fazer JSON.stringify de objetos grandes)
+        logger.debug('🎨 [DEBUG] visualPropEditorDefinition retornando:', {
+            elementsCount: elements.length,
+            hasColumnsVizProp: columnsVizPropDefinition.length > 0,
+            columnsVizPropCount: columnsVizPropDefinition.length,
+            measuresProcessed: measureColumns.length,
+        });
+        
+        if (columnsVizPropDefinition.length > 0) {
+            const measuresInConfig = Object.keys(columnsVizPropDefinition[0].columnSettingsDefinition || {}).length || 0;
+            logger.debug('🎨 [DEBUG] Medidas no columnsVizPropDefinition:', measuresInConfig);
+            
+            if (measureColumns.length !== measuresInConfig) {
+                logger.debug(`DISCREPÂNCIA DETECTADA: ${measureColumns.length} medidas no chartModel, mas ${measuresInConfig} medidas no columnsVizPropDefinition`);
+            }
+        }
+        logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
+        
+        return result;
+    } catch (error) {
+        logger.error('❌ [ERROR] Erro em visualPropEditorDefinition:', error);
+        // Retornar estrutura mínima para evitar timeout completo
+        return {
+            elements: [],
+        };
     }
-    logger.debug('🎨 [DEBUG] ===== FIM visualPropEditorDefinition =====');
-    
-    return result;
 }
 
 /**

@@ -21,6 +21,45 @@
       box-sizing: border-box;
     }
   </style>
+  <script>
+    // Corrige preloads de fontes que estão faltando o atributo crossorigin
+    (function() {
+      function fixFontPreloads() {
+        // Buscar todos os links de preload de fontes
+        const fontPreloads = document.querySelectorAll('link[rel="preload"][href*="/font/"], link[rel="preload"][href*=".otf"], link[rel="preload"][href*=".ttf"], link[rel="preload"][as="font"]');
+        fontPreloads.forEach(link => {
+          if (!link.hasAttribute('crossorigin')) {
+            link.setAttribute('crossorigin', 'anonymous');
+          }
+        });
+      }
+      
+      // Executar imediatamente
+      fixFontPreloads();
+      
+      // Observar mudanças no DOM para corrigir preloads adicionados dinamicamente
+      if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+              fixFontPreloads();
+            }
+          });
+        });
+        
+        // Observar o head para novos links
+        observer.observe(document.head, {
+          childList: true,
+          subtree: true
+        });
+      }
+      
+      // Executar quando o DOM estiver pronto
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixFontPreloads);
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="chart"></div>

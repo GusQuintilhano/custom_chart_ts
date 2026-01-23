@@ -53,13 +53,23 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
 
     measureConfigs.forEach((measureConfig, measureIdx) => {
         const referenceLine = measureConfig.referenceLine;
+        
         if (!referenceLine || !referenceLine.enabled) {
             return;
         }
 
         const range = measureRanges[measureIdx];
-        const minValue = range.effectiveMin ?? range.min;
-        const maxValue = range.effectiveMax ?? range.max;
+        let minValue = range.effectiveMin ?? range.min;
+        let maxValue = range.effectiveMax ?? range.max;
+
+        // Ajustar o range para incluir o valor da linha de referência, se estiver fora
+        // Isso garante que a linha sempre apareça dentro da área visível
+        if (referenceLine.value < minValue) {
+            minValue = referenceLine.value;
+        }
+        if (referenceLine.value > maxValue) {
+            maxValue = referenceLine.value;
+        }
 
         const measureRowTop = calculateMeasureRowTop(
             measureIdx,
@@ -81,6 +91,19 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
         const lineX2 = leftMargin + plotAreaWidth;
         const color = referenceLine.color || '#ef4444';
         const strokeDashArray = getStrokeDashArray(referenceLine.style || 'sólida');
+
+        // Debug: log da linha que será renderizada
+        console.log(`[ReferenceLine] Measure ${measureIdx}: Rendering line`, {
+            value: referenceLine.value,
+            minValue,
+            maxValue,
+            referenceY,
+            lineX1,
+            lineX2,
+            color,
+            strokeDashArray,
+            inRange: referenceLine.value >= minValue && referenceLine.value <= maxValue,
+        });
 
         // Renderizar linha
         html += `
@@ -104,12 +127,14 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
             const valuePrefix = measureConfig.valuePrefix || '';
             const valueSuffix = measureConfig.valueSuffix || '';
 
+            // Para rotação, usar 'normal' no formatValue (reference lines não rotacionam)
+            const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
             const formattedValue = formatValue(
                 referenceLine.value,
                 format,
                 decimals,
                 useThousandsSeparator,
-                valueFormat,
+                formatValueForFormatting as 'normal' | 'compacto',
                 valuePrefix,
                 valueSuffix,
                 true

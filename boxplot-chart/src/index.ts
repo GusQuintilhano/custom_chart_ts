@@ -16,7 +16,156 @@ import { calculateBoxplotDimensions } from './utils/boxplotDimensions';
 import { readBoxplotOptions } from './utils/boxplotOptions';
 import { renderBoxplot, renderYAxis } from './rendering/boxplotRenderer';
 import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
-import { ChartToTSEvent, ColumnType } from '@thoughtspot/ts-chart-sdk';
+import { ChartToTSEvent, ColumnType, ChartColumn } from '@thoughtspot/ts-chart-sdk';
+import { setupCustomTooltips } from './utils/customTooltip';
+
+function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
+    // Rastrear hover em grupos do boxplot
+    const groups = chartElement.querySelectorAll('g[data-group-index]');
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        
+        // Rastrear hover no grupo inteiro
+        group.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `group-${groupIndex}`, {
+                elementType: 'group',
+                groupIndex: groupIndex,
+            });
+        });
+        
+        // Rastrear elementos dentro do grupo (box, whiskers, median, mean)
+        const boxElements = group.querySelectorAll('rect, path, line');
+        boxElements.forEach((element, elemIndex) => {
+            // Pular outliers e jitter (têm tracking próprio)
+            if (element.closest('[data-outlier]') || element.hasAttribute('data-jitter')) {
+                return;
+            }
+            
+            element.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `box-element-${groupIndex}-${elemIndex}`, {
+                    elementType: 'box-element',
+                    groupIndex: groupIndex,
+                });
+            });
+            
+            // Rastrear cliques em elementos do boxplot
+            element.addEventListener('click', () => {
+                analytics.trackInteraction('boxplot', 'click', `box-element-${groupIndex}-${elemIndex}`, {
+                    elementType: 'box-element',
+                    groupIndex: groupIndex,
+                });
+            });
+        });
+    });
+    
+    // Rastrear outliers usando data attributes
+    const outliers = chartElement.querySelectorAll('[data-outlier="true"]');
+    outliers.forEach((outlier, index) => {
+        const groupIndex = outlier.getAttribute('data-group-index');
+        const outlierValue = outlier.getAttribute('data-outlier-value');
+        
+        outlier.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `outlier-${groupIndex}-${index}`, {
+                elementType: 'outlier',
+                groupIndex: groupIndex,
+                outlierValue: outlierValue,
+            });
+        });
+    });
+    
+    // Rastrear pontos de jitter usando data attributes
+    const jitterPoints = chartElement.querySelectorAll('[data-jitter="true"]');
+    jitterPoints.forEach((point, index) => {
+        const groupIndex = point.getAttribute('data-group-index');
+        const pointValue = point.getAttribute('data-point-value');
+        
+        point.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `jitter-${groupIndex}-${index}`, {
+                elementType: 'jitter',
+                groupIndex: groupIndex,
+                pointValue: pointValue,
+            });
+        });
+    });
+    
+    // Rastrear pontos de dot plot (amostra insuficiente) - usar classe
+    const dotPlotGroups = chartElement.querySelectorAll('g.dot-plot');
+    dotPlotGroups.forEach((dotPlotGroup, index) => {
+        const groupIndex = dotPlotGroup.getAttribute('data-group-index');
+        
+        dotPlotGroup.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `dot-plot-${groupIndex || index}`, {
+                elementType: 'dot-plot',
+                groupIndex: groupIndex || String(index),
+            });
+        });
+    });
+    
+    // Rastrear linhas de referência usando classe
+    const referenceLines = chartElement.querySelectorAll('.reference-lines line');
+    referenceLines.forEach((line, index) => {
+        line.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('boxplot', 'hover', `reference-line-${index}`, {
+                elementType: 'reference-line',
+            });
+        });
+    });
+    
+    // Rastrear linhas de mediana - dentro dos grupos
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        // Mediana geralmente é uma linha dentro do grupo
+        const medianLines = group.querySelectorAll('line');
+        medianLines.forEach((line, lineIndex) => {
+            // Verificar se é linha de mediana (geralmente é uma linha horizontal/vertical no meio)
+            // Pular se for whisker ou outra linha
+            if (line.closest('[data-outlier]')) {
+                return;
+            }
+            
+            line.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `median-line-${groupIndex}-${lineIndex}`, {
+                    elementType: 'median-line',
+                    groupIndex: groupIndex,
+                });
+            });
+        });
+    });
+    
+    // Rastrear whiskers - dentro dos grupos
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        // Whiskers são linhas dentro do grupo
+        const whiskers = group.querySelectorAll('line');
+        whiskers.forEach((whisker, whiskerIndex) => {
+            // Pular se for mediana ou outra linha
+            if (whisker.closest('[data-outlier]')) {
+                return;
+            }
+            
+            whisker.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `whisker-${groupIndex}-${whiskerIndex}`, {
+                    elementType: 'whisker',
+                    groupIndex: groupIndex,
+                });
+            });
+        });
+    });
+    
+    // Rastrear labels/eixos - textos dentro dos grupos
+    groups.forEach((group) => {
+        const groupIndex = group.getAttribute('data-group-index');
+        const labels = group.querySelectorAll('text');
+        labels.forEach((label, labelIndex) => {
+            label.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('boxplot', 'hover', `label-${groupIndex}-${labelIndex}`, {
+                    elementType: 'label',
+                    groupIndex: groupIndex,
+                });
+            });
+        });
+    });
+}
 
 export const renderChart = async (ctx: CustomChartContext) => {
     const performanceMonitor = new PerformanceMonitor();
@@ -24,7 +173,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
     
     try {
         const chartModel = ctx.getChartModel();
-        const chartElement = ctx.chartContainer;
+        const chartElement = document.getElementById('chart') as HTMLElement | null;
+        
+        if (!chartElement) {
+            logger.error('Elemento chart não encontrado');
+            return;
+        }
 
         // Validar dados
         const data = chartModel.data?.[0]?.data;
@@ -35,10 +189,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
         }
 
         // Obter colunas
+        // O Chart Config Editor já filtra quais colunas são usadas nas queries
+        // As colunas em chartModel.columns já são apenas as que o usuário arrastou para as seções
         const measureColumns = chartModel.columns.filter(col => col.type === ColumnType.MEASURE);
-        const dimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
+        const allDimensionColumns = chartModel.columns.filter(col => col.type === ColumnType.ATTRIBUTE);
 
-        if (measureColumns.length === 0 || dimensionColumns.length === 0) {
+        if (measureColumns.length === 0 || allDimensionColumns.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Boxplot requer pelo menos 1 medida e 1 dimensão</div>';
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
             return;
@@ -47,41 +203,181 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Usar primeira medida
         const measureColumn = measureColumns[0];
         
-        // Iniciar monitoramento de performance
+        // Identificar quais dimensões estão na seção 'x' (Categoria/Atributo) vs 'detail' (Granularidade)
+        // Tentar múltiplas abordagens para identificar as colunas da seção 'x'
+        let dimensionColumnsForGrouping: ChartColumn[] = [];
+        
+        // Abordagem 1: Verificar se ChartColumn tem propriedade columnSectionName
+        const xColumnsBySectionName = allDimensionColumns.filter((col: any) => 
+            col.columnSectionName === 'x' || col.sectionName === 'x' || col.section === 'x'
+        );
+        
+        if (xColumnsBySectionName.length > 0) {
+            dimensionColumnsForGrouping = xColumnsBySectionName;
+        } else {
+            // Abordagem 2: Tentar acessar chartConfig através do contexto
+            try {
+                const ctxAny = ctx as any;
+                const chartConfig = ctxAny.getChartConfig?.() || ctxAny.chartConfig || (chartModel as any).chartConfig;
+                
+                if (chartConfig && Array.isArray(chartConfig) && chartConfig.length > 0) {
+                    const firstConfig = chartConfig[0];
+                    if (firstConfig && firstConfig.dimensions && Array.isArray(firstConfig.dimensions)) {
+                        const xDimension = firstConfig.dimensions.find((dim: any) => dim.key === 'x');
+                        if (xDimension && xDimension.columns && Array.isArray(xDimension.columns)) {
+                            // Filtrar apenas as colunas que estão na seção 'x'
+                            const xColumnIds = new Set(xDimension.columns.map((col: any) => col.id || col.name || col.columnId));
+                            dimensionColumnsForGrouping = allDimensionColumns.filter(col => 
+                                xColumnIds.has(col.id) || xColumnIds.has((col as any).name) || xColumnIds.has((col as any).columnId)
+                            );
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignora erros
+            }
+        }
+        
+        // Abordagem 3: Usar a ordem das colunas nos dados retornados para identificar qual está na seção 'x'
+        // As colunas na seção 'x' geralmente aparecem primeiro nos dados
+        if (dimensionColumnsForGrouping.length === 0) {
+            try {
+                const data = chartModel.data?.[0]?.data;
+                if (data && data.columns && data.columns.length > 0) {
+                    // Encontrar o índice da primeira dimensão nos dados
+                    const firstDimensionColumnId = data.columns.find((colId: string) => 
+                        allDimensionColumns.some(dim => dim.id === colId)
+                    );
+                    
+                    if (firstDimensionColumnId) {
+                        const firstDimension = allDimensionColumns.find(dim => dim.id === firstDimensionColumnId);
+                        if (firstDimension) {
+                            dimensionColumnsForGrouping = [firstDimension];
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignora erros
+            }
+        }
+        
+        // Fallback final: usar todas as dimensões (comportamento antigo)
+        if (dimensionColumnsForGrouping.length === 0) {
+            dimensionColumnsForGrouping = allDimensionColumns;
+        }
+        
+        
+        // Calcular dimensões do container
         const containerWidth = chartElement.clientWidth || 800;
         const containerHeight = chartElement.clientHeight || 600;
         const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
         
+        // Iniciar monitoramento de performance
         performanceMonitor.startRender(
             sessionId,
             dataSize,
             measureColumns.length,
-            dimensionColumns.length,
+            dimensionColumnsForGrouping.length,
             containerWidth,
             containerHeight
         );
 
-        // Rastrear uso
+        // Tentar obter userId do contexto (se disponível)
+        // ThoughtSpot SDK pode não expor diretamente, mas tentamos diferentes formas
+        let userId: string | undefined;
+        try {
+            // Tentar acessar propriedades do contexto (se disponíveis)
+            const ctxAny = ctx as any;
+            userId = ctxAny.userId || ctxAny.user?.id || ctxAny.user?.username || ctxAny.userInfo?.userId;
+            
+            // Se não encontrado no contexto, pode estar no chartModel
+            if (!userId) {
+                const chartModelAny = chartModel as any;
+                userId = chartModelAny.userId || chartModelAny.user?.id || chartModelAny.user?.username;
+            }
+        } catch (e) {
+            // Ignora erros ao tentar acessar propriedades que podem não existir
+        }
+
+        // Ler opções primeiro (necessárias para cálculos)
+        const allVisualProps = chartModel.visualProps as Record<string, unknown>;
+        const options = readBoxplotOptions(allVisualProps, measureColumn);
+
+        // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
             numMeasures: measureColumns.length,
-            numDimensions: dimensionColumns.length,
-        });
+            numDimensions: dimensionColumnsForGrouping.length,
+            // Configurações principais
+            orientation: options.orientation,
+            yScale: options.yScale,
+            showNotch: options.showNotch,
+            sortType: options.sortType,
+            showJitter: options.showJitter,
+            variableWidth: options.variableWidth,
+            showMean: options.showMean,
+            showOutliers: options.showOutliers,
+            calculationMethod: options.calculationMethod,
+            whiskerType: options.whiskerType,
+            // Configurações de referência
+            referenceLines: {
+                show: options.referenceLines.show,
+                type: options.referenceLines.type,
+            },
+            // Configurações de grade
+            gridLines: {
+                show: options.gridLines.show,
+            },
+            // Configurações de tooltip
+            tooltip: {
+                enabled: options.tooltip.enabled,
+                format: options.tooltip.format,
+            },
+        }, userId);
 
-        // Calcular dados do boxplot
-        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumns);
+        // Calcular dados do boxplot com as opções configuradas
+        // Usar apenas as dimensões da seção 'x' (Categoria/Atributo) para agrupamento
+        const boxplotData = calculateBoxplotData(chartModel, measureColumn, dimensionColumnsForGrouping, options);
         if (!boxplotData || boxplotData.groups.length === 0) {
             chartElement.innerHTML = '<div style="padding: 20px; color: #ef4444;">Não foi possível calcular os dados do Boxplot</div>';
             ctx.emitEvent(ChartToTSEvent.RenderComplete);
             return;
         }
+        
+        // Calcular range para o eixo Y:
+        // - Se outliers estão habilitados: usar min/max absolutos de todos os dados (incluindo outliers)
+        // - Se outliers estão desabilitados: usar whiskerLower/whiskerUpper (limites dos whiskers)
+        const showOutliers = options.showOutliers !== false;
+        let actualYMin: number;
+        let actualYMax: number;
+        
+        if (showOutliers) {
+            // Incluir outliers: usar valores absolutos min/max de todos os dados
+            const allDataValues = boxplotData.groups.flatMap(g => g.values);
+            if (allDataValues.length > 0) {
+                // Usar loop ao invés de spread operator para evitar "Maximum call stack size exceeded" com arrays grandes
+                let min = allDataValues[0];
+                let max = allDataValues[0];
+                for (let i = 1; i < allDataValues.length; i++) {
+                    const val = allDataValues[i];
+                    if (val < min) min = val;
+                    if (val > max) max = val;
+                }
+                actualYMin = min;
+                actualYMax = max;
+            } else {
+                actualYMin = boxplotData.globalStats.whiskerLower;
+                actualYMax = boxplotData.globalStats.whiskerUpper;
+            }
+        } else {
+            // Sem outliers: usar limites dos whiskers
+            actualYMin = boxplotData.globalStats.whiskerLower;
+            actualYMax = boxplotData.globalStats.whiskerUpper;
+        }
 
-        // Ler opções
-        const allVisualProps = chartModel.visualProps as Record<string, unknown>;
-        const options = readBoxplotOptions(allVisualProps, measureColumn);
-
-        // Calcular dimensões
-        const containerWidth = chartElement.clientWidth || 800;
-        const containerHeight = chartElement.clientHeight || 600;
+        // Avisar se há muitos grupos (pode causar sobreposição)
+        if (boxplotData.groups.length > 100) {
+            console.warn('[BOXPLOT] Número de grupos muito alto (' + boxplotData.groups.length + '). A visualização pode estar comprometida devido à sobreposição.');
+        }
 
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
@@ -89,21 +385,26 @@ export const renderChart = async (ctx: CustomChartContext) => {
             valueLabelFontSize: options.valueLabelFontSize,
             numGroups: boxplotData.groups.length,
             boxWidth: options.boxWidth,
+            groupSpacing: options.layout.groupSpacing || options.padding,
+            layout: options.layout,
+            fitWidth: options.fitWidth, // Passar fitWidth para cálculo de dimensões
         });
 
         // Renderizar boxplot
         const boxplotHtml = renderBoxplot(boxplotData, dimensions, options);
         const yAxisHtml = renderYAxis(
-            boxplotData.globalStats.whiskerLower,
-            boxplotData.globalStats.whiskerUpper,
+            actualYMin,
+            actualYMax,
             dimensions,
             options
         );
 
         // Criar estrutura HTML completa
+        // fitWidth: controlado pela opção do usuário
+        // fitHeight: sempre true (altura sempre 100%)
         const html = createChartHtmlStructure(
-            false, // fitWidth
-            false, // fitHeight
+            options.fitWidth, // fitWidth (controlado pelo usuário)
+            true, // fitHeight (sempre 100%)
             dimensions.chartWidth,
             dimensions.chartHeight,
             '', // secondaryXAxisHtml
@@ -120,10 +421,20 @@ export const renderChart = async (ctx: CustomChartContext) => {
 
         chartElement.innerHTML = html;
         
+        // Configurar tooltips customizados
+        setupCustomTooltips(chartElement, boxplotData, options.tooltip);
+        
+        // Adicionar event listeners para rastrear interações do usuário
+        setupInteractionTracking(chartElement, userId);
+        
         // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'boxplot';
+            // Passar userId para evento de performance (herda de BaseAnalyticsEvent)
+            if (userId) {
+                perfEvent.userId = userId;
+            }
             analytics.trackPerformance(perfEvent);
         }
         
@@ -134,8 +445,10 @@ export const renderChart = async (ctx: CustomChartContext) => {
             sessionId,
         });
         logger.error('Erro ao renderizar Boxplot:', error);
-        const chartElement = ctx.chartContainer;
-        chartElement.innerHTML = `<div style="padding: 20px; color: #ef4444;">Erro ao renderizar Boxplot: ${error}</div>`;
+        const chartElement = document.getElementById('chart') as HTMLElement | null;
+        if (chartElement) {
+            chartElement.innerHTML = `<div style="padding: 20px; color: #ef4444;">Erro ao renderizar Boxplot: ${error}</div>`;
+        }
         ctx.emitEvent(ChartToTSEvent.RenderComplete);
     }
 };

@@ -33,7 +33,8 @@ export function calculateChartDimensions(
     chartData: ChartDataPoint[],
     measureCols: ChartColumn[],
     hasSecondaryDimension: boolean,
-    allVisualProps: Record<string, unknown>
+    allVisualProps: Record<string, unknown>,
+    containerDimensions?: { width: number; height: number }
 ): ChartDimensions {
     const showYAxis = chartOptions.showYAxis !== false;
     const fitWidth = chartOptions.fitWidth || false;
@@ -67,17 +68,80 @@ export function calculateChartDimensions(
     const numBars = chartData.length;
     
     if (fitWidth) {
-        // Quando fitWidth está ativo, usar valores padrão que serão ajustados dinamicamente
-        const plotAreaWidth = 800; // Valor base, será ajustado pelo resize observer
-        chartHeight = fitHeight ? 500 : chartHeight; // Usar valor base se fitHeight também estiver ativo
+        // Quando fitWidth está ativo, tentar usar dimensões reais do container se disponíveis
+        let containerWidth = containerDimensions?.width || 0;
+        
+        // Se não temos dimensões do container, tentar obter de outras formas
+        if (containerWidth === 0 && typeof window !== 'undefined') {
+            // Tentar obter do elemento chartElement se disponível
+            // Isso será feito no index.ts antes de chamar esta função
+        }
+        
+        // Usar dimensões do container se disponíveis, senão usar valor base
+        // IMPORTANTE: Quando fitWidth está ativo, precisamos garantir que o conteúdo seja redesenhado
+        // com base na largura do container. Se o containerWidth ainda não estiver disponível (0),
+        // usar um valor padrão razoável, mas o dynamicResize vai re-renderizar com as dimensões corretas
+        const baseWidth = containerWidth > 0 ? containerWidth : 800;
+        const plotAreaWidth = baseWidth - leftMargin - rightMargin;
+        
+        chartHeight = fitHeight ? (containerDimensions?.height || 500) : chartHeight; // Usar altura do container se disponível
         measureRowHeight = fitHeight ? (chartHeight - topMargin - bottomMargin - (spacingBetweenMeasures * (measureCols.length - 1))) / measureCols.length : measureRowHeight;
         
-        // Calcular espaçamento e largura das barras baseado no plotAreaWidth (será ajustado depois)
-        const barSpacing = showYAxis ? 20 : Math.max(15, plotAreaWidth / (numBars * 3));
-        const totalSpacing = barSpacing * (numBars - 1);
-        const barWidth = showYAxis ? 40 : Math.max(30, (plotAreaWidth - totalSpacing) / numBars);
+        // Calcular espaçamento e largura das barras baseado no plotAreaWidth real
+        // IMPORTANTE: Quando fitWidth está ativo, IGNORAR configurações de largura de barras
+        // e calcular para que o gráfico caiba exatamente na largura disponível
+        // Estratégia: usar espaçamento mínimo fixo e distribuir o restante entre as barras
+        let barWidth: number;
+        let barSpacing: number;
         
-        const chartWidth = plotAreaWidth + leftMargin + rightMargin;
+        if (numBars === 0) {
+            barWidth = 0;
+            barSpacing = 0;
+        } else if (numBars === 1) {
+            // Se há apenas uma barra, usar toda a largura disponível
+            barWidth = plotAreaWidth;
+            barSpacing = 0;
+        } else {
+            // Usar espaçamento mínimo fixo (2px) e distribuir o restante entre as barras
+            // Isso garante que o gráfico caiba exatamente na largura disponível
+            const minBarSpacing = 2;
+            const totalSpacing = minBarSpacing * (numBars - 1);
+            const availableWidthForBars = plotAreaWidth - totalSpacing;
+            
+            if (availableWidthForBars <= 0) {
+                // Se não há espaço suficiente, usar espaçamento mínimo e dividir o restante
+                barSpacing = minBarSpacing;
+                barWidth = Math.max(1, plotAreaWidth / (numBars * 2)); // Dividir espaço igualmente
+            } else {
+                barSpacing = minBarSpacing;
+                barWidth = availableWidthForBars / numBars;
+            }
+            
+            // Garantir que a soma seja exatamente plotAreaWidth (ajuste fino)
+            const calculatedTotal = (barWidth * numBars) + (barSpacing * (numBars - 1));
+            const diff = plotAreaWidth - calculatedTotal;
+            if (Math.abs(diff) > 0.01) {
+                // Ajustar barWidth para compensar qualquer diferença
+                barWidth += diff / numBars;
+            }
+        }
+        
+        const chartWidth = baseWidth; // Usar largura do container diretamente
+        
+        // Log para debug quando fitWidth está ativo
+        if (fitWidth) {
+            console.log('[FitWidth] calculateChartDimensions - Renderização inicial:', {
+                containerWidth,
+                baseWidth,
+                chartWidth,
+                plotAreaWidth,
+                barWidth,
+                barSpacing,
+                info: containerWidth > 0 
+                    ? 'ContainerWidth disponível, conteúdo será redesenhado com dimensões corretas'
+                    : 'ContainerWidth não disponível (0), usando valor padrão (800px). DynamicResize vai re-renderizar com dimensões corretas.',
+            });
+        }
         
         return {
             leftMargin,
@@ -140,6 +204,12 @@ export function readMeasureConfigs(
         // Se chartType está em uma seção 'visualization', pode estar em configFromColumnVisualProps.visualization.chartType
         const visualizationSection = (configFromColumnVisualProps.visualization || {}) as Record<string, unknown>;
         const numberFormattingSection = (configFromColumnVisualProps.number_formatting || {}) as Record<string, unknown>;
+        // O ThoughtSpot pode salvar referenceLine em diferentes seções: 'referenceLine', 'reference_line', ou no nível raiz
+        // IMPORTANTE: Quando temos uma seção com key 'reference_line', o ThoughtSpot pode salvar dentro dessa seção
+        const referenceLineSection = (configFromColumnVisualProps.referenceLine || 
+                                     configFromColumnVisualProps.reference_line || 
+                                     {}) as Record<string, unknown>;
+        const tooltipSection = (configFromColumnVisualProps.tooltip || {}) as Record<string, unknown>;
         
         // Ordem de merge: configNew (legado) < configOld (legado mais antigo) < configFromColumnVisualProps (mais recente, tem prioridade)
         // Também mesclar valores de seções aninhadas (ex: visualization.chartType -> chartType, number_formatting.decimals -> decimals)
@@ -151,32 +221,91 @@ export function readMeasureConfigs(
         
         // Extrair valores de seções aninhadas para o nível superior
         const chartTypeFromVisualization = visualizationSection.chartType;
+        const colorFromVisualization = visualizationSection.color;
         const decimalsFromNumberFormatting = numberFormattingSection.decimals;
         const formatFromNumberFormatting = numberFormattingSection.format;
         const useThousandsSeparatorFromNumberFormatting = numberFormattingSection.useThousandsSeparator;
         
+        // Extrair configurações de linha de referência de seções aninhadas
+        // O ThoughtSpot pode salvar de diferentes formas:
+        // 1. No nível raiz: referenceLine_enabled, referenceLine_value, etc.
+        // 2. Em seção aninhada: referenceLine.enabled, referenceLine.value, etc.
+        // 3. Em seção aninhada com prefixo: referenceLine.referenceLine_enabled, etc.
+        // 4. Dentro da seção 'reference_line': reference_line.referenceLine_enabled, etc.
+        const referenceLineSectionUnderscore = (configFromColumnVisualProps.reference_line || {}) as Record<string, unknown>;
+        
+        const referenceLineEnabledFromSection = referenceLineSection.enabled ?? 
+                                                referenceLineSection.referenceLine_enabled ??
+                                                referenceLineSectionUnderscore.referenceLine_enabled ??
+                                                referenceLineSectionUnderscore.enabled ??
+                                                (configFromColumnVisualProps as any).referenceLine_enabled;
+        const referenceLineValueFromSection = referenceLineSection.value ?? 
+                                              referenceLineSection.referenceLine_value ??
+                                              referenceLineSectionUnderscore.referenceLine_value ??
+                                              referenceLineSectionUnderscore.value ??
+                                              (configFromColumnVisualProps as any).referenceLine_value;
+        const referenceLineColorFromSection = referenceLineSection.color ?? 
+                                             referenceLineSection.referenceLine_color ??
+                                             referenceLineSectionUnderscore.referenceLine_color ??
+                                             referenceLineSectionUnderscore.color ??
+                                             (configFromColumnVisualProps as any).referenceLine_color;
+        const referenceLineStyleFromSection = referenceLineSection.style ?? 
+                                             referenceLineSection.referenceLine_style ??
+                                             referenceLineSectionUnderscore.referenceLine_style ??
+                                             referenceLineSectionUnderscore.style ??
+                                             (configFromColumnVisualProps as any).referenceLine_style;
+        const referenceLineShowLabelFromSection = referenceLineSection.showLabel ?? 
+                                                  referenceLineSection.referenceLine_showLabel ??
+                                                  referenceLineSectionUnderscore.referenceLine_showLabel ??
+                                                  referenceLineSectionUnderscore.showLabel ??
+                                                  (configFromColumnVisualProps as any).referenceLine_showLabel;
+        
+        // Extrair configurações de tooltip de seções aninhadas
+        // O ThoughtSpot pode salvar de diferentes formas:
+        // 1. No nível raiz: tooltip_enabled, tooltip_format, etc.
+        // 2. Em seção aninhada: tooltip.enabled, tooltip.format, etc.
+        // 3. Em seção aninhada com prefixo: tooltip.tooltip_enabled, etc.
+        const tooltipEnabledFromSection = tooltipSection.enabled ??
+                                         tooltipSection.tooltip_enabled ??
+                                         (configFromColumnVisualProps as any).tooltip_enabled;
+        const tooltipFormatFromSection = tooltipSection.format ??
+                                        tooltipSection.tooltip_format ??
+                                        (configFromColumnVisualProps as any).tooltip_format;
+        const tooltipBackgroundColorFromSection = tooltipSection.backgroundColor ??
+                                                 tooltipSection.tooltip_backgroundColor ??
+                                                 (configFromColumnVisualProps as any).tooltip_backgroundColor;
+        const tooltipLayoutFromSection = tooltipSection.layout ??
+                                        tooltipSection.tooltip_layout ??
+                                        (configFromColumnVisualProps as any).tooltip_layout;
+        
         const measureConfig: Record<string, unknown> = {
             ...measureConfigFlat,
             ...(chartTypeFromVisualization ? { chartType: chartTypeFromVisualization } : {}), // Extrair chartType da seção visualization se existir
+            ...(colorFromVisualization ? { color: colorFromVisualization } : {}), // Extrair color da seção visualization se existir
             ...(decimalsFromNumberFormatting !== undefined ? { decimals: decimalsFromNumberFormatting } : {}), // Extrair decimals da seção number_formatting se existir
             ...(formatFromNumberFormatting ? { format: formatFromNumberFormatting } : {}), // Extrair format da seção number_formatting se existir
             ...(useThousandsSeparatorFromNumberFormatting !== undefined ? { useThousandsSeparator: useThousandsSeparatorFromNumberFormatting } : {}), // Extrair useThousandsSeparator da seção number_formatting se existir
+            // Extrair configurações de linha de referência de seções aninhadas
+            ...(referenceLineEnabledFromSection !== undefined ? { referenceLine_enabled: referenceLineEnabledFromSection } : {}),
+            ...(referenceLineValueFromSection !== undefined ? { referenceLine_value: referenceLineValueFromSection } : {}),
+            ...(referenceLineColorFromSection ? { referenceLine_color: referenceLineColorFromSection } : {}),
+            ...(referenceLineStyleFromSection ? { referenceLine_style: referenceLineStyleFromSection } : {}),
+            ...(referenceLineShowLabelFromSection !== undefined ? { referenceLine_showLabel: referenceLineShowLabelFromSection } : {}),
+            // Extrair configurações de tooltip de seções aninhadas
+            ...(tooltipEnabledFromSection !== undefined ? { tooltip_enabled: tooltipEnabledFromSection } : {}),
+            ...(tooltipFormatFromSection ? { tooltip_format: tooltipFormatFromSection } : {}),
+            ...(tooltipBackgroundColorFromSection ? { tooltip_backgroundColor: tooltipBackgroundColorFromSection } : {}),
+            ...(tooltipLayoutFromSection ? { tooltip_layout: tooltipLayoutFromSection } : {}),
         };
-        
-        // Debug: verificar valores
-        logger.debug(`[DEBUG] Measure ${measure.id} chartType:`, {
-            configNew: (configNew as any).chartType,
-            configOld: (configOld as any).chartType,
-            configFromColumnVisualProps: (configFromColumnVisualProps as any).chartType,
-            visualizationSection: (visualizationSection as any).chartType,
-            final: (measureConfig as any).chartType
-        });
         
         const chartType = (measureConfig?.chartType as string) || 'barras';
         const defaultOpacity = chartType === 'linha' ? 0.8 : 0.9;
         
         // Processar linha de referência
-        const referenceLineEnabled = (measureConfig as any)?.referenceLine_enabled === true;
+        // Verificar se referenceLine_enabled está definido (pode ser true, "true", ou undefined)
+        const referenceLineEnabledRaw = (measureConfig as any)?.referenceLine_enabled;
+        const referenceLineEnabled = referenceLineEnabledRaw === true || referenceLineEnabledRaw === 'true' || referenceLineEnabledRaw === 1;
+        
         const referenceLine: MeasureConfig['referenceLine'] = referenceLineEnabled ? {
             enabled: true,
             value: ((measureConfig as any)?.referenceLine_value as number) ?? 0,
@@ -186,13 +315,97 @@ export function readMeasureConfigs(
         } : undefined;
         
         // Processar tooltip
-        const tooltipEnabled = (measureConfig as any)?.tooltip_enabled !== false;
-        const tooltip: MeasureConfig['tooltip'] = tooltipEnabled ? {
-            enabled: true,
-            format: (((measureConfig as any)?.tooltip_format as string) || 'simples') as 'simples' | 'detalhado',
+        // Verificar se tooltip_enabled está explicitamente definido como false
+        // Pode ser false, "false", 0, ou undefined/null (que significa habilitado por padrão)
+        const tooltipEnabledRaw = (measureConfig as any)?.tooltip_enabled;
+        const tooltipEnabled = tooltipEnabledRaw !== false && 
+                              tooltipEnabledRaw !== 'false' && 
+                              tooltipEnabledRaw !== 0 &&
+                              tooltipEnabledRaw !== '0';
+        
+        // Mapear formato de português para inglês para compatibilidade
+        const tooltipFormatRaw = ((measureConfig as any)?.tooltip_format as string) || 'simples';
+        const tooltipFormatMapped = tooltipFormatRaw === 'detalhado' ? 'detailed' : (tooltipFormatRaw === 'simples' ? 'simple' : tooltipFormatRaw);
+        
+        // Sempre criar o objeto tooltip, mas com enabled baseado na configuração
+        // Isso permite desabilitar o tooltip para uma medida específica
+        const tooltip: MeasureConfig['tooltip'] = {
+            enabled: tooltipEnabled,
+            format: tooltipFormatMapped as 'simple' | 'detailed',
             backgroundColor: ((measureConfig as any)?.tooltip_backgroundColor as string) || '#ffffff',
             layout: (((measureConfig as any)?.tooltip_layout as string) || 'vertical') as 'vertical' | 'horizontal' | 'grade',
-        } : undefined;
+        };
+        
+        // Processar coloração condicional
+        const conditionalColorSection = (configFromColumnVisualProps.conditionalColor || {}) as Record<string, unknown>;
+        const conditionalColorEnabledRaw = conditionalColorSection.enabled ?? 
+                                         (measureConfig as any)?.conditionalColor_enabled;
+        const conditionalColorEnabled = conditionalColorEnabledRaw === true || conditionalColorEnabledRaw === 'true' || conditionalColorEnabledRaw === 1;
+        
+        let conditionalColor: MeasureConfig['conditionalColor'] = undefined;
+        if (conditionalColorEnabled) {
+            const conditionalColorType = (conditionalColorSection.type ?? 
+                                         (measureConfig as any)?.conditionalColor_type ?? 
+                                         'conditional') as 'conditional' | 'dimension';
+            
+            if (conditionalColorType === 'conditional') {
+                const conditionSection = (conditionalColorSection.condition || {}) as Record<string, unknown>;
+                const operator = (conditionSection.operator ?? 
+                                 (measureConfig as any)?.conditionalColor_condition_operator ?? 
+                                 '>') as '>' | '<' | '>=' | '<=' | '==' | '!=';
+                const value = (conditionSection.value ?? 
+                             (measureConfig as any)?.conditionalColor_condition_value ?? 
+                             0.4) as number;
+                const trueColor = (conditionSection.trueColor ?? 
+                                 (measureConfig as any)?.conditionalColor_condition_trueColor ?? 
+                                 '#10b981') as string;
+                const falseColor = (conditionSection.falseColor ?? 
+                                  (measureConfig as any)?.conditionalColor_condition_falseColor) as string | undefined;
+                
+                conditionalColor = {
+                    enabled: true,
+                    type: 'conditional',
+                    condition: {
+                        operator,
+                        value,
+                        trueColor,
+                        falseColor,
+                    },
+                };
+            } else if (conditionalColorType === 'dimension') {
+                const dimensionId = (conditionalColorSection.dimensionId ?? 
+                                   (measureConfig as any)?.conditionalColor_dimensionId ?? 
+                                   '') as string;
+                const dimensionColorMap = (conditionalColorSection.dimensionColorMap || {}) as Record<string, string>;
+                
+                conditionalColor = {
+                    enabled: true,
+                    type: 'dimension',
+                    dimensionId,
+                    dimensionColorMap: Object.keys(dimensionColorMap).length > 0 ? dimensionColorMap : undefined,
+                };
+            }
+        }
+        
+        // Processar cálculo de porcentagem do total
+        const percentageOfTotalSection = (configFromColumnVisualProps.percentageOfTotal || {}) as Record<string, unknown>;
+        const percentageOfTotalEnabledRaw = percentageOfTotalSection.enabled ?? 
+                                           (measureConfig as any)?.percentageOfTotal_enabled;
+        const percentageOfTotalEnabled = percentageOfTotalEnabledRaw === true || 
+                                        percentageOfTotalEnabledRaw === 'true' || 
+                                        percentageOfTotalEnabledRaw === 1;
+        
+        let percentageOfTotal: MeasureConfig['percentageOfTotal'] = undefined;
+        if (percentageOfTotalEnabled) {
+            const dimensionId = (percentageOfTotalSection.dimensionId ?? 
+                               (measureConfig as any)?.percentageOfTotal_dimensionId ?? 
+                               '') as string | undefined;
+            
+            percentageOfTotal = {
+                enabled: true,
+                dimensionId: dimensionId || undefined,
+            };
+        }
         
         return {
             measure,
@@ -213,6 +426,8 @@ export function readMeasureConfigs(
             valueFormat: ((measureConfig as any)?.valueFormat as 'normal' | 'compacto') || 'normal',
             referenceLine,
             tooltip,
+            conditionalColor,
+            percentageOfTotal,
         };
     });
 }

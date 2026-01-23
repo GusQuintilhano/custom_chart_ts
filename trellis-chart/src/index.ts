@@ -16,7 +16,72 @@ import { setupChartOptions } from './utils/chartOptions';
 import { setupDynamicResize } from './handlers/dynamicResize';
 import { renderCompleteChart } from './rendering/chartRenderer';
 import { setupTooltips } from './rendering/tooltip';
+import { applyPercentageOfTotalToAllMeasures } from './utils/percentageCalculation';
 import { initializeChartSDK, emitRenderComplete } from './config/init';
+
+/**
+ * Configura rastreamento de interações do usuário no gráfico Trellis
+ */
+function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
+    // Rastrear hover em barras/séries
+    const bars = chartElement.querySelectorAll('rect[class*="bar"], rect[data-series]');
+    bars.forEach((bar, index) => {
+        bar.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `bar-${index}`, {
+                elementType: 'bar',
+            });
+        });
+        
+        bar.addEventListener('click', () => {
+            analytics.trackInteraction('trellis', 'click', `bar-${index}`, {
+                elementType: 'bar',
+            });
+        });
+    });
+    
+    // Rastrear hover em pontos/linhas (se houver)
+    const points = chartElement.querySelectorAll('circle[class*="point"], circle[data-series]');
+    points.forEach((point, index) => {
+        point.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `point-${index}`, {
+                elementType: 'point',
+            });
+        });
+    });
+    
+    // Rastrear tooltips
+    const elementsWithTooltips = chartElement.querySelectorAll('title');
+    elementsWithTooltips.forEach((title, index) => {
+        const parent = title.parentElement;
+        if (parent) {
+            parent.addEventListener('mouseenter', () => {
+                analytics.trackInteraction('trellis', 'tooltip_open', `tooltip-${index}`, {
+                    elementType: 'tooltip',
+                });
+            });
+        }
+    });
+    
+    // Rastrear hover em linhas de referência
+    const referenceLines = chartElement.querySelectorAll('line[class*="reference"], .reference-line');
+    referenceLines.forEach((line, index) => {
+        line.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `reference-line-${index}`, {
+                elementType: 'reference-line',
+            });
+        });
+    });
+    
+    // Rastrear hover em labels/eixos
+    const labels = chartElement.querySelectorAll('text[class*="label"], text[class*="axis"]');
+    labels.forEach((label, index) => {
+        label.addEventListener('mouseenter', () => {
+            analytics.trackInteraction('trellis', 'hover', `label-${index}`, {
+                elementType: 'label',
+            });
+        });
+    });
+}
 
 export const renderChart = async (ctx: CustomChartContext) => {
     const chartModel = ctx.getChartModel();
@@ -40,35 +105,94 @@ export const renderChart = async (ctx: CustomChartContext) => {
         } = dataSetup;
 
         // Iniciar monitoramento de performance
-        const containerWidth = chartElement.clientWidth || 800;
-        const containerHeight = chartElement.clientHeight || 600;
-        const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
+        // Obter dimensões do container para uso no cálculo inicial
+        // IMPORTANTE: Usar clientWidth (largura real do conteúdo) em vez de offsetWidth (que inclui padding)
+        // O SVG renderizado ocupa apenas o clientWidth, então o conteúdo deve ser redesenhado para essa largura
+        let containerWidth = chartElement.clientWidth || chartElement.offsetWidth || 0;
+        let containerHeight = chartElement.clientHeight || chartElement.offsetHeight || 0;
+        
+        // Se não temos dimensões, tentar obter do elemento pai
+        // Também usar clientWidth primeiro (largura real do conteúdo)
+        if (containerWidth === 0 && chartElement.parentElement) {
+            containerWidth = chartElement.parentElement.clientWidth || 
+                             chartElement.parentElement.getBoundingClientRect().width ||
+                             chartElement.parentElement.offsetWidth || 0;
+        }
+        if (containerHeight === 0 && chartElement.parentElement) {
+            containerHeight = chartElement.parentElement.clientHeight || 
+                             chartElement.parentElement.getBoundingClientRect().height ||
+                             chartElement.parentElement.offsetHeight || 0;
+        }
+        
+            // Usar valores padrão se ainda não temos dimensões
+            const initialContainerWidth = containerWidth || 800;
+            const initialContainerHeight = containerHeight || 600;
+            
+            // Log inicial de dimensões do container
+            console.log('[FitWidth] Dimensões iniciais do container:', {
+                chartElementClientWidth: chartElement.clientWidth,
+                chartElementOffsetWidth: chartElement.offsetWidth,
+                chartElementBoundingRect: chartElement.getBoundingClientRect().width,
+                containerWidth,
+                containerHeight,
+                initialContainerWidth,
+                initialContainerHeight,
+                parentElement: chartElement.parentElement?.tagName,
+                parentClientWidth: chartElement.parentElement?.clientWidth,
+                parentOffsetWidth: chartElement.parentElement?.offsetWidth,
+            });
+            
+            const dataSize = PerformanceMonitor.calculateDataSize(chartModel);
         
         performanceMonitor.startRender(
             sessionId,
             dataSize,
             measureCols.length,
             hasSecondaryDimension ? secondaryDimensions.length + 1 : 1,
-            containerWidth,
-            containerHeight
+            initialContainerWidth,
+            initialContainerHeight
         );
+
+        // Tentar obter userId do contexto (se disponível)
+        let userId: string | undefined;
+        try {
+            const ctxAny = ctx as any;
+            userId = ctxAny.userId || ctxAny.user?.id || ctxAny.user?.username || ctxAny.userInfo?.userId;
+            
+            if (!userId) {
+                const chartModelAny = chartModel as any;
+                userId = chartModelAny.userId || chartModelAny.user?.id || chartModelAny.user?.username;
+            }
+        } catch (e) {
+            // Ignora erros ao tentar acessar propriedades que podem não existir
+        }
 
         // Rastrear uso e configurações
         const { visualProps } = chartModel;
         const allVisualProps = visualProps as Record<string, unknown>;
-        analytics.trackUsage('trellis', {
-            numMeasures: measureCols.length,
-            hasSecondaryDimension,
-            numSecondaryDimensions: hasSecondaryDimension ? secondaryDimensions.length : 0,
-        });
 
-        // Setup de opções e configurações
+        // Setup de opções primeiro para ter acesso às configurações
         const options = setupChartOptions(
             allVisualProps,
             primaryDimension,
             secondaryDimensions,
             measureCols
         );
+        
+        analytics.trackUsage('trellis', {
+            numMeasures: measureCols.length,
+            hasSecondaryDimension,
+            numSecondaryDimensions: hasSecondaryDimension ? secondaryDimensions.length : 0,
+            // Configurações principais do trellis
+            showYAxis: options.showYAxis,
+            showGridLines: options.showGridLines,
+            fitWidth: options.fitWidth,
+            fitHeight: options.fitHeight,
+            dividerLinesBetweenMeasures: options.dividerLinesBetweenMeasures,
+            dividerLinesBetweenGroups: options.dividerLinesBetweenGroups,
+            dividerLinesBetweenBars: options.dividerLinesBetweenBars,
+            forceLabels: options.forceLabels,
+        }, userId);
 
     const {
         fitWidth,
@@ -105,13 +229,51 @@ export const renderChart = async (ctx: CustomChartContext) => {
         tooltipCustomTemplate,
     } = options;
 
-    // Calcular dimensões do gráfico
-    const chartDimensions = calculateChartDimensions(
-        chartOptions,
+    // Aplicar cálculo de porcentagem do total se configurado
+    // Isso deve ser feito ANTES de calcular dimensões e ranges, pois pode alterar os valores
+    const processedChartData = applyPercentageOfTotalToAllMeasures(
         chartData,
         measureCols,
+        measureConfigs,
+        primaryDimension,
+        secondaryDimensions
+    );
+
+    // Quando fitWidth está ativo, ajustar containerWidth para estimar a largura real do containerDiv
+    // O containerDiv geralmente tem clientWidth = chartElement.clientWidth - padding/border do chartElement
+    // Se houver diferença, o dynamicResize vai re-renderizar com as dimensões corretas
+    if (fitWidth && containerWidth > 0) {
+        const chartElementComputedStyle = window.getComputedStyle(chartElement);
+        const chartElementPaddingLeft = parseFloat(chartElementComputedStyle.paddingLeft) || 0;
+        const chartElementPaddingRight = parseFloat(chartElementComputedStyle.paddingRight) || 0;
+        const chartElementBorderLeft = parseFloat(chartElementComputedStyle.borderLeftWidth) || 0;
+        const chartElementBorderRight = parseFloat(chartElementComputedStyle.borderRightWidth) || 0;
+        const totalPaddingBorder = chartElementPaddingLeft + chartElementPaddingRight + 
+                                 chartElementBorderLeft + chartElementBorderRight;
+        
+        // Se há padding/border no chartElement, o containerDiv terá largura menor
+        if (totalPaddingBorder > 0) {
+            containerWidth = Math.max(0, containerWidth - totalPaddingBorder);
+            
+            console.log('[FitWidth] Estimando largura do containerDiv para renderização inicial:', {
+                chartElementClientWidth: chartElement.clientWidth,
+                chartElementOffsetWidth: chartElement.offsetWidth,
+                totalPaddingBorder,
+                estimatedContainerWidth: containerWidth,
+            });
+        }
+    }
+
+    // Calcular dimensões do gráfico
+    // (containerWidth e containerHeight já foram obtidos acima)
+    // Usar processedChartData para cálculos de dimensões
+    const chartDimensions = calculateChartDimensions(
+        chartOptions,
+        processedChartData,
+        measureCols,
         hasSecondaryDimension,
-        allVisualProps
+        allVisualProps,
+        containerWidth > 0 || containerHeight > 0 ? { width: containerWidth, height: containerHeight } : undefined
     );
 
     const {
@@ -128,17 +290,85 @@ export const renderChart = async (ctx: CustomChartContext) => {
         barSpacing,
         measureLabelSpace,
     } = chartDimensions;
+    
+    // Log das dimensões calculadas
+    console.log('[FitWidth] Dimensões calculadas do gráfico:', {
+        fitWidth,
+        fitHeight,
+        containerWidth,
+        containerHeight,
+        chartWidth,
+        chartHeight,
+        plotAreaWidth,
+        barWidth,
+        barSpacing,
+    });
 
     // Calcular ranges (min/max) para cada medida (considerando minY/maxY das configurações)
-    const measureRanges = calculateMeasureRanges(chartData, measureCols, measureConfigs);
+    // Usar processedChartData para cálculo de ranges
+    const measureRanges = calculateMeasureRanges(processedChartData, measureCols, measureConfigs);
+
+    // Garantir que o chartElement ocupe 100% da largura quando fitWidth está ativo
+    if (fitWidth) {
+        chartElement.style.width = '100%';
+        chartElement.style.minWidth = '100%';
+        chartElement.style.maxWidth = '100%';
+        chartElement.style.boxSizing = 'border-box';
+        chartElement.style.margin = '0';
+        chartElement.style.padding = '0';
+        chartElement.style.paddingLeft = '0';
+        chartElement.style.paddingRight = '0';
+        chartElement.style.paddingTop = '0';
+        chartElement.style.paddingBottom = '0';
+        chartElement.style.border = 'none';
+        chartElement.style.borderLeft = 'none';
+        chartElement.style.borderRight = 'none';
+        chartElement.style.borderTop = 'none';
+        chartElement.style.borderBottom = 'none';
+        
+        // Verificar se há padding no elemento pai
+        if (chartElement.parentElement) {
+            const parentComputedStyle = window.getComputedStyle(chartElement.parentElement);
+            const parentPaddingLeft = parseFloat(parentComputedStyle.paddingLeft) || 0;
+            const parentPaddingRight = parseFloat(parentComputedStyle.paddingRight) || 0;
+            
+            if (parentPaddingLeft > 0 || parentPaddingRight > 0) {
+                // Se há padding no pai, usar calc para compensar
+                chartElement.style.width = `calc(100% + ${parentPaddingLeft + parentPaddingRight}px)`;
+                chartElement.style.marginLeft = `-${parentPaddingLeft}px`;
+                chartElement.style.marginRight = `-${parentPaddingRight}px`;
+            }
+        }
+        
+        const computedStyle = window.getComputedStyle(chartElement);
+        console.log('[FitWidth] Aplicando estilos ao chartElement:', {
+            width: chartElement.style.width,
+            minWidth: chartElement.style.minWidth,
+            maxWidth: chartElement.style.maxWidth,
+            boxSizing: chartElement.style.boxSizing,
+            computedWidth: computedStyle.width,
+            computedPaddingLeft: computedStyle.paddingLeft,
+            computedPaddingRight: computedStyle.paddingRight,
+            computedBorderLeft: computedStyle.borderLeftWidth,
+            computedBorderRight: computedStyle.borderRightWidth,
+            actualWidth: chartElement.offsetWidth,
+            clientWidth: chartElement.clientWidth,
+            parentWidth: chartElement.parentElement?.offsetWidth,
+            parentClientWidth: chartElement.parentElement?.clientWidth,
+            parentPaddingLeft: chartElement.parentElement ? parseFloat(window.getComputedStyle(chartElement.parentElement).paddingLeft) || 0 : 0,
+            parentPaddingRight: chartElement.parentElement ? parseFloat(window.getComputedStyle(chartElement.parentElement).paddingRight) || 0 : 0,
+        });
+    }
 
     // Renderizar gráfico completo
+    // Usar processedChartData que já tem porcentagens calculadas se necessário
     chartElement.innerHTML = renderCompleteChart({
-        chartData,
+        chartData: processedChartData,
         measureCols,
         measureRanges,
         measureConfigs,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         fitWidth,
         fitHeight,
@@ -178,6 +408,10 @@ export const renderChart = async (ctx: CustomChartContext) => {
         barSpacing,
         measureLabelSpace,
     });
+
+    // O setupDynamicResize já aplica os estilos necessários ao containerDiv
+    // Não precisamos aplicar estilos aqui, pois isso seria feito após o DOM ser atualizado
+    // e pode causar atrasos desnecessários na renderização inicial
 
     // Configurar tooltips (configuração global como fallback, individual por medida tem prioridade)
     setupTooltips(
@@ -215,7 +449,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         dividerLinesBetweenBarsColor,
         dividerLinesBetweenBarsWidth,
         forceLabels,
-        chartData,
+        chartData: processedChartData,
         measureCols,
         measureRanges,
         measureConfigs,
@@ -237,6 +471,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         primaryDateFormat,
         secondaryDateFormat,
         hasSecondaryDimension,
+        primaryDimension,
         secondaryDimensions,
         measureLabelSpace,
         yAxisColor,
@@ -244,11 +479,18 @@ export const renderChart = async (ctx: CustomChartContext) => {
         axisStrokeWidth,
         backgroundColor,
     });
+    
+    // Adicionar event listeners para rastrear interações do usuário
+    setupInteractionTracking(chartElement, userId);
 
         // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'trellis';
+            // Passar userId para evento de performance (herda de BaseAnalyticsEvent)
+            if (userId) {
+                perfEvent.userId = userId;
+            }
             analytics.trackPerformance(perfEvent);
         }
 
