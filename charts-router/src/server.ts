@@ -7,7 +7,11 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { analyticsMiddleware } from './middleware/analytics.js';
+import { observabilityMiddleware, errorTrackingMiddleware } from './middleware/observability.js';
 import analyticsRouter from './routes/analytics.js';
+import auditRouter from './routes/audit.js';
+import metricsRouter from './routes/metrics.js';
+import dataCollectionRouter from './routes/dataCollection.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,8 +24,14 @@ app.set('trust proxy', true);
 // Middleware para parsear JSON
 app.use(express.json());
 
+// Middleware de observabilidade (deve vir antes das rotas)
+app.use(observabilityMiddleware);
+
 // Middleware de analytics (deve vir antes das rotas de gráficos)
 app.use(analyticsMiddleware);
+
+// Middleware de tratamento de erros
+app.use(errorTrackingMiddleware);
 
 // Determinar caminho base do projeto
 // No Docker, os arquivos estão em /app/trellis-chart/dist e /app/boxplot-chart/dist
@@ -64,35 +74,46 @@ if (!fs.existsSync(trellisDistPath)) {
     boxplotDistPath = path.join(projectRoot, 'boxplot-chart/dist');
 }
 
-// Log para debug
-console.log('Server initialization:');
-console.log('  __dirname:', __dirname);
-console.log('  projectRoot:', projectRoot);
-console.log('  trellisDistPath:', trellisDistPath);
-console.log('  boxplotDistPath:', boxplotDistPath);
-console.log('  trellisDistPath exists:', fs.existsSync(trellisDistPath));
-console.log('  boxplotDistPath exists:', fs.existsSync(boxplotDistPath));
+// Log de inicialização do servidor (apenas em debug)
+if (process.env.DEBUG === 'true') {
+    console.log('[Server] Initialization:', {
+        __dirname,
+        projectRoot,
+        trellisDistPath,
+        boxplotDistPath,
+        trellisDistPathExists: fs.existsSync(trellisDistPath),
+        boxplotDistPathExists: fs.existsSync(boxplotDistPath),
+    });
+}
 
 if (!fs.existsSync(trellisDistPath)) {
-    console.error(`ERROR: Trellis dist path does not exist: ${trellisDistPath}`);
-    console.error('  Searching for trellis-chart...');
+    console.error('[Server] ERROR: Trellis dist path does not exist:', {
+        expectedPath: trellisDistPath,
+        projectRoot,
+        timestamp: new Date().toISOString(),
+    });
+    console.error('[Server] Searching for trellis-chart...');
     const searchPaths = ['/app', '/app/charts-router', process.cwd()];
     for (const searchRoot of searchPaths) {
         const searchPath = path.join(searchRoot, 'trellis-chart/dist');
-        console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
+        console.error(`  [Server] Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
     }
 }
 
 if (!fs.existsSync(boxplotDistPath)) {
-    console.error(`ERROR: Boxplot dist path does not exist: ${boxplotDistPath}`);
-    console.error('  Searching for boxplot-chart...');
+    console.error('[Server] ERROR: Boxplot dist path does not exist:', {
+        expectedPath: boxplotDistPath,
+        projectRoot,
+        timestamp: new Date().toISOString(),
+    });
+    console.error('[Server] Searching for boxplot-chart...');
     const searchPaths = ['/app', '/app/charts-router', process.cwd()];
     for (const searchRoot of searchPaths) {
         const searchPath = path.join(searchRoot, 'boxplot-chart/dist');
-        console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
+        console.error(`  [Server] Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
         if (fs.existsSync(searchPath)) {
             const altIndexPath = path.join(searchPath, 'index.html');
-            console.error(`      index.html exists: ${fs.existsSync(altIndexPath)}`);
+            console.error(`    [Server] index.html exists: ${fs.existsSync(altIndexPath)}`);
         }
     }
 }
@@ -108,17 +129,22 @@ app.use('/assets', express.static(path.join(trellisDistPath, 'assets'), { index:
 // IMPORTANTE: app.get deve vir DEPOIS de app.use para que os assets sejam servidos primeiro
 app.get('/trellis', (req, res) => {
     const indexPath = path.join(trellisDistPath, 'index.html');
-    console.log(`Serving trellis index from: ${indexPath}`);
-    console.log(`File exists: ${fs.existsSync(indexPath)}`);
-    
+    // Log apenas em debug mode (remover em produção ou usar logger condicional)
+    if (process.env.DEBUG === 'true') {
+        console.log('[Server] Serving trellis index:', {
+            path: indexPath,
+            exists: fs.existsSync(indexPath),
+        });
+    }
+
     // Ler o arquivo e modificar os caminhos dos assets se necessário
     let htmlContent = fs.readFileSync(indexPath, 'utf8');
-    
+
     // Substituir /assets/ por /trellis/assets/ para garantir que funcione
     // Mas também manteremos /assets/ funcionando através do app.use acima
     htmlContent = htmlContent.replace(/src="\/assets\//g, 'src="/trellis/assets/');
     htmlContent = htmlContent.replace(/href="\/assets\//g, 'href="/trellis/assets/');
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(htmlContent);
 });
@@ -129,21 +155,29 @@ app.use('/boxplot', express.static(boxplotDistPath, { index: false }));
 // Servir Boxplot Chart em /boxplot
 app.get('/boxplot', (req, res) => {
     const indexPath = path.join(boxplotDistPath, 'index.html');
-    console.log(`Serving boxplot index from: ${indexPath}`);
-    console.log(`Boxplot dist path exists: ${fs.existsSync(boxplotDistPath)}`);
-    console.log(`Boxplot index.html exists: ${fs.existsSync(indexPath)}`);
-    
+    // Log apenas em debug mode (remover em produção ou usar logger condicional)
+    if (process.env.DEBUG === 'true') {
+        console.log('[Server] Serving boxplot index:', {
+            path: indexPath,
+            distPathExists: fs.existsSync(boxplotDistPath),
+            indexExists: fs.existsSync(indexPath),
+        });
+    }
+
     if (!fs.existsSync(indexPath)) {
-        console.error(`ERROR: Boxplot index.html not found at: ${indexPath}`);
-        console.error(`  boxplotDistPath: ${boxplotDistPath}`);
-        console.error(`  Searching for boxplot-chart/dist...`);
+        console.error('[Server] ERROR: Boxplot index.html not found:', {
+            expectedPath: indexPath,
+            boxplotDistPath,
+            timestamp: new Date().toISOString(),
+        });
+        console.error('[Server] Searching for boxplot-chart/dist...');
         const searchPaths = ['/app', '/app/boxplot-chart', process.cwd()];
         for (const searchRoot of searchPaths) {
             const searchPath = path.join(searchRoot, 'boxplot-chart/dist');
-            console.error(`    Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
+            console.error(`  [Server] Checking: ${searchPath} - ${fs.existsSync(searchPath) ? 'EXISTS' : 'NOT FOUND'}`);
             if (fs.existsSync(searchPath)) {
                 const altIndexPath = path.join(searchPath, 'index.html');
-                console.error(`      index.html exists: ${fs.existsSync(altIndexPath)}`);
+                console.error(`    [Server] index.html exists: ${fs.existsSync(altIndexPath)}`);
             }
         }
         res.status(404).send(`
@@ -158,14 +192,14 @@ app.get('/boxplot', (req, res) => {
         `);
         return;
     }
-    
+
     // Ler o arquivo e modificar os caminhos dos assets se necessário
     let htmlContent = fs.readFileSync(indexPath, 'utf8');
-    
+
     // Substituir /assets/ por /boxplot/assets/
     htmlContent = htmlContent.replace(/src="\/assets\//g, 'src="/boxplot/assets/');
     htmlContent = htmlContent.replace(/href="\/assets\//g, 'href="/boxplot/assets/');
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(htmlContent);
 });
@@ -173,10 +207,19 @@ app.get('/boxplot', (req, res) => {
 // API de analytics
 app.use('/api/analytics', analyticsRouter);
 
+// API de auditoria
+app.use('/api/audit', auditRouter);
+
+// API de métricas
+app.use('/api/metrics', metricsRouter);
+
+// API de coleta de dados para Databricks
+app.use('/api/data-collection', dataCollectionRouter);
+
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
+    res.json({
+        status: 'ok',
         charts: ['trellis', 'boxplot'],
         paths: {
             trellisDistPath,
@@ -200,8 +243,13 @@ app.get('/', (req, res) => {
 
 const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Charts router listening on port ${PORT}`);
-    console.log(`Trellis Chart: http://localhost:${PORT}/trellis`);
-    console.log(`Boxplot Chart: http://localhost:${PORT}/boxplot`);
+    // Log apenas em modo debug
+    if (process.env.DEBUG === 'true') {
+        console.log('[Server] Charts router started:', {
+            port: PORT,
+            trellisChart: `http://localhost:${PORT}/trellis`,
+            boxplotChart: `http://localhost:${PORT}/boxplot`,
+        });
+    }
 });
 

@@ -1,0 +1,282 @@
+---
+description: TypeScript strict mode patterns and best practices for custom_charts-railway
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript - Strict Mode Best Practices
+
+## Critical Rules
+
+1. **Strict Mode**: Always enabled (`strict: true`). No exceptions.
+2. **Avoid `any`**: Prefer `unknown` and type guards. Only use `any` when interfacing with ThoughtSpot SDK internals.
+3. **Type Safety**: All functions must have explicit return types when non-obvious.
+
+---
+
+## Type System
+
+### Prefer `unknown` over `any`
+
+```typescript
+// ❌ Bad
+function processData(data: any) {
+  return data.value;
+}
+
+// ✅ Good
+function processData(data: unknown) {
+  if (typeof data === 'object' && data !== null && 'value' in data) {
+    return (data as { value: unknown }).value;
+  }
+  throw new Error('Invalid data');
+}
+```
+
+### Type Guards
+
+```typescript
+// ✅ Good - Type guard
+function isChartModel(obj: unknown): obj is ChartModel {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'columns' in obj &&
+    'data' in obj
+  );
+}
+```
+
+### ThoughtSpot SDK Types
+
+When working with ThoughtSpot SDK:
+- Use types from `@thoughtspot/ts-chart-sdk`: `CustomChartContext`, `ChartModel`, `ChartConfig`, etc.
+- For internal SDK properties (VisualProps, etc.), use `unknown` and validate:
+
+```typescript
+// ✅ Good
+const visualProps = chartModel.visualProps as Record<string, unknown>;
+if ('someProperty' in visualProps && typeof visualProps.someProperty === 'string') {
+  // Safe to use
+}
+```
+
+---
+
+## Function Signatures
+
+### Explicit Return Types
+
+```typescript
+// ✅ Good - Explicit return type
+export function extractThoughtSpotContext(
+  ctx?: CustomChartContext | null,
+  chartModel?: ChartModel | null
+): ThoughtSpotContextInfo {
+  // ...
+}
+
+// ✅ Good - Async functions
+export async function renderChart(
+  ctx: CustomChartContext
+): Promise<void> {
+  // ...
+}
+```
+
+### Parameter Types
+
+```typescript
+// ❌ Bad - No types
+function process(event) {
+  // ...
+}
+
+// ✅ Good - Explicit types
+function process(event: AnalyticsEvent): void {
+  // ...
+}
+```
+
+---
+
+## Import Organization
+
+### Order of Imports
+
+1. External dependencies
+2. ThoughtSpot SDK imports
+3. Shared utilities (`@shared/*`)
+4. Relative imports
+5. Type-only imports
+
+```typescript
+// ✅ Good - Organized imports
+import { CustomChartContext } from '@thoughtspot/ts-chart-sdk';
+import { logger } from '@shared/utils/logger';
+import { analytics } from '@shared/utils/analytics';
+import { calculateDimensions } from './utils/dimensions';
+import type { ChartDataPoint } from './types/chartTypes';
+```
+
+### Type-Only Imports
+
+```typescript
+// ✅ Good - Type-only import
+import type { ThoughtSpotContextInfo } from '@shared/utils/thoughtspotContext';
+```
+
+---
+
+## Error Handling
+
+### Use `Error` type
+
+```typescript
+// ✅ Good
+try {
+  // ...
+} catch (error) {
+  if (error instanceof Error) {
+    logger.error('Failed:', error.message);
+  } else {
+    logger.error('Unknown error:', error);
+  }
+}
+```
+
+### Never ignore errors
+
+```typescript
+// ❌ Bad
+try {
+  riskyOperation();
+} catch {
+  // Ignored
+}
+
+// ✅ Good
+try {
+  riskyOperation();
+} catch (error) {
+  logger.warn('Operation failed:', error);
+  // Handle or rethrow
+}
+```
+
+---
+
+## Null/Undefined Handling
+
+### Use optional chaining and nullish coalescing
+
+```typescript
+// ✅ Good
+const value = obj?.property?.nested ?? 'default';
+
+// ✅ Good - Explicit checks
+if (ctx && chartModel) {
+  // Both are defined
+}
+```
+
+### Discriminated Unions for Optional Values
+
+```typescript
+// ✅ Good
+type Result<T> = 
+  | { success: true; data: T }
+  | { success: false; error: string };
+```
+
+---
+
+## Configuration
+
+Current TypeScript config (from tsconfig.json):
+- `target`: ES2020
+- `module`: ESNext
+- `strict`: true
+- `moduleResolution`: node/bundler
+- `esModuleInterop`: true
+- `skipLibCheck`: true
+- `forceConsistentCasingInFileNames`: true
+
+### Path Aliases
+
+Always use `@shared/*` for shared utilities:
+
+```typescript
+// ✅ Good
+import { logger } from '@shared/utils/logger';
+
+// ❌ Bad - Relative path from different package
+import { logger } from '../../../shared/utils/logger';
+```
+
+---
+
+## Common Patterns
+
+### Async/Await
+
+```typescript
+// ✅ Good
+export async function loadData(): Promise<Data> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to load data');
+  }
+  return response.json();
+}
+```
+
+### Generics
+
+```typescript
+// ✅ Good - Generic type
+function save<T extends AnalyticsEvent>(event: T): Promise<void> {
+  return storage.save(event);
+}
+```
+
+---
+
+## ThoughtSpot SDK Specific
+
+### Context Handling
+
+```typescript
+// ✅ Good - Handle missing context gracefully
+const contextInfo = extractThoughtSpotContext(ctx, chartModel);
+if (contextInfo.userId) {
+  // Use userId
+}
+```
+
+### Chart Model Access
+
+```typescript
+// ✅ Good - Type-safe access
+const chartModel = ctx.getChartModel();
+const columns = chartModel.columns; // Type: ChartColumn[]
+```
+
+---
+
+## File Organization
+
+- One main export per file (when possible)
+- Related types in same file or `types/` directory
+- Utility functions in `utils/` directory
+- Keep files under 500 lines when possible
+
+---
+
+## Linting Rules
+
+Follow these principles:
+- No `any` except for ThoughtSpot SDK internals
+- No `@ts-ignore` or `@ts-expect-error` without comment explaining why
+- All public functions must have JSDoc comments
+- Use const assertions for literal types

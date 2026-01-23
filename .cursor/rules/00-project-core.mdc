@@ -1,0 +1,225 @@
+---
+description: Core project configuration and conventions for custom_charts-railway monorepo
+globs: []
+alwaysApply: true
+---
+
+# custom_charts-railway - Project Core
+
+## Critical Rules
+
+1. **Monorepo Structure**: This is a monorepo with 5 packages. Always consider cross-package dependencies and shared utilities.
+2. **ThoughtSpot SDK**: All charts must use `@thoughtspot/ts-chart-sdk`. Follow SDK patterns for `CustomChartContext`, `ChartModel`, and `ChartConfig`.
+3. **Import Aliases**: Use `@shared/*` for shared utilities. Never create duplicate utilities across packages.
+4. **Research First, Never Assume**: When in doubt about SDK capabilities, API behavior, or implementation details, **ALWAYS search the internet/documentation** before making assumptions. Do not create functionality based on guesses or assumptions - verify first through official documentation or web search.
+
+**Current Date**: January 2025
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Framework | Monorepo (Vite + Express) | - |
+| Language | TypeScript | 5.0+ |
+| Frontend | Vite | 5.0 |
+| Backend | Express | 4.18 |
+| SDK | ThoughtSpot Chart SDK | 1.0 |
+| Testing | Not configured | - |
+
+---
+
+## Project Structure
+
+```
+custom_charts-railway/
+├── charts-router/          # Express server (backend)
+│   ├── src/
+│   │   ├── middleware/     # Express middleware
+│   │   ├── routes/         # API routes
+│   │   ├── server.ts       # Main server file
+│   │   └── utils/          # Server utilities
+│   └── package.json
+├── trellis-chart/          # Trellis chart (Vite frontend)
+│   ├── src/
+│   │   ├── config/         # Chart SDK config functions
+│   │   ├── handlers/       # Event handlers
+│   │   ├── rendering/      # SVG rendering logic
+│   │   ├── types/          # TypeScript types
+│   │   └── utils/          # Chart utilities
+│   └── package.json
+├── boxplot-chart/          # Boxplot chart (Vite frontend)
+│   └── src/                # Similar structure to trellis
+├── shared/                 # Shared utilities (all packages)
+│   ├── config/             # Shared SDK initialization
+│   ├── types/              # Shared TypeScript types
+│   └── utils/              # Shared utilities (analytics, logger, etc.)
+└── docs/                   # Documentation (separate docs, used with moderation)
+```
+
+---
+
+## Conventions
+
+### File Naming
+- **Components**: `camelCase.ts` (e.g., `chartRenderer.ts`, `boxplotRenderer.ts`)
+- **Types**: `camelCase.ts` (e.g., `chartTypes.ts`, `analytics.ts`)
+- **Config**: `camelCase.ts` (e.g., `chartConfig.ts`, `visualPropEditor.ts`)
+- **Utils**: `camelCase.ts` (e.g., `boxplotCalculations.ts`)
+
+### Import Aliases
+- Use `@shared/*` for shared utilities:
+  ```typescript
+  import { logger } from '@shared/utils/logger';
+  import { analytics } from '@shared/utils/analytics';
+  ```
+
+### Code Style
+- **TypeScript strict mode**: Always enabled (`strict: true` in all tsconfig.json)
+- **ES Modules**: Use `import/export`, not `require`
+- **Type Safety**: Prefer `unknown` over `any`. Only use `any` when interfacing with ThoughtSpot SDK internals
+- **Documentation**: Separate docs in `docs/` folder, used with moderation. Prefer inline JSDoc for complex functions
+
+### ThoughtSpot SDK Patterns
+- Always use `CustomChartContext` and `ChartModel` from `@thoughtspot/ts-chart-sdk`
+- Chart config functions: `getDefaultChartConfig`, `getQueriesFromChartConfig`
+- Visual prop editor: `visualPropEditorDefinition`
+- Render function: `renderChart(ctx: CustomChartContext)`
+- Emit events: `ctx.emitEvent(ChartToTSEvent.RenderComplete)`
+
+### Package Boundaries
+- **charts-router**: Server-side only (Node.js, Express, file system access)
+- **trellis-chart/boxplot-chart**: Client-side only (DOM, SVG, ThoughtSpot SDK)
+- **shared**: Cross-platform utilities (must work in both Node.js and browser)
+
+### Analytics
+- Use `@shared/utils/analytics` for all analytics tracking
+- Events are sent to `/api/analytics/event` endpoint
+- Context information (org, model, user) may not be available - always handle gracefully
+
+---
+
+## Development Workflow
+
+1. **Local Development**: Use `vite dev` for frontend, `tsx src/server.ts` for backend
+2. **Build**: Run build scripts in each package before deployment
+3. **Shared Code**: If adding shared utilities, add to `shared/` package, not individual charts
+
+---
+
+## MCP Servers Available
+
+Currently not using MCP servers. Can be added later if needed for:
+- Browser automation
+- Sequential thinking for complex chart rendering logic
+
+---
+
+## Important Notes
+
+- **Context Information**: The ThoughtSpot Chart SDK does NOT guarantee that org, model, or user information is available in `CustomChartContext`. Always handle gracefully.
+- **Debug Mode**: Set `window.DEBUG_LOGGING = true` or `ANALYTICS_DEBUG=true` to inspect available context
+- **Documentation**: See `docs/ANALYTICS_CONTEXT.md` for details on what context information is available
+
+---
+
+## Documentation References
+
+**ALWAYS consult these documents before implementing features or making changes:**
+
+### Core Documentation
+
+1. **README.md** - Project overview, analytics system, API endpoints, structure
+   - Contains: System architecture, analytics configuration, troubleshooting
+   - **MUST READ** for: Understanding the analytics system, API endpoints
+
+2. **docs/ANALYTICS_API.md** - Analytics API complete documentation
+   - Contains: Endpoint details, event types, query parameters, examples
+   - **MUST READ** for: Working with analytics endpoints, event structure
+
+3. **docs/ANALYTICS_CONTEXT.md** - ThoughtSpot context information
+   - Contains: What context info is available, debug mode, limitations
+   - **MUST READ** for: Extracting org/model/user information, understanding context limitations
+
+4. **DEPLOY_CONFIG.md** - Deployment configuration
+   - Contains: Railway deployment setup, environment variables, Docker config
+   - **MUST READ** for: Deployment, environment setup
+
+### Chart-Specific Documentation
+
+5. **docs/TRELLIS_CHART.md** - Trellis Chart documentation
+   - Contains: Chart specifications, configuration options, visual properties
+   - **MUST READ** for: Working on trellis-chart package
+
+6. **boxplot-chart/ESPECIFICACAO_COMPLETA.md** - Boxplot Chart specification
+   - Contains: Boxplot chart specifications, statistical calculations
+   - **MUST READ** for: Working on boxplot-chart package
+
+7. **charts-router/README.md** - Router server documentation
+   - Contains: Server setup, routing configuration
+   - **MUST READ** for: Backend/Express server work
+
+### SDK & Best Practices
+
+8. **docs/sdk/aprendizados/QUALIDADE_E_REFATORACAO.md** - Code quality lessons learned
+   - Contains: TypeScript best practices, code organization, quality metrics
+   - **MUST READ** for: Code quality improvements, TypeScript patterns
+
+9. **trellis-chart/ANALISE_OPCOES_MELHORIAS.md** - Trellis chart improvements analysis
+   - Contains: Improvement options, feature analysis
+   - **MUST READ** for: Trellis chart enhancements
+
+### Documentation Guidelines
+
+- **Before implementing new features**: Read relevant documentation first
+- **When updating code**: Check if documentation needs updating
+- **For context information**: Always refer to `docs/ANALYTICS_CONTEXT.md` - don't assume properties exist
+- **For API changes**: Update `docs/ANALYTICS_API.md` if changing analytics endpoints
+- **For SDK patterns**: Follow examples in existing documentation
+
+### Research and Verification
+
+**CRITICAL: Never assume or guess - always verify through research:**
+
+- **Unknown SDK features**: Search ThoughtSpot Chart SDK documentation online before implementing
+- **API capabilities**: Check official documentation or search internet for examples
+- **Best practices**: Research current best practices for TypeScript, Express, Vite patterns
+- **Dependencies**: Verify package capabilities by checking official docs or npm registry
+- **Context properties**: Refer to `docs/ANALYTICS_CONTEXT.md` - don't create properties that don't exist
+- **Error messages**: If something doesn't work, search for the specific error message online
+
+**Research workflow:**
+1. **Check project documentation first** (this `docs/` folder and README files)
+2. **Search official documentation** (ThoughtSpot SDK, TypeScript, Express docs)
+3. **Search internet for examples/answers** if documentation doesn't cover it
+4. **Verify with actual code** (check existing implementations in the project)
+5. **Only then implement** based on verified information
+
+**What to research:**
+- ThoughtSpot Chart SDK API changes or new features
+- TypeScript patterns for specific use cases
+- Express middleware patterns
+- Vite build configuration
+- Any unknown error messages or unexpected behavior
+
+**What NOT to do:**
+- ❌ Assume a property exists because it "should" exist
+- ❌ Guess API behavior without checking documentation
+- ❌ Create functionality based on assumptions
+- ❌ Skip research when encountering something unknown
+
+---
+
+## Rules to Follow
+
+When working on this project:
+1. ✅ Always consider the monorepo structure - don't duplicate code
+2. ✅ Use `@shared/*` imports for shared utilities
+3. ✅ Follow ThoughtSpot SDK patterns from existing charts
+4. ✅ Maintain TypeScript strict mode compliance
+5. ✅ Add separate docs only when necessary (use moderation)
+6. ✅ Handle missing context information gracefully
+7. ❌ Don't create utilities that already exist in `shared/`
+8. ❌ Don't assume org/model/user are available in context
+9. ❌ Don't break cross-package dependencies

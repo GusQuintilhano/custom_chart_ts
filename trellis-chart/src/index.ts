@@ -9,6 +9,7 @@ import { CustomChartContext } from '@thoughtspot/ts-chart-sdk';
 import { logger } from '@shared/utils/logger';
 import { analytics } from '@shared/utils/analytics';
 import { PerformanceMonitor } from '@shared/utils/performanceMonitor';
+import { extractThoughtSpotContext } from '@shared/utils/thoughtspotContext';
 import { calculateChartDimensions } from './utils/chartDimensions';
 import { calculateMeasureRanges } from './utils/measureRanges';
 import { setupChartData } from './utils/dataSetup';
@@ -22,20 +23,24 @@ import { initializeChartSDK, emitRenderComplete } from './config/init';
 /**
  * Configura rastreamento de interações do usuário no gráfico Trellis
  */
-function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
+function setupInteractionTracking(
+    chartElement: HTMLElement, 
+    userId?: string,
+    contextInfo?: import('@shared/utils/thoughtspotContext').ThoughtSpotContextInfo
+): void {
     // Rastrear hover em barras/séries
     const bars = chartElement.querySelectorAll('rect[class*="bar"], rect[data-series]');
     bars.forEach((bar, index) => {
         bar.addEventListener('mouseenter', () => {
             analytics.trackInteraction('trellis', 'hover', `bar-${index}`, {
                 elementType: 'bar',
-            });
+            }, contextInfo);
         });
         
         bar.addEventListener('click', () => {
             analytics.trackInteraction('trellis', 'click', `bar-${index}`, {
                 elementType: 'bar',
-            });
+            }, contextInfo);
         });
     });
     
@@ -45,7 +50,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
         point.addEventListener('mouseenter', () => {
             analytics.trackInteraction('trellis', 'hover', `point-${index}`, {
                 elementType: 'point',
-            });
+            }, contextInfo);
         });
     });
     
@@ -57,7 +62,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
             parent.addEventListener('mouseenter', () => {
                 analytics.trackInteraction('trellis', 'tooltip_open', `tooltip-${index}`, {
                     elementType: 'tooltip',
-                });
+                }, contextInfo);
             });
         }
     });
@@ -68,7 +73,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
         line.addEventListener('mouseenter', () => {
             analytics.trackInteraction('trellis', 'hover', `reference-line-${index}`, {
                 elementType: 'reference-line',
-            });
+            }, contextInfo);
         });
     });
     
@@ -78,7 +83,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
         label.addEventListener('mouseenter', () => {
             analytics.trackInteraction('trellis', 'hover', `label-${index}`, {
                 elementType: 'label',
-            });
+            }, contextInfo);
         });
     });
 }
@@ -128,8 +133,8 @@ export const renderChart = async (ctx: CustomChartContext) => {
             const initialContainerWidth = containerWidth || 800;
             const initialContainerHeight = containerHeight || 600;
             
-            // Log inicial de dimensões do container
-            console.log('[FitWidth] Dimensões iniciais do container:', {
+            // Log inicial de dimensões do container (apenas em debug)
+            logger.debug('[FitWidth] Dimensões iniciais do container:', {
                 chartElementClientWidth: chartElement.clientWidth,
                 chartElementOffsetWidth: chartElement.offsetWidth,
                 chartElementBoundingRect: chartElement.getBoundingClientRect().width,
@@ -153,19 +158,9 @@ export const renderChart = async (ctx: CustomChartContext) => {
             initialContainerHeight
         );
 
-        // Tentar obter userId do contexto (se disponível)
-        let userId: string | undefined;
-        try {
-            const ctxAny = ctx as any;
-            userId = ctxAny.userId || ctxAny.user?.id || ctxAny.user?.username || ctxAny.userInfo?.userId;
-            
-            if (!userId) {
-                const chartModelAny = chartModel as any;
-                userId = chartModelAny.userId || chartModelAny.user?.id || chartModelAny.user?.username;
-            }
-        } catch (e) {
-            // Ignora erros ao tentar acessar propriedades que podem não existir
-        }
+        // Extrair informações do contexto ThoughtSpot (ORG, MODEL, USUARIO)
+        const contextInfo = extractThoughtSpotContext(ctx, chartModel);
+        const userId = contextInfo.userId;
 
         // Rastrear uso e configurações
         const { visualProps } = chartModel;
@@ -178,6 +173,23 @@ export const renderChart = async (ctx: CustomChartContext) => {
             secondaryDimensions,
             measureCols
         );
+        
+        // Identificar funcionalidades usadas
+        const usedFeatures: string[] = [];
+        const appliedConfigs: string[] = [];
+        
+        if (options.showYAxis) appliedConfigs.push('showYAxis');
+        if (options.showGridLines) appliedConfigs.push('showGridLines');
+        if (options.fitWidth) appliedConfigs.push('fitWidth');
+        if (options.fitHeight) appliedConfigs.push('fitHeight');
+        if (options.dividerLinesBetweenMeasures) appliedConfigs.push('dividerLinesBetweenMeasures');
+        if (options.dividerLinesBetweenGroups) appliedConfigs.push('dividerLinesBetweenGroups');
+        if (options.dividerLinesBetweenBars) appliedConfigs.push('dividerLinesBetweenBars');
+        if (options.forceLabels) appliedConfigs.push('forceLabels');
+        
+        // Funcionalidades baseadas em interações disponíveis
+        usedFeatures.push('render'); // Sempre presente
+        if (hasSecondaryDimension) usedFeatures.push('secondaryDimension');
         
         analytics.trackUsage('trellis', {
             numMeasures: measureCols.length,
@@ -192,7 +204,12 @@ export const renderChart = async (ctx: CustomChartContext) => {
             dividerLinesBetweenGroups: options.dividerLinesBetweenGroups,
             dividerLinesBetweenBars: options.dividerLinesBetweenBars,
             forceLabels: options.forceLabels,
-        }, userId);
+            // Informações sobre funcionalidades usadas
+            features: {
+                usedFeatures,
+                appliedConfigs,
+            },
+        }, userId, contextInfo);
 
     const {
         fitWidth,
@@ -255,7 +272,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         if (totalPaddingBorder > 0) {
             containerWidth = Math.max(0, containerWidth - totalPaddingBorder);
             
-            console.log('[FitWidth] Estimando largura do containerDiv para renderização inicial:', {
+            logger.debug('[FitWidth] Estimando largura do containerDiv para renderização inicial:', {
                 chartElementClientWidth: chartElement.clientWidth,
                 chartElementOffsetWidth: chartElement.offsetWidth,
                 totalPaddingBorder,
@@ -292,7 +309,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
     } = chartDimensions;
     
     // Log das dimensões calculadas
-    console.log('[FitWidth] Dimensões calculadas do gráfico:', {
+    logger.debug('[FitWidth] Dimensões calculadas do gráfico:', {
         fitWidth,
         fitHeight,
         containerWidth,
@@ -341,7 +358,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         }
         
         const computedStyle = window.getComputedStyle(chartElement);
-        console.log('[FitWidth] Aplicando estilos ao chartElement:', {
+        logger.debug('[FitWidth] Aplicando estilos ao chartElement:', {
             width: chartElement.style.width,
             minWidth: chartElement.style.minWidth,
             maxWidth: chartElement.style.maxWidth,
@@ -481,26 +498,24 @@ export const renderChart = async (ctx: CustomChartContext) => {
     });
     
     // Adicionar event listeners para rastrear interações do usuário
-    setupInteractionTracking(chartElement, userId);
+        setupInteractionTracking(chartElement, userId, contextInfo);
 
     // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'trellis';
-            // Passar userId para evento de performance (herda de BaseAnalyticsEvent)
-            if (userId) {
-                perfEvent.userId = userId;
-            }
-            analytics.trackPerformance(perfEvent);
+            analytics.trackPerformance(perfEvent, contextInfo);
         }
 
         emitRenderComplete(ctx);
         return Promise.resolve();
     } catch (error) {
+        // Extrair contexto para logs de erro (pode não ter sido extraído antes)
+        const errorContextInfo = extractThoughtSpotContext(ctx, chartModel);
         // Rastrear erros
         analytics.trackError('trellis', error instanceof Error ? error : String(error), {
             sessionId,
-        });
+        }, errorContextInfo);
         logger.error('Erro ao renderizar Trellis Chart:', error);
         throw error;
     }
@@ -513,5 +528,5 @@ initializeChartSDK(renderChart).catch((error) => {
 
 // Tornar renderChart disponível globalmente para handlers
 if (typeof window !== 'undefined') {
-    (window as any).__renderChart = renderChart;
+    window.__renderChart = renderChart;
 }

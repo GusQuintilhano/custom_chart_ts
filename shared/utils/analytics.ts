@@ -13,6 +13,7 @@ import type {
     ChartType,
     InteractionType,
 } from '../types/analytics';
+import type { ThoughtSpotContextInfo } from './thoughtspotContext';
 
 /**
  * Configuração do cliente de analytics
@@ -63,16 +64,37 @@ class AnalyticsClient {
     /**
      * Rastreia uso do gráfico
      */
-    trackUsage(chartType: ChartType, config: Record<string, unknown>, userId?: string): void {
+    trackUsage(
+        chartType: ChartType, 
+        config: Record<string, unknown>, 
+        userId?: string,
+        contextInfo?: ThoughtSpotContextInfo
+    ): void {
         if (!this.config.enabled) return;
 
+        // Extrair informações de funcionalidades do config se disponível
+        const features = (config.features as { usedFeatures?: string[]; appliedConfigs?: string[]; interactions?: string[] }) || undefined;
+        
+        // Coletar TODAS as informações disponíveis do contexto
         const event: UsageEvent = {
             type: 'usage',
             chartType,
             timestamp: new Date().toISOString(),
             sessionId: this.sessionId,
-            userId,
+            userId: userId || contextInfo?.userId || contextInfo?.userGuid,
+            org: contextInfo?.org,
+            orgId: contextInfo?.orgId,
+            tenantId: contextInfo?.tenantId,
+            model: contextInfo?.model,
+            modelId: contextInfo?.modelId,
+            worksheetId: contextInfo?.worksheetId,
+            user: contextInfo?.user,
+            userName: contextInfo?.userName,
+            userEmail: contextInfo?.userEmail,
+            userGuid: contextInfo?.userGuid,
+            contextMetadata: contextInfo?.contextMetadata,
             config,
+            features, // Incluir informações de funcionalidades
         };
 
         this.queueEvent(event);
@@ -81,13 +103,30 @@ class AnalyticsClient {
     /**
      * Rastreia performance de renderização
      */
-    trackPerformance(event: Omit<PerformanceEvent, 'sessionId' | 'timestamp'>): void {
+    trackPerformance(
+        event: Omit<PerformanceEvent, 'sessionId' | 'timestamp'>,
+        contextInfo?: ThoughtSpotContextInfo
+    ): void {
         if (!this.config.enabled) return;
 
+        // Coletar TODAS as informações disponíveis do contexto
         const fullEvent: PerformanceEvent = {
             ...event,
             sessionId: this.sessionId,
             timestamp: new Date().toISOString(),
+            // Incluir TODAS as informações do contexto se não estiverem no evento
+            userId: event.userId || contextInfo?.userId || contextInfo?.userGuid,
+            org: event.org || contextInfo?.org,
+            orgId: event.orgId || contextInfo?.orgId,
+            tenantId: event.tenantId || contextInfo?.tenantId,
+            model: event.model || contextInfo?.model,
+            modelId: event.modelId || contextInfo?.modelId,
+            worksheetId: event.worksheetId || contextInfo?.worksheetId,
+            user: event.user || contextInfo?.user,
+            userName: event.userName || contextInfo?.userName,
+            userEmail: event.userEmail || contextInfo?.userEmail,
+            userGuid: event.userGuid || contextInfo?.userGuid,
+            contextMetadata: event.contextMetadata || contextInfo?.contextMetadata,
         };
 
         this.queueEvent(fullEvent);
@@ -96,17 +135,35 @@ class AnalyticsClient {
     /**
      * Rastreia erros
      */
-    trackError(chartType: ChartType, error: Error | string, context?: Record<string, unknown>): void {
+    trackError(
+        chartType: ChartType, 
+        error: Error | string, 
+        context?: Record<string, unknown>,
+        contextInfo?: ThoughtSpotContextInfo
+    ): void {
         if (!this.config.enabled) return;
 
         const errorMessage = error instanceof Error ? error.message : error;
         const stack = error instanceof Error ? error.stack : undefined;
 
+        // Coletar TODAS as informações disponíveis do contexto
         const event: ErrorEvent = {
             type: 'error',
             chartType,
             timestamp: new Date().toISOString(),
             sessionId: this.sessionId,
+            userId: contextInfo?.userId || contextInfo?.userGuid,
+            org: contextInfo?.org,
+            orgId: contextInfo?.orgId,
+            tenantId: contextInfo?.tenantId,
+            model: contextInfo?.model,
+            modelId: contextInfo?.modelId,
+            worksheetId: contextInfo?.worksheetId,
+            user: contextInfo?.user,
+            userName: contextInfo?.userName,
+            userEmail: contextInfo?.userEmail,
+            userGuid: contextInfo?.userGuid,
+            contextMetadata: contextInfo?.contextMetadata,
             error: errorMessage,
             stack,
             context: context || {},
@@ -118,17 +175,36 @@ class AnalyticsClient {
     /**
      * Rastreia interações do usuário
      */
-    trackInteraction(chartType: ChartType, interactionType: InteractionType, element: string, metadata?: Record<string, unknown>): void {
+    trackInteraction(
+        chartType: ChartType, 
+        interactionType: InteractionType, 
+        element: string, 
+        metadata?: Record<string, unknown>,
+        contextInfo?: ThoughtSpotContextInfo
+    ): void {
         if (!this.config.enabled) return;
 
+        // Coletar TODAS as informações disponíveis do contexto
         const event: InteractionEvent = {
             type: 'interaction',
             chartType,
             timestamp: new Date().toISOString(),
             sessionId: this.sessionId,
+            userId: contextInfo?.userId || contextInfo?.userGuid,
+            org: contextInfo?.org,
+            orgId: contextInfo?.orgId,
+            tenantId: contextInfo?.tenantId,
+            model: contextInfo?.model,
+            modelId: contextInfo?.modelId,
+            worksheetId: contextInfo?.worksheetId,
+            user: contextInfo?.user,
+            userName: contextInfo?.userName,
+            userEmail: contextInfo?.userEmail,
+            userGuid: contextInfo?.userGuid,
+            contextMetadata: contextInfo?.contextMetadata,
             interactionType,
             element,
-            metadata,
+            metadata: metadata || {},
         };
 
         this.queueEvent(event);
@@ -137,14 +213,32 @@ class AnalyticsClient {
     /**
      * Rastreia configurações utilizadas
      */
-    trackConfig(chartType: ChartType, configKey: string, configValue: unknown): void {
+    trackConfig(
+        chartType: ChartType, 
+        configKey: string, 
+        configValue: unknown,
+        contextInfo?: ThoughtSpotContextInfo
+    ): void {
         if (!this.config.enabled) return;
 
+        // Coletar TODAS as informações disponíveis do contexto
         const event: ConfigEvent = {
             type: 'config',
             chartType,
             timestamp: new Date().toISOString(),
             sessionId: this.sessionId,
+            userId: contextInfo?.userId || contextInfo?.userGuid,
+            org: contextInfo?.org,
+            orgId: contextInfo?.orgId,
+            tenantId: contextInfo?.tenantId,
+            model: contextInfo?.model,
+            modelId: contextInfo?.modelId,
+            worksheetId: contextInfo?.worksheetId,
+            user: contextInfo?.user,
+            userName: contextInfo?.userName,
+            userEmail: contextInfo?.userEmail,
+            userGuid: contextInfo?.userGuid,
+            contextMetadata: contextInfo?.contextMetadata,
             configKey,
             configValue,
         };
@@ -232,14 +326,14 @@ export function getAnalyticsClient(): AnalyticsClient {
         
         if (typeof window !== 'undefined') {
             // Se customizado via window, usa esse
-            if ((window as any).ANALYTICS_ENDPOINT) {
-                endpoint = (window as any).ANALYTICS_ENDPOINT;
+            if (window.ANALYTICS_ENDPOINT) {
+                endpoint = window.ANALYTICS_ENDPOINT;
             }
             // Caso contrário, usa o endpoint padrão relativo à raiz
         }
         
         const enabled = typeof window !== 'undefined'
-            ? (window as any).ANALYTICS_ENABLED !== false
+            ? window.ANALYTICS_ENABLED !== false
             : true;
 
         analyticsClient = new AnalyticsClient({
@@ -257,20 +351,44 @@ export function getAnalyticsClient(): AnalyticsClient {
  * Funções de conveniência para uso direto
  */
 export const analytics = {
-    trackUsage: (chartType: ChartType, config: Record<string, unknown>, userId?: string) => {
-        getAnalyticsClient().trackUsage(chartType, config, userId);
+    trackUsage: (
+        chartType: ChartType, 
+        config: Record<string, unknown>, 
+        userId?: string,
+        contextInfo?: ThoughtSpotContextInfo
+    ) => {
+        getAnalyticsClient().trackUsage(chartType, config, userId, contextInfo);
     },
-    trackPerformance: (event: Omit<PerformanceEvent, 'sessionId' | 'timestamp'>) => {
-        getAnalyticsClient().trackPerformance(event);
+    trackPerformance: (
+        event: Omit<PerformanceEvent, 'sessionId' | 'timestamp'>,
+        contextInfo?: ThoughtSpotContextInfo
+    ) => {
+        getAnalyticsClient().trackPerformance(event, contextInfo);
     },
-    trackError: (chartType: ChartType, error: Error | string, context?: Record<string, unknown>) => {
-        getAnalyticsClient().trackError(chartType, error, context);
+    trackError: (
+        chartType: ChartType, 
+        error: Error | string, 
+        context?: Record<string, unknown>,
+        contextInfo?: ThoughtSpotContextInfo
+    ) => {
+        getAnalyticsClient().trackError(chartType, error, context, contextInfo);
     },
-    trackInteraction: (chartType: ChartType, interactionType: InteractionType, element: string, metadata?: Record<string, unknown>) => {
-        getAnalyticsClient().trackInteraction(chartType, interactionType, element, metadata);
+    trackInteraction: (
+        chartType: ChartType, 
+        interactionType: InteractionType, 
+        element: string, 
+        metadata?: Record<string, unknown>,
+        contextInfo?: ThoughtSpotContextInfo
+    ) => {
+        getAnalyticsClient().trackInteraction(chartType, interactionType, element, metadata, contextInfo);
     },
-    trackConfig: (chartType: ChartType, configKey: string, configValue: unknown) => {
-        getAnalyticsClient().trackConfig(chartType, configKey, configValue);
+    trackConfig: (
+        chartType: ChartType, 
+        configKey: string, 
+        configValue: unknown,
+        contextInfo?: ThoughtSpotContextInfo
+    ) => {
+        getAnalyticsClient().trackConfig(chartType, configKey, configValue, contextInfo);
     },
 };
 

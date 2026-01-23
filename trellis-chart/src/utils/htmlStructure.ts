@@ -56,12 +56,12 @@ export function createChartHtmlStructure(
         : 'none';
     const viewBox = `0 0 ${chartWidth} ${chartHeight}`;
 
-    // Log de dimensões para debug do fitWidth
-    console.log('[FitWidth] Criando estrutura HTML:', {
-        fitWidth,
-        fitHeight,
-        chartWidth,
-        chartHeight,
+    // Log de dimensões para debug do fitWidth (removido - usar logger.debug se necessário)
+    // logger.debug('[FitWidth] Criando estrutura HTML:', {
+    //     fitWidth,
+    //     fitHeight,
+    //     chartWidth,
+    //     chartHeight,
         svgWidth,
         svgHeight,
         viewBox,

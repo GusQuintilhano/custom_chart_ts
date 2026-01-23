@@ -137,13 +137,20 @@ class FileStorage implements IAnalyticsStorage {
 
     /**
      * Lê eventos dos arquivos de log dos últimos 30 dias
-     * @param options Opções de leitura (offset, limit, type, chartType)
+     * @param options Opções de leitura com filtros avançados
      */
     async readEvents(options?: {
         offset?: number;
         limit?: number;
         type?: AnalyticsEvent['type'];
         chartType?: AnalyticsEvent['chartType'];
+        userId?: string;
+        org?: string;
+        orgId?: string;
+        model?: string;
+        modelId?: string;
+        startDate?: string; // ISO date string
+        endDate?: string;   // ISO date string
     }): Promise<AnalyticsEvent[]> {
         try {
             const dir = path.dirname(this.baseLogPath);
@@ -174,12 +181,40 @@ class FileStorage implements IAnalyticsStorage {
                 try {
                     const event = JSON.parse(line) as AnalyticsEvent;
                     
-                    // Aplicar filtros
+                    // Aplicar filtros básicos
                     if (options?.type && event.type !== options.type) {
                         continue;
                     }
                     if (options?.chartType && event.chartType !== options.chartType) {
                         continue;
+                    }
+                    
+                    // Aplicar filtros de contexto
+                    if (options?.userId && event.userId !== options.userId) {
+                        continue;
+                    }
+                    if (options?.org && event.org !== options.org && event.orgId !== options.org) {
+                        continue;
+                    }
+                    if (options?.orgId && event.orgId !== options.orgId && event.org !== options.orgId) {
+                        continue;
+                    }
+                    if (options?.model && event.model !== options.model && event.modelId !== options.model) {
+                        continue;
+                    }
+                    if (options?.modelId && event.modelId !== options.modelId && event.model !== options.modelId) {
+                        continue;
+                    }
+                    
+                    // Aplicar filtros de data
+                    if (options?.startDate || options?.endDate) {
+                        const eventDate = new Date(event.timestamp);
+                        if (options?.startDate && eventDate < new Date(options.startDate)) {
+                            continue;
+                        }
+                        if (options?.endDate && eventDate > new Date(options.endDate)) {
+                            continue;
+                        }
                     }
 
                     allEvents.push(event);

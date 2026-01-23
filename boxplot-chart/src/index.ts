@@ -8,6 +8,7 @@ import { CustomChartContext } from '@thoughtspot/ts-chart-sdk';
 import { logger } from '@shared/utils/logger';
 import { analytics } from '@shared/utils/analytics';
 import { PerformanceMonitor } from '@shared/utils/performanceMonitor';
+import { extractThoughtSpotContext } from '@shared/utils/thoughtspotContext';
 import { initializeChartSDK } from '@shared/config/init';
 import { getDefaultChartConfig, getQueriesFromChartConfig } from './config/chartConfig';
 import { createVisualPropEditorDefinition, createChartConfigEditorDefinition } from './config/visualPropEditor';
@@ -16,10 +17,59 @@ import { calculateBoxplotDimensions } from './utils/boxplotDimensions';
 import { readBoxplotOptions } from './utils/boxplotOptions';
 import { renderBoxplot, renderYAxis } from './rendering/boxplotRenderer';
 import { createChartHtmlStructure } from '@shared/utils/htmlStructure';
-import { ChartToTSEvent, ColumnType, ChartColumn } from '@thoughtspot/ts-chart-sdk';
+import { ChartToTSEvent, ColumnType, ChartColumn, type ChartConfig } from '@thoughtspot/ts-chart-sdk';
 import { setupCustomTooltips } from './utils/customTooltip';
 
-function setupInteractionTracking(chartElement: HTMLElement, userId?: string): void {
+/**
+ * Interface para ChartColumn com propriedades de seção (podem não existir)
+ */
+interface ChartColumnWithSection extends ChartColumn {
+    columnSectionName?: string;
+    sectionName?: string;
+    section?: string;
+    name?: string;
+    columnId?: string;
+}
+
+/**
+ * Interface para ChartConfig dimension (podem não existir)
+ */
+interface ChartConfigDimension {
+    key?: string;
+    columns?: Array<{ id?: string; name?: string; columnId?: string }>;
+}
+
+/**
+ * Interface para CustomChartContext com métodos opcionais (podem não existir)
+ */
+interface CustomChartContextWithConfig extends CustomChartContext {
+    getChartConfig?: () => ChartConfig[] | undefined;
+    chartConfig?: ChartConfig[] | undefined;
+}
+
+/**
+ * Type guard para verificar se ChartColumn tem propriedades de seção
+ */
+function hasSection(col: ChartColumn, section: string): boolean {
+    const colAny = col as ChartColumnWithSection;
+    return colAny.columnSectionName === section || 
+           colAny.sectionName === section || 
+           colAny.section === section;
+}
+
+/**
+ * Função auxiliar para extrair ID de uma coluna
+ */
+function getColumnId(col: ChartColumn): string | undefined {
+    const colAny = col as ChartColumnWithSection;
+    return col.id || colAny.name || colAny.columnId;
+}
+
+function setupInteractionTracking(
+    chartElement: HTMLElement, 
+    userId?: string,
+    contextInfo?: import('@shared/utils/thoughtspotContext').ThoughtSpotContextInfo
+): void {
     // Rastrear hover em grupos do boxplot
     const groups = chartElement.querySelectorAll('g[data-group-index]');
     groups.forEach((group) => {
@@ -30,7 +80,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
             analytics.trackInteraction('boxplot', 'hover', `group-${groupIndex}`, {
                 elementType: 'group',
                 groupIndex: groupIndex,
-            });
+            }, contextInfo);
         });
         
         // Rastrear elementos dentro do grupo (box, whiskers, median, mean)
@@ -45,7 +95,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 analytics.trackInteraction('boxplot', 'hover', `box-element-${groupIndex}-${elemIndex}`, {
                     elementType: 'box-element',
                     groupIndex: groupIndex,
-                });
+                }, contextInfo);
             });
             
             // Rastrear cliques em elementos do boxplot
@@ -53,7 +103,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 analytics.trackInteraction('boxplot', 'click', `box-element-${groupIndex}-${elemIndex}`, {
                     elementType: 'box-element',
                     groupIndex: groupIndex,
-                });
+                }, contextInfo);
             });
         });
     });
@@ -69,7 +119,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 elementType: 'outlier',
                 groupIndex: groupIndex,
                 outlierValue: outlierValue,
-            });
+            }, contextInfo);
         });
     });
     
@@ -84,7 +134,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 elementType: 'jitter',
                 groupIndex: groupIndex,
                 pointValue: pointValue,
-            });
+            }, contextInfo);
         });
     });
     
@@ -97,7 +147,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
             analytics.trackInteraction('boxplot', 'hover', `dot-plot-${groupIndex || index}`, {
                 elementType: 'dot-plot',
                 groupIndex: groupIndex || String(index),
-            });
+            }, contextInfo);
         });
     });
     
@@ -107,7 +157,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
         line.addEventListener('mouseenter', () => {
             analytics.trackInteraction('boxplot', 'hover', `reference-line-${index}`, {
                 elementType: 'reference-line',
-            });
+            }, contextInfo);
         });
     });
     
@@ -127,7 +177,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 analytics.trackInteraction('boxplot', 'hover', `median-line-${groupIndex}-${lineIndex}`, {
                     elementType: 'median-line',
                     groupIndex: groupIndex,
-                });
+                }, contextInfo);
             });
         });
     });
@@ -147,7 +197,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 analytics.trackInteraction('boxplot', 'hover', `whisker-${groupIndex}-${whiskerIndex}`, {
                     elementType: 'whisker',
                     groupIndex: groupIndex,
-                });
+                }, contextInfo);
             });
         });
     });
@@ -161,7 +211,7 @@ function setupInteractionTracking(chartElement: HTMLElement, userId?: string): v
                 analytics.trackInteraction('boxplot', 'hover', `label-${groupIndex}-${labelIndex}`, {
                     elementType: 'label',
                     groupIndex: groupIndex,
-                });
+                }, contextInfo);
             });
         });
     });
@@ -208,33 +258,46 @@ export const renderChart = async (ctx: CustomChartContext) => {
         let dimensionColumnsForGrouping: ChartColumn[] = [];
         
         // Abordagem 1: Verificar se ChartColumn tem propriedade columnSectionName
-        const xColumnsBySectionName = allDimensionColumns.filter((col: any) => 
-            col.columnSectionName === 'x' || col.sectionName === 'x' || col.section === 'x'
+        // Usar type guard para acesso seguro
+        const xColumnsBySectionName = allDimensionColumns.filter(col => 
+            hasSection(col, 'x')
         );
         
         if (xColumnsBySectionName.length > 0) {
             dimensionColumnsForGrouping = xColumnsBySectionName;
         } else {
             // Abordagem 2: Tentar acessar chartConfig através do contexto
+            // Usar interface tipada para acesso seguro
             try {
-                const ctxAny = ctx as any;
-                const chartConfig = ctxAny.getChartConfig?.() || ctxAny.chartConfig || (chartModel as any).chartConfig;
+                const ctxWithConfig = ctx as CustomChartContextWithConfig;
+                const chartConfig = ctxWithConfig.getChartConfig?.() || 
+                                   ctxWithConfig.chartConfig || 
+                                   (chartModel as { chartConfig?: ChartConfig[] }).chartConfig;
                 
                 if (chartConfig && Array.isArray(chartConfig) && chartConfig.length > 0) {
                     const firstConfig = chartConfig[0];
-                    if (firstConfig && firstConfig.dimensions && Array.isArray(firstConfig.dimensions)) {
-                        const xDimension = firstConfig.dimensions.find((dim: any) => dim.key === 'x');
+                    if (firstConfig && 'dimensions' in firstConfig && Array.isArray(firstConfig.dimensions)) {
+                        const dimensions = firstConfig.dimensions as ChartConfigDimension[];
+                        const xDimension = dimensions.find(dim => dim.key === 'x');
+                        
                         if (xDimension && xDimension.columns && Array.isArray(xDimension.columns)) {
                             // Filtrar apenas as colunas que estão na seção 'x'
-                            const xColumnIds = new Set(xDimension.columns.map((col: any) => col.id || col.name || col.columnId));
-                            dimensionColumnsForGrouping = allDimensionColumns.filter(col => 
-                                xColumnIds.has(col.id) || xColumnIds.has((col as any).name) || xColumnIds.has((col as any).columnId)
+                            const xColumnIds = new Set(
+                                xDimension.columns
+                                    .map(col => col.id || col.name || col.columnId)
+                                    .filter((id): id is string => id !== undefined)
                             );
+                            
+                            dimensionColumnsForGrouping = allDimensionColumns.filter(col => {
+                                const colId = getColumnId(col);
+                                return colId !== undefined && xColumnIds.has(colId);
+                            });
                         }
                     }
                 }
             } catch (e) {
-                // Ignora erros
+                // Ignora erros ao tentar acessar propriedades que podem não existir
+                // Isso é esperado - o SDK pode não expor essas informações
             }
         }
         
@@ -282,27 +345,34 @@ export const renderChart = async (ctx: CustomChartContext) => {
             containerHeight
         );
 
-        // Tentar obter userId do contexto (se disponível)
-        // ThoughtSpot SDK pode não expor diretamente, mas tentamos diferentes formas
-        let userId: string | undefined;
-        try {
-            // Tentar acessar propriedades do contexto (se disponíveis)
-            const ctxAny = ctx as any;
-            userId = ctxAny.userId || ctxAny.user?.id || ctxAny.user?.username || ctxAny.userInfo?.userId;
-            
-            // Se não encontrado no contexto, pode estar no chartModel
-            if (!userId) {
-                const chartModelAny = chartModel as any;
-                userId = chartModelAny.userId || chartModelAny.user?.id || chartModelAny.user?.username;
-            }
-        } catch (e) {
-            // Ignora erros ao tentar acessar propriedades que podem não existir
-        }
+        // Extrair informações do contexto ThoughtSpot (ORG, MODEL, USUARIO)
+        const contextInfo = extractThoughtSpotContext(ctx, chartModel);
+        const userId = contextInfo.userId;
 
         // Ler opções primeiro (necessárias para cálculos)
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
 
+        // Identificar funcionalidades usadas
+        const usedFeatures: string[] = ['render'];
+        const appliedConfigs: string[] = [];
+        
+        if (options.showMean) appliedConfigs.push('showMean');
+        if (options.showOutliers) appliedConfigs.push('showOutliers');
+        if (options.showNotch) appliedConfigs.push('showNotch');
+        if (options.showJitter) appliedConfigs.push('showJitter');
+        if (options.variableWidth) appliedConfigs.push('variableWidth');
+        if (options.referenceLines.show) {
+            appliedConfigs.push('referenceLines');
+            usedFeatures.push('referenceLines');
+        }
+        if (options.gridLines.show) appliedConfigs.push('gridLines');
+        if (options.sortType && options.sortType !== 'Alfabética') {
+            appliedConfigs.push(`sort-${options.sortType}`);
+            usedFeatures.push('sorting');
+        }
+        if (options.orientation === 'horizontal') appliedConfigs.push('horizontalOrientation');
+        
         // Rastrear uso com configurações utilizadas
         analytics.trackUsage('boxplot', {
             numMeasures: measureColumns.length,
@@ -327,12 +397,17 @@ export const renderChart = async (ctx: CustomChartContext) => {
             gridLines: {
                 show: options.gridLines.show,
             },
+            // Informações sobre funcionalidades usadas
+            features: {
+                usedFeatures,
+                appliedConfigs,
+            },
             // Configurações de tooltip
             tooltip: {
                 enabled: options.tooltip.enabled,
                 format: options.tooltip.format,
             },
-        }, userId);
+        }, userId, contextInfo);
 
         // Calcular dados do boxplot com as opções configuradas
         // Usar apenas as dimensões da seção 'x' (Categoria/Atributo) para agrupamento
@@ -425,7 +500,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         setupCustomTooltips(chartElement, boxplotData, options.tooltip);
         
         // Adicionar event listeners para rastrear interações do usuário
-        setupInteractionTracking(chartElement, userId);
+        setupInteractionTracking(chartElement, userId, contextInfo);
         
         // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
@@ -435,15 +510,17 @@ export const renderChart = async (ctx: CustomChartContext) => {
             if (userId) {
                 perfEvent.userId = userId;
             }
-            analytics.trackPerformance(perfEvent);
+            analytics.trackPerformance(perfEvent, contextInfo);
         }
         
         ctx.emitEvent(ChartToTSEvent.RenderComplete);
     } catch (error) {
+        // Extrair contexto para logs de erro (pode não ter sido extraído antes)
+        const errorContextInfo = extractThoughtSpotContext(ctx, chartModel);
         // Rastrear erros
         analytics.trackError('boxplot', error instanceof Error ? error : String(error), {
             sessionId,
-        });
+        }, errorContextInfo);
         logger.error('Erro ao renderizar Boxplot:', error);
         const chartElement = document.getElementById('chart') as HTMLElement | null;
         if (chartElement) {

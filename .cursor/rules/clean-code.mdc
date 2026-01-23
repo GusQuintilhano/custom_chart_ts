@@ -1,0 +1,405 @@
+---
+description: Clean code principles and best practices
+globs: ["**/*.ts", "**/*.tsx", "**/*.js"]
+alwaysApply: true
+---
+
+# Clean Code - Best Practices
+
+## Critical Rules
+
+1. **DRY**: Don't Repeat Yourself - extract common logic to shared utilities.
+2. **Single Responsibility**: Each function should do one thing well.
+3. **Meaningful Names**: Variables and functions should clearly express intent.
+4. **Small Functions**: Keep functions focused and under 50 lines when possible.
+
+---
+
+## Naming Conventions
+
+### Functions
+
+```typescript
+// ✅ Good - Verb-based, clear intent
+function extractThoughtSpotContext(ctx: CustomChartContext): ThoughtSpotContextInfo
+function calculateChartDimensions(model: ChartModel): Dimensions
+function validateAnalyticsEvent(event: unknown): event is AnalyticsEvent
+
+// ❌ Bad - Vague or unclear
+function process(data: any)
+function doStuff()
+function handler()
+```
+
+### Variables
+
+```typescript
+// ✅ Good - Descriptive names
+const chartModel = ctx.getChartModel();
+const contextInfo = extractThoughtSpotContext(ctx, chartModel);
+const analyticsEnabled = process.env.ANALYTICS_ENABLED !== 'false';
+
+// ❌ Bad - Abbreviations or single letters (except in loops)
+const cm = ctx.getChartModel();
+const ci = extractThoughtSpotContext(ctx);
+const flag = process.env.ANALYTICS_ENABLED !== 'false';
+```
+
+### Boolean Names
+
+```typescript
+// ✅ Good - Boolean names are questions
+const isEnabled = analyticsEnabled;
+const hasData = data.length > 0;
+const canRender = columns.length > 0 && measures.length > 0;
+
+// ❌ Bad - Not clear it's boolean
+const enabled = analyticsEnabled;
+const data = data.length > 0;
+```
+
+---
+
+## Function Design
+
+### Single Responsibility
+
+```typescript
+// ❌ Bad - Does multiple things
+function processChart(ctx: CustomChartContext) {
+  const model = ctx.getChartModel();
+  const data = extractData(model);
+  const dimensions = calculateDimensions(data);
+  renderChart(dimensions);
+  trackAnalytics(ctx);
+  saveToDatabase(data);
+}
+
+// ✅ Good - Single responsibility
+async function renderChart(ctx: CustomChartContext): Promise<void> {
+  const chartModel = ctx.getChartModel();
+  const data = setupChartData(ctx, chartModel);
+  const dimensions = calculateChartDimensions(data);
+  await renderChartWithDimensions(dimensions);
+}
+
+// Separate functions for separate concerns
+function trackChartUsage(ctx: CustomChartContext): void { /* ... */ }
+function saveChartData(data: ChartData): Promise<void> { /* ... */ }
+```
+
+### Function Length
+
+Keep functions under 50 lines. If longer, extract logic:
+
+```typescript
+// ❌ Bad - Too long
+function extractThoughtSpotContext(ctx?: CustomChartContext | null): ThoughtSpotContextInfo {
+  const info: ThoughtSpotContextInfo = {};
+  // 100 lines of extraction logic...
+  return info;
+}
+
+// ✅ Good - Broken into smaller functions
+function extractThoughtSpotContext(ctx?: CustomChartContext | null): ThoughtSpotContextInfo {
+  const info: ThoughtSpotContextInfo = {};
+  if (ctx) {
+    extractFromContext(ctx, info);
+  }
+  return info;
+}
+
+function extractFromContext(ctx: CustomChartContext, info: ThoughtSpotContextInfo): void {
+  extractOrg(ctx, info);
+  extractUser(ctx, info);
+  extractModel(ctx, info);
+}
+```
+
+---
+
+## Code Organization
+
+### Early Returns
+
+```typescript
+// ✅ Good - Early returns reduce nesting
+function validateEvent(event: unknown): event is AnalyticsEvent {
+  if (!event || typeof event !== 'object') {
+    return false;
+  }
+  
+  if (!('type' in event) || !('chartType' in event)) {
+    return false;
+  }
+  
+  return true;
+}
+
+// ❌ Bad - Deep nesting
+function validateEvent(event: unknown): event is AnalyticsEvent {
+  if (event && typeof event === 'object') {
+    if ('type' in event && 'chartType' in event) {
+      return true;
+    }
+  }
+  return false;
+}
+```
+
+### Guard Clauses
+
+```typescript
+// ✅ Good - Guard clauses
+async function saveEvent(event: AnalyticsEvent): Promise<void> {
+  if (!event) {
+    throw new Error('Event is required');
+  }
+  
+  if (!isValidEvent(event)) {
+    throw new Error('Invalid event');
+  }
+  
+  await storage.save(event);
+}
+```
+
+---
+
+## Comments and Documentation
+
+### When to Comment
+
+```typescript
+// ✅ Good - Explain WHY, not WHAT
+// ThoughtSpot SDK doesn't guarantee these properties exist,
+// so we try multiple access patterns
+const org = ctxAny.org || ctxAny.organization || ctxAny.orgId;
+
+// ✅ Good - Complex algorithm explanation
+// Calculate dimensions using container width minus padding,
+// ensuring minimum bar width of 2px for visibility
+const barWidth = Math.max(2, (containerWidth - padding) / dataPoints.length);
+
+// ❌ Bad - Obvious comments
+// Get chart model
+const chartModel = ctx.getChartModel();
+
+// ❌ Bad - Commented out code
+// const oldValue = calculateOldWay();
+const newValue = calculateNewWay();
+```
+
+### JSDoc for Public Functions
+
+```typescript
+// ✅ Good - JSDoc for public APIs
+/**
+ * Extracts context information from ThoughtSpot SDK context.
+ * 
+ * Note: The SDK does NOT guarantee these properties exist.
+ * Returns empty object if no information is available.
+ * 
+ * @param ctx - CustomChartContext from ThoughtSpot SDK (optional)
+ * @param chartModel - ChartModel from ThoughtSpot SDK (optional)
+ * @returns Context information (org, model, user, userId)
+ */
+export function extractThoughtSpotContext(
+  ctx?: CustomChartContext | null,
+  chartModel?: ChartModel | null
+): ThoughtSpotContextInfo {
+  // ...
+}
+```
+
+---
+
+## Error Handling
+
+### Meaningful Error Messages
+
+```typescript
+// ✅ Good - Descriptive errors
+if (events.length === 0) {
+  throw new Error('No events provided in request body');
+}
+
+if (!isValidEvent(event)) {
+  throw new Error(`Invalid event structure: missing required field 'type'`);
+}
+
+// ❌ Bad - Vague errors
+if (events.length === 0) {
+  throw new Error('Error');
+}
+```
+
+### Error Context
+
+```typescript
+// ✅ Good - Include context
+try {
+  await saveEvent(event);
+} catch (error) {
+  logger.error('Failed to save analytics event', {
+    eventType: event.type,
+    chartType: event.chartType,
+    error: error instanceof Error ? error.message : String(error),
+  });
+  throw error;
+}
+```
+
+---
+
+## Duplication (DRY)
+
+### Extract Common Logic
+
+```typescript
+// ❌ Bad - Duplicated logic
+function saveTrellisEvent(event: UsageEvent): Promise<void> {
+  const logPath = getCurrentDayLogPath();
+  const line = JSON.stringify(event) + '\n';
+  await fs.appendFile(logPath, line, 'utf-8');
+}
+
+function saveBoxplotEvent(event: UsageEvent): Promise<void> {
+  const logPath = getCurrentDayLogPath();
+  const line = JSON.stringify(event) + '\n';
+  await fs.appendFile(logPath, line, 'utf-8');
+}
+
+// ✅ Good - Shared utility
+class FileStorage {
+  async save(event: AnalyticsEvent): Promise<void> {
+    const logPath = this.getCurrentDayLogPath();
+    const line = JSON.stringify(event) + '\n';
+    await fs.appendFile(logPath, line, 'utf-8');
+  }
+}
+```
+
+---
+
+## Magic Numbers and Strings
+
+### Use Named Constants
+
+```typescript
+// ❌ Bad - Magic numbers
+if (retryCount > 5) {
+  // Stop retrying
+}
+
+// ✅ Good - Named constants
+const MAX_RETRIES = 5;
+if (retryCount > MAX_RETRIES) {
+  // Stop retrying
+}
+```
+
+### Configuration Constants
+
+```typescript
+// ✅ Good - Configuration object
+const ANALYTICS_CONFIG = {
+  BATCH_SIZE: 10,
+  FLUSH_INTERVAL: 5000,
+  MAX_EVENTS_IN_QUEUE: 100,
+  LOG_RETENTION_DAYS: 30,
+} as const;
+```
+
+---
+
+## Type Safety
+
+### Use Type Guards
+
+```typescript
+// ✅ Good - Type guard
+function isValidEvent(event: unknown): event is AnalyticsEvent {
+  return (
+    typeof event === 'object' &&
+    event !== null &&
+    'type' in event &&
+    'chartType' in event &&
+    'timestamp' in event
+  );
+}
+
+// Usage
+if (isValidEvent(data)) {
+  // TypeScript knows data is AnalyticsEvent here
+  processEvent(data);
+}
+```
+
+---
+
+## ThoughtSpot SDK Specific
+
+### Shared Utilities Pattern
+
+```typescript
+// ✅ Good - Use shared utilities
+import { logger } from '@shared/utils/logger';
+import { analytics } from '@shared/utils/analytics';
+import { extractThoughtSpotContext } from '@shared/utils/thoughtspotContext';
+
+// ❌ Bad - Duplicate in each chart
+// Don't recreate logger, analytics, etc. in each package
+```
+
+### Graceful Degradation
+
+```typescript
+// ✅ Good - Handle missing data gracefully
+const contextInfo = extractThoughtSpotContext(ctx, chartModel);
+// contextInfo may be empty - that's OK
+analytics.trackUsage('trellis', config, contextInfo.userId, contextInfo);
+
+// ❌ Bad - Assume data exists
+const userId = ctx.userId; // May not exist!
+```
+
+---
+
+## File Structure
+
+### One Thing Per File
+
+- One main class/function export per file when possible
+- Related types in same file or dedicated `types/` directory
+- Utilities in `utils/` directory
+- Keep files under 500 lines
+
+---
+
+## Performance Considerations
+
+### Avoid Premature Optimization
+
+```typescript
+// ✅ Good - Clear and readable first
+const events = data.map(transformEvent);
+
+// Optimize only if profiling shows it's needed
+// const events = new Array(data.length);
+// for (let i = 0; i < data.length; i++) {
+//   events[i] = transformEvent(data[i]);
+// }
+```
+
+### Lazy Evaluation
+
+```typescript
+// ✅ Good - Lazy evaluation
+function getStorage(): AnalyticsStorage {
+  if (!storageInstance) {
+    storageInstance = createStorage();
+  }
+  return storageInstance;
+}
+```

@@ -28,11 +28,35 @@ export function analyticsMiddleware(req: Request, res: Response, next: NextFunct
     res.on('finish', () => {
         const responseTime = Date.now() - startTime;
         
+        // Extrair informações adicionais dos headers HTTP (se disponíveis)
+        // NOTA: Baseado na documentação, o ThoughtSpot pode enviar algumas informações via headers
+        // quando usado através de proxy ou embed. Estas propriedades podem não estar sempre presentes.
+        const org = req.get('x-thoughtspot-org') || 
+                    req.get('x-org-id') || 
+                    req.get('x-organization-id') ||
+                    req.get('x-tenant-id') ||
+                    undefined;
+        const model = req.get('x-thoughtspot-model') || 
+                     req.get('x-model-id') || 
+                     req.get('x-worksheet-id') ||
+                     undefined;
+        const user = req.get('x-thoughtspot-user') || 
+                    req.get('x-user-name') || 
+                    req.get('x-username') ||
+                    undefined;
+        const userId = req.get('x-thoughtspot-user-id') || 
+                      req.get('x-user-id') ||
+                      undefined;
+        
         const event: UsageEvent = {
             type: 'usage',
             chartType,
             timestamp: new Date().toISOString(),
             sessionId: generateRequestId(),
+            userId: userId || undefined,
+            org: org || undefined,
+            model: model || undefined,
+            user: user || undefined,
             userAgent: req.get('user-agent'),
             ip: req.ip || req.socket.remoteAddress,
             config: {
@@ -40,14 +64,37 @@ export function analyticsMiddleware(req: Request, res: Response, next: NextFunct
                 path: req.path,
                 responseTime,
                 statusCode: res.statusCode,
+                // Informações adicionais de headers
+                referer: req.get('referer'),
+                origin: req.get('origin'),
             },
         };
+
+        // Log detalhado para debug (apenas se variável de ambiente estiver habilitada)
+        if (process.env.ANALYTICS_DEBUG === 'true') {
+            console.log('[Analytics Middleware] Event captured:', {
+                chartType,
+                responseTime,
+                statusCode: res.statusCode,
+                org,
+                model,
+                user,
+                userId,
+                ip: event.ip,
+            });
+        }
 
         // Salva de forma assíncrona, não bloqueia resposta
         getAnalyticsStorage()
             .save(event)
             .catch(err => {
-                console.error('Failed to save analytics event:', err);
+                console.error('[Analytics Middleware] Failed to save analytics event:', {
+                    error: err instanceof Error ? err.message : String(err),
+                    stack: err instanceof Error ? err.stack : undefined,
+                    eventType: event.type,
+                    chartType: event.chartType,
+                    timestamp: new Date().toISOString(),
+                });
             });
     });
 

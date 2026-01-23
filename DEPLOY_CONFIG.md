@@ -21,68 +21,43 @@ Isso causa **2 deploys** toda vez que há push.
 - **Quando faz deploy**: Automático em cada push (se configurado)
 - **Dockerfile usado**: `Dockerfile` (corrigido no `railway.json`)
 
-## ✅ Solução Recomendada
+## ✅ Solução Implementada
 
-### Opção 1: Separar por Ambiente (Recomendado)
+### Separação por Repositório/Pasta
 
-**GitLab CI/CD → Produção (`main`)**
-- Deploy apenas quando há push/merge para `main`
-- Usa `Dockerfile.gitlab` (com golden image iFood)
-- Registry interno do iFood
-
-**Railway → Desenvolvimento (`develop`)**
-- Deploy apenas quando há push para `develop`
+**custom_charts-railway → Railway (Ativo)**
+- Deploy automático no Railway
 - Usa `Dockerfile` (versão simplificada)
 - Registry público Railway
+- Branch: `main` ou `develop` (conforme configurado no Railway)
 
-### Como Configurar Railway para Monitorar Apenas `develop`:
+**custom_charts → GitLab CI/CD (Futuro)**
+- Deploy via GitLab CI/CD quando estiver 100% funcional
+- Usa `Dockerfile.gitlab` (com golden image iFood)
+- Registry interno do iFood
+- Branch: `main`
 
-1. No painel do Railway:
-   - Vá em **Settings** → **Source**
-   - Em **Branch**, selecione apenas `develop`
-   - Desmarque **Auto Deploy** para outras branches
+## 🔧 Configuração Atual
 
-2. Ou criar um arquivo `.railway/config.toml` (se Railway suportar):
-```toml
-[build]
-  dockerfilePath = "Dockerfile"
+### Railway (custom_charts-railway)
+- **Status**: ✅ Ativo e funcionando
+- **Branch monitorada**: Configurada no painel do Railway
+- **Dockerfile**: `Dockerfile` (versão simplificada para Railway)
+- **Build**: Nixpacks com `railway.json`
 
-[deploy]
-  branch = "develop"
-```
-
-### Opção 2: Desabilitar Deploy Automático no Railway
-
-1. No painel do Railway:
-   - Vá em **Settings** → **Source**
-   - Desabilite **Auto Deploy**
-   - Deploy manual apenas quando necessário
-
-### Opção 3: Usar Apenas GitLab CI/CD
-
-1. Remover integração do Railway
-2. Usar apenas GitLab CI/CD para todos os deploys
-3. Configurar GitLab para fazer deploy em múltiplos ambientes
-
-## 🔧 Correções Aplicadas
-
-1. ✅ Corrigido `railway.json` para usar `Dockerfile` (em vez de `Dockerfile.railway` inexistente)
-2. ✅ Adicionada configuração de restart policy no `railway.json`
+### GitLab CI/CD (custom_charts)
+- **Status**: 🔄 Em desenvolvimento (não 100% funcional ainda)
+- **Branch monitorada**: `main` (quando ativado)
+- **Dockerfile**: `Dockerfile.gitlab` (com golden image iFood)
+- **Build**: GitLab CI com `.gitlab-ci.yml`
 
 ## 📝 Próximos Passos
 
-**Você precisa configurar no painel do Railway:**
-
-1. Acesse o projeto no Railway
-2. Vá em **Settings** → **Source**
-3. Configure para monitorar **apenas a branch `develop`** (ou a branch que você usa para dev)
-4. Desabilite **Auto Deploy** para outras branches
-5. Salve as alterações
-
-Isso garantirá que:
-- **GitLab CI** faça deploy apenas de `main` (produção)
-- **Railway** faça deploy apenas de `develop` (desenvolvimento)
-- **Apenas 1 deploy por push** em cada ambiente
+**Situação Atual (Recomendado):**
+1. ✅ Manter Railway ativo para `custom_charts-railway`
+2. ✅ Continuar desenvolvimento do GitLab CI para `custom_charts`
+3. ✅ Quando GitLab estiver 100%, migrar produção para lá
+4. ✅ Railway pode continuar como ambiente de desenvolvimento/teste
 
 ## 🚨 Verificação
 

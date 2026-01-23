@@ -19,6 +19,9 @@ export type InteractionType = 'hover' | 'click' | 'tooltip_open' | 'tooltip_clos
 
 /**
  * Evento base para todos os tipos de analytics
+ * 
+ * IMPORTANTE: Coletamos TODAS as informações disponíveis do ThoughtSpot
+ * para ter logs completos e visibilidade total do uso dos gráficos.
  */
 export interface BaseAnalyticsEvent {
     type: AnalyticsEventType;
@@ -26,16 +29,40 @@ export interface BaseAnalyticsEvent {
     timestamp: string;
     sessionId: string;
     userId?: string;
+    // Informações do contexto ThoughtSpot (coletamos todas as variações possíveis)
+    org?: string;           // Organização/tenant do ThoughtSpot (nome)
+    orgId?: string;        // ID da organização
+    tenantId?: string;     // ID do tenant
+    model?: string;         // Model/Worksheet ID ou nome
+    modelId?: string;       // ID do modelo
+    worksheetId?: string;  // ID do worksheet
+    user?: string;          // Nome/username do usuário
+    userName?: string;      // Nome do usuário (variação)
+    userEmail?: string;     // Email do usuário
+    userGuid?: string;      // GUID do usuário
+    // Metadados adicionais do contexto (para análise)
+    contextMetadata?: Record<string, unknown>;
 }
 
 /**
  * Evento de uso do gráfico
+ * 
+ * IMPORTANTE: Inclui informações sobre funcionalidades usadas para análise
  */
 export interface UsageEvent extends BaseAnalyticsEvent {
     type: 'usage';
     config: Record<string, unknown>;
     userAgent?: string;
     ip?: string;
+    // Informações sobre funcionalidades usadas
+    features?: {
+        // Funcionalidades específicas do gráfico que foram usadas
+        usedFeatures?: string[]; // Ex: ['tooltip', 'zoom', 'export', 'filter']
+        // Configurações específicas aplicadas
+        appliedConfigs?: string[]; // Ex: ['fitWidth', 'showGrid', 'showLegend']
+        // Interações realizadas
+        interactions?: string[]; // Ex: ['hover', 'click', 'resize']
+    };
 }
 
 /**

@@ -128,15 +128,15 @@ export function calculateChartDimensions(
         
         const chartWidth = baseWidth; // Usar largura do container diretamente
         
-        // Log para debug quando fitWidth está ativo
-        if (fitWidth) {
-            console.log('[FitWidth] calculateChartDimensions - Renderização inicial:', {
-                containerWidth,
-                baseWidth,
-                chartWidth,
-                plotAreaWidth,
-                barWidth,
-                barSpacing,
+        // Log para debug quando fitWidth está ativo (removido - usar logger.debug se necessário)
+        // if (fitWidth) {
+        //     logger.debug('[FitWidth] calculateChartDimensions - Renderização inicial:', {
+        //         containerWidth,
+        //         baseWidth,
+        //         chartWidth,
+        //         plotAreaWidth,
+        //         barWidth,
+        //         barSpacing,
                 info: containerWidth > 0 
                     ? 'ContainerWidth disponível, conteúdo será redesenhado com dimensões corretas'
                     : 'ContainerWidth não disponível (0), usando valor padrão (800px). DynamicResize vai re-renderizar com dimensões corretas.',
