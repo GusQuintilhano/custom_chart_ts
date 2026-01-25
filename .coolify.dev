@@ -1,0 +1,32 @@
+# Configuração do Coolify para DESENVOLVIMENTO
+
+# Tipo de aplicação
+type=docker
+
+# Dockerfile específico para desenvolvimento
+dockerfile=Dockerfile.dev
+
+# Porta que a aplicação usa internamente
+port=3000
+
+# Variáveis de ambiente para desenvolvimento
+environment_variables=NODE_ENV=development,ANALYTICS_ENABLED=true,ANALYTICS_STORAGE_TYPE=file,DEBUG=*,LOG_LEVEL=debug
+
+# Health check endpoint
+health_check_path=/health
+
+# Branch para desenvolvimento
+branch=develop
+
+# Domínio para desenvolvimento
+# domain=dev-charts.seudominio.com
+
+# SSL automático
+ssl=true
+
+# Restart policy
+restart_policy=unless-stopped
+
+# Recursos para desenvolvimento (menores)
+memory_limit=512m
+cpu_limit=0.5

@@ -1,34 +1,45 @@
-# Docker Compose para ambiente de desenvolvimento local
-# Útil para testar charts em ambiente isolado
+# Docker Compose para Custom Charts SDK
+# Compatível com Coolify e desenvolvimento local
 
 version: '3.8'
 
 services:
-  dev-server:
+  custom-charts:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: muze-dev-server
+    container_name: custom-charts-app
     ports:
-      - "8080:8080"
-    volumes:
-      - .:/app
-      - /app/node_modules
+      - "${PORT:-3000}:3000"
     environment:
-      - NODE_ENV=development
-      - PORT=8080
-    command: npm run serve
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - ANALYTICS_ENABLED=${ANALYTICS_ENABLED:-true}
+      - ANALYTICS_STORAGE_TYPE=${ANALYTICS_STORAGE_TYPE:-file}
+      - ANALYTICS_LOG_PATH=/app/logs/analytics.jsonl
+    volumes:
+      # Volume para logs persistentes
+      - logs_data:/app/logs
     networks:
-      - muze-network
+      - charts-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    labels:
+      # Labels para Coolify
+      - "coolify.managed=true"
+      - "coolify.version=1.0.0"
+      - "coolify.type=application"
+
+volumes:
+  logs_data:
+    driver: local
 
 networks:
-  muze-network:
+  charts-network:
     driver: bridge
 
