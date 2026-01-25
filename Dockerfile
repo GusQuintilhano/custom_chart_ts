@@ -12,9 +12,9 @@ COPY . .
 # Instalar dependências apenas do charts-router
 RUN cd charts-router && npm install --only=production
 
-# Criar servidor mínimo sempre (mais confiável)
+# Criar servidor mínimo usando ES modules (compatível com "type": "module")
 RUN mkdir -p charts-router/dist && \
-    echo 'const express = require("express");' > charts-router/dist/server.js && \
+    echo 'import express from "express";' > charts-router/dist/server.js && \
     echo 'const app = express();' >> charts-router/dist/server.js && \
     echo 'app.get("/health", (req, res) => res.json({status: "ok", timestamp: new Date().toISOString()}));' >> charts-router/dist/server.js && \
     echo 'app.get("/", (req, res) => res.json({message: "Charts Router", status: "running"}));' >> charts-router/dist/server.js && \
