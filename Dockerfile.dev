@@ -1,27 +1,27 @@
-# Dockerfile para ambiente de desenvolvimento
-# Inclui hot reload e ferramentas de debug
+# Dockerfile para ambiente de desenvolvimento - Coolify
+# Versão simplificada e robusta
 
 FROM node:18-alpine
 
-# Instalar ferramentas de desenvolvimento
+# Instalar ferramentas necessárias
 RUN apk add --no-cache git curl
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY charts-router/package*.json ./charts-router/
-COPY trellis-chart/package*.json ./trellis-chart/
-COPY boxplot-chart/package*.json ./boxplot-chart/
-COPY shared/package*.json ./shared/
-
-# Instalar dependências incluindo devDependencies
-RUN cd shared && npm install && \
-    cd ../charts-router && npm install && \
-    cd ../trellis-chart && npm install && \
-    cd ../boxplot-chart && npm install
-
-# Copiar código fonte
+# Copiar todos os arquivos primeiro
 COPY . .
+
+# Instalar dependências em todos os diretórios
+# Usar npm install para garantir compatibilidade
+RUN cd shared && npm install --production=false && \
+    cd ../charts-router && npm install --production=false && \
+    cd ../trellis-chart && npm install --production=false && \
+    cd ../boxplot-chart && npm install --production=false
+
+# Build de todos os projetos
+RUN cd charts-router && npm run build && \
+    cd ../trellis-chart && npm run build && \
+    cd ../boxplot-chart && npm run build
 
 # Criar diretório de logs
 RUN mkdir -p /app/logs && chmod 777 /app/logs
@@ -36,5 +36,9 @@ ENV ANALYTICS_LOG_PATH=/app/logs/analytics-dev.jsonl
 # Expor porta
 EXPOSE 3000
 
-# Comando para desenvolvimento com hot reload
-CMD ["sh", "-c", "cd charts-router && npm run build && npm run dev"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Comando para iniciar a aplicação
+CMD ["node", "charts-router/dist/server.js"]

@@ -13,10 +13,11 @@ COPY boxplot-chart/package*.json ./boxplot-chart/
 COPY shared/package*.json ./shared/
 
 # Instalar dependências
-RUN cd shared && npm ci --only=production && \
-    cd ../charts-router && npm ci && \
-    cd ../trellis-chart && npm ci && \
-    cd ../boxplot-chart && npm ci
+# Usar npm install para diretórios sem package-lock.json
+RUN cd shared && npm install && \
+    cd ../charts-router && (npm ci 2>/dev/null || npm install) && \
+    cd ../trellis-chart && (npm ci 2>/dev/null || npm install) && \
+    cd ../boxplot-chart && npm install
 
 # Copiar código fonte
 COPY charts-router/ ./charts-router/
