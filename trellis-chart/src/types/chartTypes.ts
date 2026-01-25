@@ -115,7 +115,7 @@ export interface MeasureConfig {
     valuePrefix?: string; // Prefixo antes do valor (ex: "R$", "Total:")
     valueSuffix?: string; // Sufixo depois do valor (ex: "%", "un")
     showZeroValues?: boolean; // Mostrar valores zero
-    valueFormat?: 'normal' | 'compacto'; // Formato: normal ou compacto (1.5K, 1.2M)
+    valueFormat?: 'normal' | 'compacto' | 'rotacionado'; // Formato: normal, compacto (1.5K, 1.2M) ou rotacionado
     referenceLine?: {
         enabled: boolean;
         value: number;

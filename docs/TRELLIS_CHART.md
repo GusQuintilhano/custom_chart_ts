@@ -1,4 +1,4 @@
-# Trellis Chart - Documentação Completa
+ quando # Trellis Chart - Documentação Completa
 
 O **Trellis Chart** é um gráfico customizado desenvolvido para o ThoughtSpot que permite visualizar múltiplas medidas simultaneamente em formato "crosschart" (trellis), onde cada medida é exibida em sua própria seção com eixos compartilhados.
 

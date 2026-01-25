@@ -37,6 +37,13 @@ Utilitários e funções comuns estão em `shared/`:
 
 ## 📚 Documentação
 
+### Documentação dos Charts
+
+- **Trellis Chart**: [`docs/TRELLIS_CHART.md`](./docs/TRELLIS_CHART.md) - Documentação completa do Trellis Chart
+- **Boxplot Chart**: [`docs/BOXPLOT.md`](./docs/BOXPLOT.md) - Documentação completa do Boxplot Chart
+
+### Documentação do SDK
+
 Documentação completa disponível em [`docs/sdk/`](./docs/sdk/):
 - **Aprendizados**: [`docs/sdk/aprendizados/`](./docs/sdk/aprendizados/)
 - **Guias**: [`docs/sdk/guias/`](./docs/sdk/guias/)
@@ -384,3 +391,209 @@ O sistema é composto por:
 ## 📄 Licença
 
 Veja [LICENSE](./LICENSE) para mais detalhes.
+
+## 🚀 Deploy com Coolify - Desenvolvimento e Produção
+
+Este projeto está preparado para deploy automático com Coolify em múltiplos ambientes.
+
+### Pré-requisitos
+
+- Servidor VPS com Coolify instalado
+- Repositório Git (GitHub, GitLab, etc.)
+- Domínios configurados (opcional)
+
+### Estrutura de Ambientes
+
+#### 🔧 Desenvolvimento
+- **Branch**: `develop`
+- **Dockerfile**: `Dockerfile.dev`
+- **Domínio**: `dev-charts.seudominio.com`
+- **Recursos**: 512MB RAM, 0.5 CPU
+- **Features**: Hot reload, debug logs, CORS permissivo
+
+#### 🏭 Produção
+- **Branch**: `main`
+- **Dockerfile**: `Dockerfile`
+- **Domínio**: `charts.seudominio.com`
+- **Recursos**: 1GB RAM, 1.0 CPU
+- **Features**: Otimizado, logs mínimos, segurança
+
+### Configuração no Coolify
+
+#### 1. Ambiente de Desenvolvimento
+
+**Criar Projeto:**
+- Nome: `custom-charts-dev`
+- Repositório: Seu repositório Git
+- Branch: `develop`
+- Dockerfile: `Dockerfile.dev`
+
+**Variáveis de Ambiente:**
+```bash
+NODE_ENV=development
+ANALYTICS_ENABLED=true
+ANALYTICS_STORAGE_TYPE=file
+DEBUG=*
+LOG_LEVEL=debug
+```
+
+**Configurações:**
+- Porta: 3000
+- Health Check: `/health`
+- SSL: Automático
+- Domínio: `dev-charts.seudominio.com`
+
+#### 2. Ambiente de Produção
+
+**Criar Projeto:**
+- Nome: `custom-charts-prod`
+- Repositório: Seu repositório Git
+- Branch: `main`
+- Dockerfile: `Dockerfile`
+
+**Variáveis de Ambiente:**
+```bash
+NODE_ENV=production
+ANALYTICS_ENABLED=true
+ANALYTICS_STORAGE_TYPE=file
+LOG_LEVEL=info
+```
+
+**Configurações:**
+- Porta: 3000
+- Health Check: `/health`
+- SSL: Automático
+- Domínio: `charts.seudominio.com`
+
+### Deploy Automático
+
+#### Fluxo de Desenvolvimento
+1. **Desenvolvimento**: Push para `develop` → Deploy automático em dev
+2. **Teste**: Testar em `dev-charts.seudominio.com`
+3. **Produção**: Merge para `main` → Deploy automático em prod
+
+#### Comandos de Deploy Local
+
+```bash
+# Testar ambiente de desenvolvimento
+./deploy.sh dev
+
+# Testar ambiente de produção
+./deploy.sh prod
+
+# Testar ambos ambientes
+./deploy.sh both
+
+# Apenas testar builds (sem deploy)
+./deploy.sh test
+```
+
+### Estrutura de Deploy
+
+```
+Desenvolvimento (/app/):
+├── charts-router/src/      # Código fonte (hot reload)
+├── trellis-chart/src/      # Código fonte (hot reload)
+├── boxplot-chart/src/      # Código fonte (hot reload)
+├── shared/                 # Utilitários compartilhados
+└── logs/                   # analytics-dev.jsonl
+
+Produção (/app/):
+├── charts-router/dist/     # Código compilado
+├── trellis-chart/dist/     # Código compilado
+├── boxplot-chart/dist/     # Código compilado
+├── shared/                 # Utilitários compartilhados
+└── logs/                   # analytics-prod.jsonl
+```
+
+### Endpoints por Ambiente
+
+#### Desenvolvimento
+- **Health Check**: `https://dev-charts.seudominio.com/health`
+- **Trellis Chart**: `https://dev-charts.seudominio.com/trellis`
+- **Boxplot Chart**: `https://dev-charts.seudominio.com/boxplot`
+- **Analytics API**: `https://dev-charts.seudominio.com/api/analytics`
+
+#### Produção
+- **Health Check**: `https://charts.seudominio.com/health`
+- **Trellis Chart**: `https://charts.seudominio.com/trellis`
+- **Boxplot Chart**: `https://charts.seudominio.com/boxplot`
+- **Analytics API**: `https://charts.seudominio.com/api/analytics`
+
+### Monitoramento
+
+O Coolify fornece para cada ambiente:
+- Logs em tempo real separados
+- Métricas de CPU/RAM individuais
+- Status da aplicação por ambiente
+- SSL automático para cada domínio
+- Backup automático separado
+
+### Diferenças entre Ambientes
+
+| Feature | Desenvolvimento | Produção |
+|---------|----------------|----------|
+| Hot Reload | ✅ Sim | ❌ Não |
+| Debug Logs | ✅ Verbose | ⚠️ Mínimo |
+| CORS | ✅ Permissivo | 🔒 Restrito |
+| Rate Limiting | ✅ Relaxado | 🔒 Rigoroso |
+| Recursos | 512MB/0.5CPU | 1GB/1.0CPU |
+| SSL | ✅ Auto | ✅ Auto |
+| Analytics | ✅ Separado | ✅ Separado |
+
+### Troubleshooting
+
+#### Build falha em desenvolvimento
+```bash
+# Testar localmente
+./deploy.sh dev
+# Verificar logs no Coolify
+# Verificar se branch develop existe
+```
+
+#### Build falha em produção
+```bash
+# Testar localmente
+./deploy.sh prod
+# Verificar se código está otimizado
+# Verificar variáveis de ambiente
+```
+
+#### Aplicação não inicia
+- Verificar logs específicos do ambiente no Coolify
+- Verificar variáveis de ambiente corretas
+- Verificar health check endpoint
+- Verificar recursos disponíveis
+
+#### Charts não carregam
+- Verificar se build foi concluído
+- Verificar paths dos assets por ambiente
+- Verificar logs do servidor específico
+- Testar endpoints individualmente
+
+### Deploy Manual (Alternativo)
+
+#### Desenvolvimento
+```bash
+git checkout develop
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+#### Produção
+```bash
+git checkout main
+docker-compose up -d
+```
+
+### Configuração de Branches
+
+Para configurar o fluxo de branches:
+
+```bash
+# Criar branch de desenvolvimento
+git checkout -b develop
+git push -u origin develop
+
+# Configurar proteção da branch main
+# (no GitHub/GitLab - require PR/MR)
+```

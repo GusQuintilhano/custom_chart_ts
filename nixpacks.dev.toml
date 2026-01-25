@@ -1,0 +1,28 @@
+# Configuração do Nixpacks para DESENVOLVIMENTO
+
+[variables]
+NODE_ENV = "development"
+PORT = "3000"
+DEBUG = "*"
+LOG_LEVEL = "debug"
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = [
+    "cd charts-router && npm install",
+    "cd ../trellis-chart && npm install", 
+    "cd ../boxplot-chart && npm install",
+    "cd ../shared && npm install"
+]
+
+[phases.build]
+cmds = [
+    "cd charts-router && npm run build",
+    "cd ../trellis-chart && npm run build",
+    "cd ../boxplot-chart && npm run build"
+]
+
+[start]
+cmd = "cd charts-router && npm run dev"

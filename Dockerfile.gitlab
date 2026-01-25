@@ -33,6 +33,13 @@ COPY trellis-chart/ ./trellis-chart/
 COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
+# Copiar start.js também
+COPY charts-router/start.js ./charts-router/start.js
+
+# Garantir que os scripts têm permissão de execução (no stage de build que tem shell)
+RUN chmod +x charts-router/start.sh && \
+    chmod +x charts-router/start.js
+
 # Build de todos os projetos em um único comando
 # Verificar se o build foi bem-sucedido (aceitar qualquer localização de server.js)
 RUN cd charts-router && npm run build && \
@@ -40,16 +47,41 @@ RUN cd charts-router && npm run build && \
     cd ../trellis-chart && npm run build && \
     cd ../boxplot-chart && npm run build
 
+# Criar diretório de logs no stage de build
+# Será copiado para o stage de produção
+RUN mkdir -p /app/app/logs && chmod 777 /app/app/logs
+
 # Stage 2: Production stage
 FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge AS production
 
 # Copiar apenas os arquivos necessários do stage de build
+# O start.sh já tem permissão de execução do stage de build
 COPY --from=dist /app /app/app
+
+# Copiar os scripts explicitamente para garantir que estão no lugar certo
+COPY --from=dist /app/charts-router/start.sh /app/app/charts-router/start.sh
+COPY --from=dist /app/charts-router/start.js /app/app/charts-router/start.js
+
+# Copiar diretório de logs criado no stage de build
+# Isso garante que o diretório existe com as permissões corretas
+COPY --from=dist /app/app/logs /app/app/logs
+
+# Adicionar arquivo de permissões para o diretório de logs
+# A golden image usa arquivos em /.permissions/ para configurar permissões
+ADD 01-permissions-logs.yaml /.permissions/01-permissions-logs.yaml
 
 EXPOSE 8080
 
-# Usar script de entrada que encontra server.js em qualquer localização
-# O script já está incluído na cópia acima, apenas garantir permissão
-RUN chmod +x /app/app/charts-router/start.sh
+# Configurar porta via variável de ambiente (o servidor usa PORT ou default 3000)
+ENV PORT=8080
 
-ENTRYPOINT [ "/executor", "/app/app/charts-router/start.sh" ]
+# Configurar caminho dos logs para local com permissões adequadas
+ENV ANALYTICS_LOG_PATH=/app/app/logs/analytics.jsonl
+
+# O executor da golden image executa comandos diretamente
+# Baseado na documentação: docker run -it node18 "node --version"
+# O executor aceita comandos como string única
+# Mudando o diretório de trabalho para que os imports relativos funcionem
+WORKDIR /app/app/charts-router/dist/charts-router/src
+ENTRYPOINT [ "/executor" ]
+CMD [ "node server.js" ]

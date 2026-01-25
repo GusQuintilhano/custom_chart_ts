@@ -170,7 +170,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         // Rastrear uso e configurações
         const { visualProps } = chartModel;
         const allVisualProps = visualProps as Record<string, unknown>;
-        
+
         // Setup de opções primeiro para ter acesso às configurações
         const options = setupChartOptions(
             allVisualProps,
@@ -483,7 +483,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
     // Adicionar event listeners para rastrear interações do usuário
     setupInteractionTracking(chartElement, userId);
 
-    // Finalizar monitoramento e rastrear performance
+        // Finalizar monitoramento e rastrear performance
         const perfEvent = performanceMonitor.endRender(sessionId);
         if (perfEvent) {
             perfEvent.chartType = 'trellis';

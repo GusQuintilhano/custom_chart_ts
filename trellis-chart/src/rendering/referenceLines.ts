@@ -127,12 +127,14 @@ export function renderReferenceLines(params: RenderReferenceLinesParams): string
             const valuePrefix = measureConfig.valuePrefix || '';
             const valueSuffix = measureConfig.valueSuffix || '';
 
+            // Para rotação, usar 'normal' no formatValue (reference lines não rotacionam)
+            const formatValueForFormatting = valueFormat === 'rotacionado' ? 'normal' : valueFormat;
             const formattedValue = formatValue(
                 referenceLine.value,
                 format,
                 decimals,
                 useThousandsSeparator,
-                valueFormat,
+                formatValueForFormatting as 'normal' | 'compacto',
                 valuePrefix,
                 valueSuffix,
                 true
