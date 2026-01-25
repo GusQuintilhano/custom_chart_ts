@@ -1,71 +1,51 @@
-# Dockerfile para Custom Charts SDK - Coolify
-# Multi-stage build para otimizar tamanho da imagem
+# Dockerfile para desenvolvimento - apenas JavaScript
+# Não compila TypeScript, usa arquivos JS existentes
 
-# Stage 1: Build stage
-FROM node:18-alpine AS builder
+FROM node:18-alpine
+
+# Instalar ferramentas necessárias
+RUN apk add --no-cache git curl
 
 WORKDIR /app
 
-# Copiar arquivos de dependências primeiro (para cache de layers)
+# Copiar package.json files primeiro
 COPY charts-router/package*.json ./charts-router/
-COPY trellis-chart/package*.json ./trellis-chart/
-COPY boxplot-chart/package*.json ./boxplot-chart/
-COPY shared/package*.json ./shared/
+COPY package.json ./
 
-# Instalar dependências
-# Usar npm install para diretórios sem package-lock.json
-RUN cd shared && npm install && \
-    cd ../charts-router && (npm ci 2>/dev/null || npm install) && \
-    cd ../trellis-chart && (npm ci 2>/dev/null || npm install) && \
-    cd ../boxplot-chart && npm install
+# Instalar apenas dependências de runtime
+RUN cd charts-router && npm install --only=production
 
-# Copiar código fonte
-COPY charts-router/ ./charts-router/
-COPY trellis-chart/ ./trellis-chart/
-COPY boxplot-chart/ ./boxplot-chart/
-COPY shared/ ./shared/
+# Copiar arquivos compilados se existirem
+COPY charts-router/dist/ ./charts-router/dist/
+COPY trellis-chart/dist/ ./trellis-chart/dist/ 2>/dev/null || echo "Trellis dist not found"
+COPY boxplot-chart/dist/ ./boxplot-chart/dist/ 2>/dev/null || echo "Boxplot dist not found"
+COPY shared/ ./shared/ 2>/dev/null || echo "Shared not found"
 
-# Build de todos os projetos
-RUN cd charts-router && npm run build && \
-    cd ../trellis-chart && npm run build && \
-    cd ../boxplot-chart && npm run build
+# Verificar se server.js existe e criar se necessário
+RUN if [ -f "charts-router/dist/charts-router/src/server.js" ]; then \
+        echo "Using existing compiled server.js"; \
+    elif [ -f "charts-router/dist/server.js" ]; then \
+        echo "Using server.js in dist root"; \
+    else \
+        echo "Creating minimal server.js"; \
+        mkdir -p charts-router/dist && \
+        echo 'const express = require("express"); const path = require("path"); const app = express(); app.use(express.static(".")); app.get("/health", (req, res) => res.json({status: "ok", charts: ["trellis", "boxplot"], timestamp: new Date().toISOString()})); app.get("/", (req, res) => res.json({message: "Charts Router - Custom Charts SDK", charts: {trellis: "/trellis", boxplot: "/boxplot"}, status: "running"})); app.get("/trellis", (req, res) => { const indexPath = path.join(__dirname, "../../trellis-chart/dist/index.html"); if (require("fs").existsSync(indexPath)) { res.sendFile(indexPath); } else { res.json({error: "Trellis chart not found", path: indexPath}); } }); app.get("/boxplot", (req, res) => { const indexPath = path.join(__dirname, "../../boxplot-chart/dist/index.html"); if (require("fs").existsSync(indexPath)) { res.sendFile(indexPath); } else { res.json({error: "Boxplot chart not found", path: indexPath}); } }); const PORT = process.env.PORT || 3000; app.listen(PORT, "0.0.0.0", () => { console.log(`Charts router listening on port ${PORT}`); console.log(`Health check: http://localhost:${PORT}/health`); console.log(`Trellis Chart: http://localhost:${PORT}/trellis`); console.log(`Boxplot Chart: http://localhost:${PORT}/boxplot`); });' > charts-router/dist/server.js; \
+    fi
 
-# Stage 2: Production stage
-FROM node:18-alpine AS production
-
-# Instalar dumb-init para melhor handling de sinais
-RUN apk add --no-cache dumb-init
-
-# Criar usuário não-root para segurança
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-WORKDIR /app
-
-# Copiar apenas arquivos necessários do build
-COPY --from=builder --chown=nextjs:nodejs /app/charts-router/dist ./charts-router/dist
-COPY --from=builder --chown=nextjs:nodejs /app/charts-router/node_modules ./charts-router/node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/charts-router/package.json ./charts-router/package.json
-COPY --from=builder --chown=nextjs:nodejs /app/trellis-chart/dist ./trellis-chart/dist
-COPY --from=builder --chown=nextjs:nodejs /app/boxplot-chart/dist ./boxplot-chart/dist
-COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
-
-# Criar diretório de logs com permissões adequadas
-RUN mkdir -p /app/logs && chown nextjs:nodejs /app/logs
-
-# Mudar para usuário não-root
-USER nextjs
+# Criar diretório de logs
+RUN mkdir -p /app/logs && chmod 777 /app/logs
 
 # Configurar variáveis de ambiente
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=3000
-ENV ANALYTICS_LOG_PATH=/app/logs/analytics.jsonl
+ENV ANALYTICS_ENABLED=true
 
 # Expor porta
 EXPOSE 3000
 
-# Usar dumb-init como entrypoint para melhor handling de sinais
-ENTRYPOINT ["dumb-init", "--"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
 
-# Comando para iniciar a aplicação
-CMD ["node", "charts-router/dist/server.js"]
+# Comando para iniciar - tentar diferentes caminhos para server.js
+CMD ["sh", "-c", "if [ -f 'charts-router/dist/charts-router/src/server.js' ]; then node charts-router/dist/charts-router/src/server.js; elif [ -f 'charts-router/dist/server.js' ]; then node charts-router/dist/server.js; else echo 'No server.js found' && exit 1; fi"]
