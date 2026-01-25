@@ -1,0 +1,54 @@
+# Docker Compose para ambiente de desenvolvimento
+# Inclui volumes para hot reload e debug
+
+version: '3.8'
+
+services:
+  custom-charts-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: custom-charts-dev
+    ports:
+      - "${DEV_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - ANALYTICS_ENABLED=true
+      - ANALYTICS_STORAGE_TYPE=file
+      - ANALYTICS_LOG_PATH=/app/logs/analytics-dev.jsonl
+      - DEBUG=*
+    volumes:
+      # Volume para hot reload (código fonte)
+      - ./charts-router/src:/app/charts-router/src
+      - ./trellis-chart/src:/app/trellis-chart/src
+      - ./boxplot-chart/src:/app/boxplot-chart/src
+      - ./shared:/app/shared
+      # Volume para logs persistentes
+      - dev_logs:/app/logs
+      # Excluir node_modules do volume para evitar conflitos
+      - /app/charts-router/node_modules
+      - /app/trellis-chart/node_modules
+      - /app/boxplot-chart/node_modules
+      - /app/shared/node_modules
+    networks:
+      - charts-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "coolify.managed=true"
+      - "coolify.environment=development"
+      - "coolify.version=1.0.0-dev"
+
+volumes:
+  dev_logs:
+    driver: local
+
+networks:
+  charts-dev-network:
+    driver: bridge

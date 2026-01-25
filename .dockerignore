@@ -1,52 +1,60 @@
-# Dependências
+# Arquivos e diretórios a serem ignorados no build Docker
+
+# Node modules (serão instalados no container)
 node_modules/
+*/node_modules/
+
+# Arquivos de desenvolvimento
+.git/
+.gitignore
+*.md
+README.md
+CHANGELOG.md
+
+# Arquivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Build artifacts
-dist/
-*.zip
-
-# Logs
-*.log
-logs/
-*.jsonl
-
-# Sistema operacional
+# Arquivos temporários
+.tmp/
+.cache/
 .DS_Store
 Thumbs.db
 
-# Git
-.git/
-.gitignore
-
-# IDEs
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Arquivos de ambiente
-.env
-.env.local
-.env.*.local
-
-# Documentação e testes
-docs/
-*.md
-!README.md
+# Arquivos de teste
 test/
 tests/
+*.test.js
 *.test.ts
+*.spec.js
 *.spec.ts
+coverage/
 
-# Temporários
-*.temp
-.cache/
-tmp/
-temp/
+# Arquivos de CI/CD específicos (manter apenas os necessários)
+.gitlab-ci.yml
+.github/
 
-# Backup
-*.backup-*
-*backup*/
+# Arquivos de configuração local
+.env.local
+.env.development
+.env.test
+
+# Arquivos de build locais (serão recriados no container)
+dist/
+build/
+
+# Arquivos específicos do projeto
+docs/
+scripts/
+*.tgz
+*.tar.gz

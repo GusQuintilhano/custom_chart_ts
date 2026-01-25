@@ -1,0 +1,9 @@
+# File containing additional permissions for logs directory
+- rootDir: "/app"
+  relativePaths:
+    # Allow write access to logs directory
+    - path: "/app/logs"
+      action: enforce
+      uid: 1000
+      gid: 1000
+      mode: 0770

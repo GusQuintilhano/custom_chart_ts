@@ -1,0 +1,40 @@
+# Dockerfile para ambiente de desenvolvimento
+# Inclui hot reload e ferramentas de debug
+
+FROM node:18-alpine
+
+# Instalar ferramentas de desenvolvimento
+RUN apk add --no-cache git curl
+
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY charts-router/package*.json ./charts-router/
+COPY trellis-chart/package*.json ./trellis-chart/
+COPY boxplot-chart/package*.json ./boxplot-chart/
+COPY shared/package*.json ./shared/
+
+# Instalar dependências incluindo devDependencies
+RUN cd shared && npm install && \
+    cd ../charts-router && npm install && \
+    cd ../trellis-chart && npm install && \
+    cd ../boxplot-chart && npm install
+
+# Copiar código fonte
+COPY . .
+
+# Criar diretório de logs
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
+# Configurar variáveis de ambiente para desenvolvimento
+ENV NODE_ENV=development
+ENV PORT=3000
+ENV ANALYTICS_ENABLED=true
+ENV ANALYTICS_STORAGE_TYPE=file
+ENV ANALYTICS_LOG_PATH=/app/logs/analytics-dev.jsonl
+
+# Expor porta
+EXPOSE 3000
+
+# Comando para desenvolvimento com hot reload
+CMD ["sh", "-c", "cd charts-router && npm run build && npm run dev"]
