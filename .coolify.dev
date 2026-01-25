@@ -3,14 +3,14 @@
 # Tipo de aplicação
 type=docker
 
-# Dockerfile específico para desenvolvimento
-dockerfile=Dockerfile.dev
+# Dockerfile específico para desenvolvimento (sem build TypeScript)
+dockerfile=Dockerfile.js
 
 # Porta que a aplicação usa internamente
 port=3000
 
 # Variáveis de ambiente para desenvolvimento
-environment_variables=NODE_ENV=development,ANALYTICS_ENABLED=true,ANALYTICS_STORAGE_TYPE=file,DEBUG=*,LOG_LEVEL=debug
+environment_variables=NODE_ENV=development,ANALYTICS_ENABLED=true,PORT=3000
 
 # Health check endpoint
 health_check_path=/health
