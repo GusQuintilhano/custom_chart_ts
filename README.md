@@ -384,3 +384,4 @@ O sistema é composto por:
 ## 📄 Licença
 
 Veja [LICENSE](./LICENSE) para mais detalhes.
+# Pipeline test
