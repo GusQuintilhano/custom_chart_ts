@@ -39,6 +39,9 @@ FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edg
 # Copy built application
 COPY --from=build /app /app
 
+# Set execute permissions for server.js
+RUN chmod +x /app/charts-router/dist/charts-router/src/server.js
+
 # Set working directory
 WORKDIR /app/charts-router
 
