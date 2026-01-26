@@ -1,0 +1,32 @@
+# Dockerfile simples para desenvolvimento - sem build TypeScript
+# Serve arquivos estáticos diretamente
+
+FROM node:18-alpine
+
+# Instalar ferramentas necessárias
+RUN apk add --no-cache git curl
+
+WORKDIR /app
+
+# Copiar todos os arquivos
+COPY . .
+
+# Instalar apenas dependências de runtime necessárias
+RUN npm install -g http-server
+
+# Criar diretório de logs
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
+# Configurar variáveis de ambiente
+ENV NODE_ENV=development
+ENV PORT=3000
+
+# Expor porta
+EXPOSE 3000
+
+# Health check simples
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Servir arquivos estáticos com http-server
+CMD ["http-server", ".", "-p", "3000", "-c-1", "--cors"]
