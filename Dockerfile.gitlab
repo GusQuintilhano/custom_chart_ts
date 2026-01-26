@@ -31,11 +31,7 @@ RUN cd charts-router && \
      mkdir -p dist && \
      echo 'import express from "express"; const app = express(); app.get("/health", (req, res) => res.json({status: "ok", timestamp: new Date().toISOString()})); app.get("/", (req, res) => res.json({message: "Charts Router", status: "running"})); const PORT = process.env.PORT || 8080; app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));' > dist/server.js)) && \
     cd ../trellis-chart && (npm run build || echo "Trellis build falhou, continuando...") && \
-    cd ../boxplot-chart && (npm run build || echo "Boxplot build falhou, continuando...") && \
-    # Create executable wrapper script
-    echo '#!/usr/bin/env node' > /app/charts-router/server && \
-    cat /app/charts-router/dist/charts-router/src/server.js >> /app/charts-router/server && \
-    chmod +x /app/charts-router/server
+    cd ../boxplot-chart && (npm run build || echo "Boxplot build falhou, continuando...")
 
 # Production stage
 FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge
@@ -57,6 +53,6 @@ ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Start command
+# Start command - Use the golden image pattern
 ENTRYPOINT ["/executor"]
-CMD ["/app/charts-router/server"]
+CMD ["node", "/app/charts-router/dist/charts-router/src/server.js"]
