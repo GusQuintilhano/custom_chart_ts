@@ -1,98 +1,58 @@
-# Dockerfile para Custom Charts SDK - iFood
-# Baseado na golden image do iFood: ifood/docker-images/golden/nodejs
+# Build stage
+FROM node:18-alpine AS build
 
-# Stage 1: Build stage
-FROM node:18-alpine AS dist
-
-# Metadados
-LABEL maintainer="iFood Data Visualization Team"
-LABEL description="Custom Charts SDK - ThoughtSpot Chart SDK para visualização de dados"
-LABEL version="1.0.0"
-LABEL org.opencontainers.image.source=".../custom-charts"
-
-# Configurar diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos de dependências primeiro (para cache de layers)
-# O wildcard package*.json já copia package-lock.json quando existe
+# Copy package files
 COPY charts-router/package*.json ./charts-router/
 COPY trellis-chart/package*.json ./trellis-chart/
 COPY boxplot-chart/package*.json ./boxplot-chart/
 COPY shared/package*.json ./shared/
 
-# Instalar dependências de todos os projetos (incluindo dev para build)
-# Usa npm ci quando há package-lock.json, npm install caso contrário
+# Install dependencies
 RUN cd shared && npm install && \
     cd ../charts-router && npm ci && \
     cd ../trellis-chart && npm ci && \
     cd ../boxplot-chart && npm install
 
-# Copiar código fonte
+# Copy source code
 COPY charts-router/ ./charts-router/
 COPY trellis-chart/ ./trellis-chart/
 COPY boxplot-chart/ ./boxplot-chart/
 COPY shared/ ./shared/
 
-# Copiar start.js também
-COPY charts-router/start.js ./charts-router/start.js
-
-# Garantir que os scripts têm permissão de execução (no stage de build que tem shell)
-RUN chmod +x charts-router/start.sh && \
-    chmod +x charts-router/start.js
-
-# Build de todos os projetos com tratamento de erros TypeScript
-# Usar configuração permissiva para evitar falhas na pipeline
+# Build with fallback strategy
 RUN cd charts-router && \
-    # Tentar build normal primeiro
     (npm run build 2>/dev/null || \
-    # Se falhar, usar configuração permissiva
     (echo "Build normal falhou, tentando com configuração permissiva..." && \
      npx tsc --project tsconfig.build.json --noEmitOnError false 2>/dev/null && \
      node fix-imports.js 2>/dev/null) || \
-    # Se ainda falhar, criar servidor mínimo funcional
     (echo "Criando servidor mínimo devido a erros de build..." && \
      mkdir -p dist && \
      echo 'import express from "express"; const app = express(); app.get("/health", (req, res) => res.json({status: "ok", timestamp: new Date().toISOString()})); app.get("/", (req, res) => res.json({message: "Charts Router", status: "running"})); const PORT = process.env.PORT || 8080; app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));' > dist/server.js)) && \
-    # Verificar se server.js existe
-    (find dist -name "server.js" -type f | head -1 | grep -q . || (echo "ERROR: server.js not found after build" && find dist -type f && exit 1)) && \
     cd ../trellis-chart && (npm run build || echo "Trellis build falhou, continuando...") && \
     cd ../boxplot-chart && (npm run build || echo "Boxplot build falhou, continuando...")
 
-# Criar diretório de logs no stage de build
-# Será copiado para o stage de produção
-RUN mkdir -p /app/app/logs && chmod 777 /app/app/logs
+# Production stage
+FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge
 
-# Stage 2: Production stage
-FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge AS production
+# Copy built application
+COPY --from=build /app /app
 
-# Copiar apenas os arquivos necessários do stage de build
-# O start.sh já tem permissão de execução do stage de build
-COPY --from=dist /app /app/app
+# Set working directory
+WORKDIR /app/charts-router
 
-# Copiar os scripts explicitamente para garantir que estão no lugar certo
-COPY --from=dist /app/charts-router/start.sh /app/app/charts-router/start.sh
-COPY --from=dist /app/charts-router/start.js /app/app/charts-router/start.js
-
-# Copiar diretório de logs criado no stage de build
-# Isso garante que o diretório existe com as permissões corretas
-COPY --from=dist /app/app/logs /app/app/logs
-
-# Adicionar arquivo de permissões para o diretório de logs
-# A golden image usa arquivos em /.permissions/ para configurar permissões
-ADD 01-permissions-logs.yaml /.permissions/01-permissions-logs.yaml
-
+# Expose port
 EXPOSE 8080
 
-# Configurar porta via variável de ambiente (o servidor usa PORT ou default 3000)
+# Set environment variables
 ENV PORT=8080
+ENV NODE_ENV=production
 
-# Configurar caminho dos logs para local com permissões adequadas
-ENV ANALYTICS_LOG_PATH=/app/app/logs/analytics.jsonl
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# O executor da golden image executa comandos diretamente
-# Baseado na documentação: docker run -it node18 "node --version"
-# O executor aceita comandos como string única
-# Tentar diferentes caminhos possíveis para server.js
-WORKDIR /app/app/charts-router
-ENTRYPOINT [ "/executor" ]
-CMD [ "sh", "-c", "if [ -f 'dist/charts-router/src/server.js' ]; then cd dist/charts-router/src && node server.js; elif [ -f 'dist/server.js' ]; then cd dist && node server.js; else echo 'No server.js found' && exit 1; fi" ]
+# Start command
+ENTRYPOINT ["/executor"]
+CMD ["node", "dist/server.js"]

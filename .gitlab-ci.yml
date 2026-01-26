@@ -5,11 +5,7 @@ include:
     file: pipelines/ifood-security/main.yml
 
 variables:
-  FORCE_RELEASE: "true"
-  SEMANTIC_VERSION_FILE: ""
   SERVICE_NAME: dataviz-custom-charts
-  BUILD_MULTIARCH: 'false'
-  DEV_IMAGE_TAG: dev
   NODE_VERSION: "18"
 
 # Validação de estrutura e arquivos
@@ -55,7 +51,7 @@ build:
         file: pipelines/ifood-docker/main.yml
     strategy: depend
   variables:
-    CONTAINER_IMAGE_TAG: $DEV_IMAGE_TAG
+    CONTAINER_IMAGE_TAG: dev
     BUILD_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile.gitlab
   rules:
     - if: "$CI_MERGE_REQUEST_IID"
@@ -108,14 +104,3 @@ release-image:
       when: never
     - if: "$CI_COMMIT_TAG"
   allow_failure: false
-
-# Testes (quando implementados)
-# test:
-#   stage: test
-#   image: node:${NODE_VERSION}
-#   script:
-#     - echo "Executando testes..."
-#     - npm test || echo "Testes não implementados ainda"
-#   only:
-#     - main
-#     - merge_requests
