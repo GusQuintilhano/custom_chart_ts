@@ -32,10 +32,10 @@ RUN cd charts-router && \
      echo 'import express from "express"; const app = express(); app.get("/health", (req, res) => res.json({status: "ok", timestamp: new Date().toISOString()})); app.get("/", (req, res) => res.json({message: "Charts Router", status: "running"})); const PORT = process.env.PORT || 8080; app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));' > dist/server.js)) && \
     cd ../trellis-chart && (npm run build || echo "Trellis build falhou, continuando...") && \
     cd ../boxplot-chart && (npm run build || echo "Boxplot build falhou, continuando...") && \
-    # Create startup script for golden image executor
-    echo '#!/bin/sh' > /app/charts-router/start-server.sh && \
-    echo 'exec node dist/charts-router/src/server.js' >> /app/charts-router/start-server.sh && \
-    chmod +x /app/charts-router/start-server.sh
+    # Create executable wrapper script
+    echo '#!/usr/bin/env node' > /app/charts-router/server && \
+    cat /app/charts-router/dist/charts-router/src/server.js >> /app/charts-router/server && \
+    chmod +x /app/charts-router/server
 
 # Production stage
 FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge
@@ -59,4 +59,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start command
 ENTRYPOINT ["/executor"]
-CMD ["start-server.sh"]
+CMD ["/app/charts-router/server"]
