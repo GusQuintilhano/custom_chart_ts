@@ -36,8 +36,8 @@ RUN cd charts-router && \
 # Production stage
 FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge
 
-# Copy built application
-COPY --from=build /app /app
+# Copy built application with execute permissions
+COPY --from=build --chmod=755 /app /app
 
 # Set working directory
 WORKDIR /app/charts-router
@@ -55,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start command - Use the golden image pattern
 ENTRYPOINT ["/executor"]
-CMD ["node", "/app/charts-router/dist/charts-router/src/server.js"]
+CMD ["node", "/app/charts-router/dist/server.js"]
