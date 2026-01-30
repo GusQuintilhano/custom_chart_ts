@@ -1,0 +1,34 @@
+# Dockerfile para Custom Charts SDK - iFood
+# Baseado na golden image do iFood: ifood/docker-images/golden/nodejs
+
+# Usar golden image do iFood como base
+FROM node:18-alpine AS dist
+
+# Metadados
+LABEL maintainer="iFood Data Visualization Team"
+LABEL description="Custom Charts SDK - ThoughtSpot Chart SDK para visualização de dados"
+LABEL version="1.0.0"
+LABEL org.opencontainers.image.source=".../custom-charts"
+
+# Configurar diretório de trabalho
+WORKDIR /app
+
+# Instalar Go para compilar o servidor
+RUN apk add --no-cache go
+
+# Copiar código Go
+COPY server.go .
+
+# Compilar binário Go
+RUN go build -o charts-router server.go && \
+    chmod +x charts-router && \
+    ls -la charts-router
+
+# final image
+FROM registry.infra.ifood-prod.com.br/ifood/docker-images/golden/nodejs/18:1-edge AS production
+
+COPY --from=dist /app/charts-router /app/charts-router
+
+EXPOSE 8080
+
+ENTRYPOINT [ "/executor", "/app/charts-router" ]

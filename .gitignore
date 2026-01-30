@@ -45,6 +45,18 @@ src.backup*/
 # Arquivos de tracking local
 TASK.md
 
+# Arquivos de teste e debug (adicionado para evitar commits acidentais)
+test-*.sh
+*-test.sh
+build-and-test-*.sh
+diagnostico-*.md
+SOLUCOES_*.md
+Dockerfile.test*
+Dockerfile.working*
+Dockerfile.fixed*
+fix-*.sh
+temp-*/
+
 
 
 
