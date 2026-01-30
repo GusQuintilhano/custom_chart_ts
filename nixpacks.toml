@@ -1,0 +1,27 @@
+# Configuração do Nixpacks para Custom Charts SDK
+# Alternativa ao Dockerfile para deploy mais rápido
+
+[variables]
+NODE_ENV = "production"
+PORT = "3000"
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = [
+    "cd charts-router && npm ci",
+    "cd ../trellis-chart && npm ci", 
+    "cd ../boxplot-chart && npm ci",
+    "cd ../shared && npm ci"
+]
+
+[phases.build]
+cmds = [
+    "cd charts-router && npm run build",
+    "cd ../trellis-chart && npm run build",
+    "cd ../boxplot-chart && npm run build"
+]
+
+[start]
+cmd = "cd charts-router && node dist/server.js"
