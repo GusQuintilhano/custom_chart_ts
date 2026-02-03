@@ -33,7 +33,7 @@ test_build() {
     docker build -f $dockerfile -t custom-charts:$env .
 
     echo "🧪 Testando a imagem $env..."
-    docker run --rm -d --name custom-charts-test-$env -p $port:3000 custom-charts:$env
+    docker run --rm -d --name custom-charts-test-$env -p $port:8080 custom-charts:$env
 
     # Aguardar alguns segundos para o container iniciar
     sleep 15
@@ -76,7 +76,7 @@ fi
 case $ENVIRONMENT in
     "dev")
         echo "🔧 Preparando deploy para DESENVOLVIMENTO..."
-        test_build "development" "Dockerfile.dev" "3001"
+        test_build "development" "Dockerfile" "3001"
         ;;
     "prod")
         echo "🏭 Preparando deploy para PRODUÇÃO..."
@@ -84,12 +84,12 @@ case $ENVIRONMENT in
         ;;
     "both")
         echo "🔄 Preparando deploy para AMBOS ambientes..."
-        test_build "development" "Dockerfile.dev" "3001"
+        test_build "development" "Dockerfile" "3001"
         test_build "production" "Dockerfile" "3002"
         ;;
     "test")
         echo "🧪 Testando builds localmente..."
-        test_build "development" "Dockerfile.dev" "3001"
+        test_build "development" "Dockerfile" "3001"
         test_build "production" "Dockerfile" "3002"
         echo "✅ Todos os testes passaram!"
         exit 0
@@ -110,7 +110,7 @@ if [ "$ENVIRONMENT" = "dev" ] || [ "$ENVIRONMENT" = "both" ]; then
     echo ""
     echo "🔧 DESENVOLVIMENTO:"
     echo "  - Branch: develop"
-    echo "  - Dockerfile: Dockerfile.dev"
+    echo "  - Dockerfile: Dockerfile"
     echo "  - Domínio: dev-charts.seudominio.com"
     echo "  - Variáveis de ambiente:"
     echo "    NODE_ENV=development"

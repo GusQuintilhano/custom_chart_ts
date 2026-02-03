@@ -14,6 +14,9 @@ import type {
     InteractionType,
 } from '../types/analytics';
 
+const HEADER_CONTENT_TYPE = 'Content-Type';
+const CONTENT_TYPE_JSON = 'application/json';
+
 /**
  * Configuração do cliente de analytics
  */
@@ -191,7 +194,7 @@ class AnalyticsClient {
             const response = await fetch(this.config.endpoint, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    [HEADER_CONTENT_TYPE]: CONTENT_TYPE_JSON,
                 },
                 body: JSON.stringify({ events }),
             });

@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+const (
+	headerContentType = "Content-Type"
+	contentTypeJSON   = "application/json"
+)
+
 type HealthResponse struct {
 	Status    string   `json:"status"`
 	Charts    []string `json:"charts"`
@@ -28,48 +33,45 @@ type ChartResponse struct {
 	Message string `json:"message"`
 }
 
+func writeJSON(w http.ResponseWriter, v interface{}) {
+	w.Header().Set(headerContentType, contentTypeJSON)
+	json.NewEncoder(w).Encode(v)
+}
+
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	response := HealthResponse{
+	writeJSON(w, HealthResponse{
 		Status:    "ok",
 		Charts:    []string{"trellis", "boxplot"},
 		Timestamp: time.Now().Format(time.RFC3339),
 		Version:   "1.0.0",
-	}
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	response := RootResponse{
+	writeJSON(w, RootResponse{
 		Message: "Charts Router - ThoughtSpot Custom Charts",
 		Charts: map[string]string{
 			"trellis": "/trellis",
 			"boxplot": "/boxplot",
 		},
 		Status: "running",
-	}
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func trellisHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	response := ChartResponse{
+	writeJSON(w, ChartResponse{
 		Chart:   "trellis",
 		Status:  "available",
 		Message: "Trellis chart endpoint",
-	}
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func boxplotHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	response := ChartResponse{
+	writeJSON(w, ChartResponse{
 		Chart:   "boxplot",
 		Status:  "available",
 		Message: "Boxplot chart endpoint",
-	}
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func main() {

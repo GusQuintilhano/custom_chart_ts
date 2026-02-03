@@ -25,9 +25,10 @@ screenshots/*.tmp
 .env
 .env.local
 
-# IDEs
+# IDEs e editores
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 
@@ -42,12 +43,17 @@ src.backup*/
 
 # Arquivos de configuração de deploy (secrets devem estar em variáveis de ambiente)
 
+# Repo clonado da Golden Image (só referência local, não fazer commit)
+nodejs/
+
 # Arquivos de tracking local
 TASK.md
 
-# Arquivos de teste e debug (adicionado para evitar commits acidentais)
+# Arquivos de teste e debug (evitar commits acidentais)
 test-*.sh
+!scripts/test-gitlab-image.sh
 *-test.sh
+quick-test.sh
 build-and-test-*.sh
 diagnostico-*.md
 SOLUCOES_*.md
@@ -56,6 +62,9 @@ Dockerfile.working*
 Dockerfile.fixed*
 fix-*.sh
 temp-*/
+
+# Documentos não versionados (PDFs, golden image specs locais)
+*.pdf
 
 
 
