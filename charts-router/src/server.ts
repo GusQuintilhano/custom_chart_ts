@@ -60,4 +60,3 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Trellis Chart: http://localhost:${PORT}/trellis`);
     console.log(`Boxplot Chart: http://localhost:${PORT}/boxplot`);
 });
-

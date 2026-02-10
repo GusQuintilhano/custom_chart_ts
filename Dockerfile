@@ -1,5 +1,6 @@
 # Dockerfile para Custom Charts SDK - iFood (GitLab CI / Golden Image)
 # Doc: git clone https://code.ifoodcorp.com.br/ifood/docker-images/golden/nodejs.git
+ARG CI_REGISTRY=registry.infra.ifood-prod.com.br
 
 FROM node:18-alpine AS dist
 
@@ -18,8 +19,7 @@ RUN go build -o charts-router server.go && \
     chmod +x charts-router && \
     ls -la charts-router
 
-# Golden Image via CI_REGISTRY (gate compliant)
-ARG CI_REGISTRY
+# Golden Image via CI_REGISTRY (gate compliant); default for local builds
 FROM ${CI_REGISTRY}/ifood/docker-images/golden/nodejs/18:1-edge AS production
 
 COPY --from=dist /app/charts-router /app/charts-router

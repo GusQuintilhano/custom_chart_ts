@@ -1,31 +1,29 @@
 # Docker Compose - mesma imagem usada no GitLab (Go + Golden Image)
 # Build: docker-compose up --build | Run: docker-compose up -d
 
-version: '3.8'
-
 services:
-  dev-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        CI_REGISTRY: ${CI_REGISTRY:-registry.infra.ifood-prod.com.br}
-    container_name: muze-dev-server
-    ports:
-      - "8080:8080"
-    environment:
-      - PORT=8080
-    networks:
-      - muze-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    dev-server:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                CI_REGISTRY: ${CI_REGISTRY:-registry.infra.ifood-prod.com.br}
+        container_name: muze-dev-server
+        ports:
+            - "8080:8080"
+        environment:
+            - PORT=8080
+        networks:
+            - muze-network
+        restart: unless-stopped
+        healthcheck:
+            test:
+                ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
 
 networks:
-  muze-network:
-    driver: bridge
-
+    muze-network:
+        driver: bridge
