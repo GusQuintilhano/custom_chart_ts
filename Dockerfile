@@ -15,6 +15,8 @@ RUN apk add --no-cache go
 
 COPY server.go .
 
+# CGO_ENABLED=0 evita link com musl (Alpine); gera binário estático que roda na base glibc do Golden Image
+ENV CGO_ENABLED=0
 RUN go build -o charts-router server.go && \
     chmod +x charts-router && \
     ls -la charts-router
