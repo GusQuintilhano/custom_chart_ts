@@ -79,10 +79,7 @@ export const renderChart = async (ctx: CustomChartContext) => {
         const allVisualProps = chartModel.visualProps as Record<string, unknown>;
         const options = readBoxplotOptions(allVisualProps, measureColumn);
 
-        // Calcular dimensões
-        const containerWidth = chartElement.clientWidth || 800;
-        const containerHeight = chartElement.clientHeight || 600;
-
+        // Calcular dimensões (reutiliza containerWidth/containerHeight já declarados acima)
         const dimensions = calculateBoxplotDimensions(containerWidth, containerHeight, {
             showYAxis: options.showYAxis,
             labelFontSize: options.labelFontSize,
