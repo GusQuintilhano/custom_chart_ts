@@ -62,6 +62,28 @@ docker-compose exec dev-server bash  # Acessar shell do container
 - **Porta**: 8080
 - **Aplicação**: servidor Go (`/app/charts-router`), endpoints `/`, `/health`, `/trellis`, `/boxplot`
 
+## Teste local do binário estático (glibc)
+
+Para validar que o binário Go (build com `CGO_ENABLED=0`) roda em base glibc como no K8s, use o stage `test`, que usa Debian em vez da Golden Image:
+
+```bash
+# Build da imagem de teste (dist + debian:bookworm-slim)
+docker build --target test -t dataviz-custom-charts-test .
+
+# Rodar e testar
+docker run --rm -p 8080:8080 dataviz-custom-charts-test
+# Em outro terminal:
+curl -s http://localhost:8080/health
+```
+
+Ou use o script que faz build, sobe o container, chama `/health` e `/` e encerra:
+
+```bash
+./scripts/test-docker-local.sh
+```
+
+Se o health retornar JSON com `"status":"ok"`, o binário estático está funcionando em glibc; o mesmo binário rodará na Golden Image no K8s.
+
 ## Troubleshooting
 
 ### Porta já em uso

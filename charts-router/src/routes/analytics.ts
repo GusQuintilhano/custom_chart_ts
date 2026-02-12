@@ -23,24 +23,16 @@ router.post('/event', async (req: Request, res: Response) => {
             } as AnalyticsEventResponse);
         }
 
-        // Suporta tanto array de eventos quanto evento único
-        const events: AnalyticsEvent[] = req.body.events || [req.body.event].filter(Boolean);
+        // Normaliza e valida entrada: body.events (array) ou body.event (objeto único)
+        const raw = req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>).events ?? (req.body as Record<string, unknown>).event : undefined;
+        const rawArray = Array.isArray(raw) ? raw : raw != null ? [raw] : [];
+        const events: AnalyticsEvent[] = rawArray.filter((e): e is AnalyticsEvent => isValidEvent(e));
 
         if (events.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No events provided',
+                message: 'No events provided or invalid format (expected events[] or event)',
             } as AnalyticsEventResponse);
-        }
-
-        // Valida eventos
-        for (const event of events) {
-            if (!isValidEvent(event)) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Invalid event: ${JSON.stringify(event)}`,
-                } as AnalyticsEventResponse);
-            }
         }
 
         // Salva eventos
