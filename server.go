@@ -6,12 +6,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 )
 
 const (
 	headerContentType = "Content-Type"
 	contentTypeJSON   = "application/json"
+	// staticDir é o diretório no container com trellis e boxplot (builds); usado para servir o HTML do chart ao ThoughtSpot
+	staticDir = "/app/static"
 )
 
 type HealthResponse struct {
@@ -58,27 +61,28 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func trellisHandler(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, ChartResponse{
-		Chart:   "trellis",
-		Status:  "available",
-		Message: "Trellis chart endpoint",
-	})
-}
-
-func boxplotHandler(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, ChartResponse{
-		Chart:   "boxplot",
-		Status:  "available",
-		Message: "Boxplot chart endpoint",
-	})
+// serveChartIndex entrega o index.html do chart para que o ThoughtSpot carregue a aplicação do gráfico (iframe).
+func serveChartIndex(chartName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/"+chartName {
+			return
+		}
+		indexPath := filepath.Join(staticDir, chartName, "index.html")
+		http.ServeFile(w, r, indexPath)
+	}
 }
 
 func main() {
+	// Arquivos estáticos dos charts (HTML/JS/CSS) para o ThoughtSpot carregar o gráfico
+	trellisFS := http.Dir(filepath.Join(staticDir, "trellis"))
+	boxplotFS := http.Dir(filepath.Join(staticDir, "boxplot"))
+	http.Handle("/trellis/", http.StripPrefix("/trellis/", http.FileServer(trellisFS)))
+	http.Handle("/boxplot/", http.StripPrefix("/boxplot/", http.FileServer(boxplotFS)))
+	http.HandleFunc("/trellis", serveChartIndex("trellis"))
+	http.HandleFunc("/boxplot", serveChartIndex("boxplot"))
+
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/trellis", trellisHandler)
-	http.HandleFunc("/boxplot", boxplotHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
