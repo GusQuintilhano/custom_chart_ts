@@ -1,7 +1,7 @@
 {
   "name": "ifood-charts-sdk",
-  "version": "1.0.0",
-  "description": "Custom Charts desenvolvidos com ThoughtSpot Chart SDK para integração com ThoughtSpot",
+  "version": "0.1.1",
+  "description": "Custom Charts desenvolvidos com ThoughtSpot Chart SDK para integra\u00e7\u00e3o com ThoughtSpot",
   "scripts": {},
   "dependencies": {},
   "devDependencies": {},

@@ -1,3 +1,4 @@
+
 # Changelog
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
@@ -7,25 +8,25 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+_(Nenhuma alteração pendente.)_
+
+## [0.1.1] - 2026-02-12
+
 ### Adicionado
-- Estrutura completa do projeto reorganizada
-- Pastas `muze/` e `sdk/` para charts de produção
-- Pasta `dev/` para desenvolvimento e testes
-- Documentação completa em `docs/`
-- Scripts de empacotamento e validação
-- 7 Custom Charts desenvolvidos com Muze Studio
-- Trellis Chart SDK desenvolvido
+- Build dos charts (Trellis e Boxplot) na imagem Docker: `/trellis` e `/boxplot` passam a servir o HTML do gráfico para o ThoughtSpot carregar no iframe (em vez de JSON)
+- Stage de teste local no Dockerfile (`docker build --target test`) para validar binário estático e chart HTML em base glibc
+- Documentação do teste local no DOCKER.md e script `scripts/test-docker-local.sh`
+- Override de dependência `axios` para `>=1.13.5` (trellis-chart e boxplot-chart) para atender ao gate de segurança Snyk SCA
+
+### Corrigido
+- Erro no K8s ao subir o pod: `fork/exec /app/charts-router: no such file or directory` — binário Go passou a ser construído com `CGO_ENABLED=0` (estático), compatível com a Golden Image
+- Redeclaração de variáveis no boxplot-chart (`containerWidth`/`containerHeight`) que quebrava o build
 
 ### Mudado
-- Reorganização completa da estrutura de pastas
-- Charts movidos de `muze-tests/` para `dev/charts/`
-- Trellis Chart movido para `sdk/trellis-chart/`
-- Documentação consolidada e organizada por tecnologia
-
-### Documentação
-- README principal atualizado
-- READMEs criados em todas as pastas principais
-- Documentação técnica completa em `docs/`
+- Dockerfile: stage `go-build` para o binário; novo stage `charts-build` para compilar trellis-chart e boxplot-chart; cópia de `/app/static/trellis` e `/app/static/boxplot` na imagem final
+- server.go: rota `/trellis` e `/boxplot` servem arquivos estáticos (index.html e assets) a partir de `/app/static`
+- shared/package.json: adicionada dependência `@thoughtspot/ts-chart-sdk` para o build do trellis resolver os tipos
+- boxplot-chart: no Docker usa `npx vite build` (sem `tsc`) até correção completa dos tipos
 
 ## [0.1.0] - 2025-01-03
 
@@ -34,3 +35,6 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Estrutura base para desenvolvimento
 - Documentação inicial
 
+[Unreleased]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/compare/v0.1.1...HEAD
+[0.1.1]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.1
+[0.1.0]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.0

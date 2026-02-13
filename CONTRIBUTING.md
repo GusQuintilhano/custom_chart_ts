@@ -50,6 +50,25 @@ Obrigado por considerar contribuir para este projeto! Este documento fornece dir
 - Referencie issues relacionadas
 - Certifique-se de que os builds passam
 
+### 6. Versionamento
+
+O projeto segue [Semantic Versioning](https://semver.org/) e [Keep a Changelog](https://keepachangelog.com/). A versão é única no repositório (arquivo `VERSION` e `package.json` na raiz).
+
+**Para dar release (bump + tag + push):**
+
+```bash
+# Bump patch (0.1.1 -> 0.1.2), commit + tag v0.1.2 + push
+python scripts/bump_version.py patch
+
+# Bump minor (0.1.2 -> 0.2.0)
+python scripts/bump_version.py minor
+
+# Só atualizar arquivos, sem commit/tag/push
+python scripts/bump_version.py patch --no-commit --no-tag --no-push
+```
+
+O script atualiza `VERSION`, `package.json` e `CHANGELOG.md` (seção da nova versão e links de compare). Antes de rodar, preencha a seção `[Unreleased]` do `CHANGELOG.md` com as mudanças. Tag criada: `vX.Y.Z` (ex.: `v0.1.2`). A pipeline do GitLab usa a tag para build e publicação da imagem.
+
 ## Dúvidas?
 
 Entre em contato com o time de Data Visualization do iFood.
