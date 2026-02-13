@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { analyticsMiddleware } from './middleware/analytics.js';
@@ -14,6 +15,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.disable('x-powered-by');
+
 // Configurar trust proxy para obter IP correto em produção
 app.set('trust proxy', true);
 
@@ -23,15 +26,23 @@ app.use(express.json());
 // Middleware de analytics (deve vir antes das rotas de gráficos)
 app.use(analyticsMiddleware);
 
+// Rate limit para rotas que servem arquivos (mitiga DoS)
+const chartLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Servir Trellis Chart em /trellis
-app.use('/trellis', express.static(path.join(__dirname, '../../trellis-chart/dist')));
-app.get('/trellis', (req, res) => {
+app.use('/trellis', chartLimiter, express.static(path.join(__dirname, '../../trellis-chart/dist')));
+app.get('/trellis', chartLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, '../../trellis-chart/dist/index.html'));
 });
 
 // Servir Boxplot Chart em /boxplot
-app.use('/boxplot', express.static(path.join(__dirname, '../../boxplot-chart/dist')));
-app.get('/boxplot', (req, res) => {
+app.use('/boxplot', chartLimiter, express.static(path.join(__dirname, '../../boxplot-chart/dist')));
+app.get('/boxplot', chartLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, '../../boxplot-chart/dist/index.html'));
 });
 
