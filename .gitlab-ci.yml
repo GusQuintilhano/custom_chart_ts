@@ -1,136 +1,40 @@
-# yaml-language-server: $schema=https://nexus.dc.ifood.com.br/repository/schemastore/gitlab-pipelines/ifood-security-4-stable.schema.json
+# Alinhado ao padrão Golden Image Node.js (simple-project-gi-nodejs)
+# https://code.ifoodcorp.com.br/ifood/docker-images/golden/test-projects/simple-project-gi-nodejs
 include:
   - project: ifood/pipelines/gitlab-pipelines
-    ref: ifood-security-4-stable
-    file: pipelines/ifood-security/main.yml
-
-# Permite pipeline para tags (release), MR e main (workflow do include pode bloquear tags)
-# workflow:
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    ref: ifood-backend-2-stable
+    file: pipelines/ifood-backend/main.yml
 
 variables:
   SERVICE_NAME: dataviz-custom-charts
-  NODE_VERSION: "18"
-  FORCE_RELEASE: "true"
-  SEMANTIC_VERSION_FILE: ""
-  BUILD_MULTIARCH: 'false'
+  GOLDEN_IMG_TAG: "1-edge"
+  GOLDEN_IMG_NODE_VERSION: "18"
+  BUILD_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
+  BUILD_ARGS: "GOLDEN_IMG_TAG=$GOLDEN_IMG_TAG GOLDEN_IMG_NODE_VERSION=$GOLDEN_IMG_NODE_VERSION"
+  KUBERNETES_CLUSTER_SANDBOX: security-sandbox-use1-01
+  KUBERNETES_CLUSTER_PRODUCTION: security-production-use1-01
+  HELM_CHART: ifood-app
+  KUBERNETES_NAMESPACE: dataviz
+  DATADOG_DEFAULT_MONITOR: "false"
 
-# Validação de estrutura e arquivos
-validate:
-  stage: test
-  image: node:${NODE_VERSION}
-  script:
-    - echo "Validando estrutura do projeto..."
-    - test -f README.md || (echo "README.md não encontrado" && exit 1)
-    - test -f package.json || (echo "package.json não encontrado" && exit 1)
-    - test -f Dockerfile || (echo "Dockerfile não encontrado" && exit 1)
-    - test -f docker-compose.yml || (echo "docker-compose.yml não encontrado" && exit 1)
-    - echo "Validacao de estrutura concluida"
-  only:
-    - main
-    - merge_requests
-
-# Build dos charts
-build-charts:
-  stage: test
-  image: node:${NODE_VERSION}
-  script:
-    - echo "Empacotando charts..."
-    - echo "Verificando estrutura dos charts..."
-    - ls -la charts-router/ trellis-chart/ boxplot-chart/ shared/
-    - echo "Charts encontrados e estrutura validada"
-    - echo "Build concluido"
-  artifacts:
-    paths:
-      - charts-router/dist/
-      - trellis-chart/dist/
-      - boxplot-chart/dist/
-    expire_in: 1 week
-  only:
-    - main
-    - tags
-
-# Build e publicação da imagem Docker (desenvolvimento/MR)
-build:
-  stage: .post
-  trigger:
-    include:
-      - project: ifood/pipelines/gitlab-pipelines
-        ref: ifood-docker-1-stable
-        file: pipelines/ifood-docker/main.yml
-    strategy: depend
-  variables:
-    CONTAINER_IMAGE_TAG: dev
-    BUILD_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
+# Deploy via k8s-manifests (Argo); desabilita deploy automático desta pipeline
+production_helm_dry_run:
   rules:
-    - if: "$CI_MERGE_REQUEST_IID"
-      changes:
-        - charts-router/**/*
-        - trellis-chart/**/*
-        - boxplot-chart/**/*
-        - shared/**/*
-        - Dockerfile
-        - .gitlab-ci.yml
-      when: always
-    - if: "$CI_COMMIT_TAG"
-      when: never
-    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
-  allow_failure: false
+    - when: never
 
-# Build e publicação da imagem Docker (release/tags)
-build-release:
-  stage: .post
-  trigger:
-    include:
-      - project: ifood/pipelines/gitlab-pipelines
-        ref: ifood-docker-1-stable
-        file: pipelines/ifood-docker/main.yml
-    strategy: depend
-  variables:
-    CONTAINER_IMAGE_TAG: "$CI_COMMIT_TAG"
-    BUILD_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
+production:
   rules:
-    - if: "$CI_MERGE_REQUEST_IID"
-      when: never
-    - if: "$CI_COMMIT_TAG"
-  allow_failure: false
+    - when: never
 
-# Release da imagem (idempotente: se o Release já existir, não falha)
-release-image:
-  stage: .post
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  needs:
-    - job: build-release
-  script:
-    - |
-      if ! release-cli create --name "$CI_PROJECT_NAME $CI_COMMIT_TAG" --description "Release version $CI_COMMIT_TAG" --tag-name "$CI_COMMIT_TAG" --ref "$CI_COMMIT_SHA" 2>&1 | tee /tmp/release.log; then
-        grep -qi "already exists" /tmp/release.log && { echo "Release already exists, ok."; exit 0; }
-        exit 1
-      fi
+# Sem k8s/values-dev.yaml neste repo; deploy via k8s-manifests
+sandbox_helm_dry_run:
   rules:
-    - if: "$CI_MERGE_REQUEST_IID"
-      when: never
-    - if: "$CI_COMMIT_TAG"
-  allow_failure: false
+    - when: never
 
-# Abre MR no k8s-manifests para atualizar image tag (deploy da nova versão).
-# Requer variável CI/CD: K8S_MANIFESTS_UPDATE_TOKEN (project access token do k8s-manifests com write).
-# Se não configurada, o job termina sem erro e o deploy continua manual.
-update-k8s-manifest:
-  stage: .post
-  image: alpine:3.18
-  needs:
-    - job: release-image
-  before_script:
-    - apk add --no-cache git curl
-  script:
-    - chmod +x scripts/update-k8s-manifest.sh
-    - ./scripts/update-k8s-manifest.sh
+sandbox:
   rules:
-    - if: "$CI_MERGE_REQUEST_IID"
-      when: never
-    - if: "$CI_COMMIT_TAG"
-  allow_failure: true
+    - when: never
+
+workflow:
+  rules:
+    - when: always
