@@ -69,6 +69,20 @@ python scripts/bump_version.py patch --no-commit --no-tag --no-push
 
 O script atualiza `VERSION`, `package.json` e `CHANGELOG.md` (seção da nova versão e links de compare). Antes de rodar, preencha a seção `[Unreleased]` do `CHANGELOG.md` com as mudanças. Tag criada: `vX.Y.Z` (ex.: `v0.1.2`). A pipeline do GitLab usa a tag para build e publicação da imagem.
 
+### 7. Deploy automático (k8s-manifests)
+
+Ao dar push em uma tag (ex.: `v0.1.2`), a pipeline além de buildar e publicar a imagem pode **abrir um MR no repositório k8s-manifests** atualizando o deployment para a nova tag. Assim o deploy deixa de ser manual.
+
+**Como ativar:** no projeto custom-charts no GitLab, em **Settings > CI/CD > Variables**, crie uma variável:
+
+- **Key:** `K8S_MANIFESTS_UPDATE_TOKEN`
+- **Value:** um [Project Access Token](https://docs.gitlab.com/ee/user/project/settings/project_access_tokens.html) do repositório **k8s-manifests** com permissão **write** (ou **maintainer**)
+- **Flags:** marque como **Masked** (e opcionalmente **Protected** se quiser só em protected branches)
+
+Com a variável configurada, a cada release (tag) o job `update-k8s-manifest` clona o k8s-manifests, atualiza o `deployment.yaml` do dataviz-custom-chart para a nova tag, envia uma branch e cria um MR. Basta aprovar e fazer merge do MR para o Argo aplicar o deploy.
+
+**Alternativa (cluster):** se o time usar **Argo CD Image Updater**, o SRE pode configurar o Application do dataviz-custom-chart para atualizar a image tag automaticamente a partir do registry (estratégia semver). Nesse caso não é necessário o token nem o job no custom_charts.
+
 ## Dúvidas?
 
 Entre em contato com o time de Data Visualization do iFood.
