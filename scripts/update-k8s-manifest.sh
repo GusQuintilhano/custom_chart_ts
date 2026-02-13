@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Atualiza o image tag do dataviz-custom-chart no repositório k8s-manifests e abre MR.
 # Uso: chamado pela pipeline (job update-k8s-manifest) após build-release em tag.
 # Variáveis esperadas: CI_COMMIT_TAG, K8S_MANIFESTS_UPDATE_TOKEN (opcional; se vazia, só exibe instruções).
