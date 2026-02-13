@@ -1,28 +1,11 @@
 # Dockerfile para Custom Charts SDK - iFood (GitLab CI / Golden Image)
-# Doc: git clone https://code.ifoodcorp.com.br/ifood/docker-images/golden/nodejs.git
+# Apenas Node.js: build dos charts + charts-router (Express). Sem Go/CGO.
+# Doc: https://code.ifoodcorp.com.br/ifood/docker-images/golden/test-projects/simple-project-gi-nodejs
 ARG CI_REGISTRY=registry.infra.ifood-prod.com.br
+ARG GOLDEN_IMG_NODE_VERSION=18
+ARG GOLDEN_IMG_TAG=1-edge
 
-# Build do binário Go (router)
-FROM node:18-alpine AS go-build
-
-LABEL maintainer="iFood Data Visualization Team"
-LABEL description="Custom Charts SDK - ThoughtSpot Chart SDK para visualização de dados"
-LABEL version="1.0.0"
-LABEL org.opencontainers.image.source=".../custom-charts"
-
-WORKDIR /app
-
-RUN apk add --no-cache go
-
-COPY server.go .
-
-# CGO_ENABLED=0 evita link com musl (Alpine); gera binário estático que roda na base glibc do Golden Image
-ENV CGO_ENABLED=0
-RUN go build -o charts-router server.go && \
-    chmod +x charts-router && \
-    ls -la charts-router
-
-# Build dos charts (Trellis e Boxplot) para servir HTML/JS no ThoughtSpot
+# Build dos charts (Trellis e Boxplot)
 FROM node:18-alpine AS charts-build
 
 WORKDIR /build
@@ -35,23 +18,45 @@ RUN cd shared && npm install
 RUN cd trellis-chart && npm ci && npm run build
 RUN cd boxplot-chart && npm ci && npx vite build
 
-# Stage para teste local: base glibc (como Golden Image), sem executor - valida binário estático
-FROM debian:bookworm-slim AS test
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=go-build /app/charts-router /app/charts-router
-COPY --from=charts-build /build/trellis-chart/dist /app/static/trellis
-COPY --from=charts-build /build/boxplot-chart/dist /app/static/boxplot
+# Build do charts-router (Express que serve /trellis e /boxplot)
+FROM node:18-alpine AS router-build
+
+WORKDIR /build
+
+COPY charts-router/package.json charts-router/package-lock.json ./charts-router/
+COPY shared/ ./shared/
+
+RUN cd charts-router && npm ci
+
+COPY charts-router/ ./charts-router/
+RUN cd charts-router && npm run build && npm ci --omit=dev
+
+# Stage para teste local (Node apenas, sem Golden Image)
+FROM node:18-alpine AS test
+WORKDIR /app
+COPY --from=router-build /build/charts-router/package.json /build/charts-router/package-lock.json ./charts-router/
+RUN cd charts-router && npm ci --omit=dev
+COPY --from=router-build /build/charts-router/dist ./charts-router/dist/
+COPY --from=charts-build /build/trellis-chart/dist ./trellis-chart/dist/
+COPY --from=charts-build /build/boxplot-chart/dist ./boxplot-chart/dist/
 ENV PORT=8080
 EXPOSE 8080
-CMD ["/app/charts-router"]
+WORKDIR /app/charts-router
+CMD ["node", "dist/server.js"]
 
-# Golden Image via CI_REGISTRY (gate compliant); default for local builds
-FROM ${CI_REGISTRY}/ifood/docker-images/golden/nodejs/18:1-edge AS production
+# Produção: Golden Image Node.js (sem shell; só COPY, sem RUN)
+FROM ${CI_REGISTRY}/ifood/docker-images/golden/nodejs/${GOLDEN_IMG_NODE_VERSION}:${GOLDEN_IMG_TAG} AS production
 
-COPY --from=go-build /app/charts-router /app/charts-router
-COPY --from=charts-build /build/trellis-chart/dist /app/static/trellis
-COPY --from=charts-build /build/boxplot-chart/dist /app/static/boxplot
+WORKDIR /app
 
+# node_modules de produção já gerado em router-build; Golden Image pode não ter /bin/sh
+COPY --from=router-build /build/charts-router/package.json /build/charts-router/package-lock.json ./charts-router/
+COPY --from=router-build /build/charts-router/node_modules ./charts-router/node_modules/
+COPY --from=router-build /build/charts-router/dist ./charts-router/dist/
+COPY --from=charts-build /build/trellis-chart/dist ./trellis-chart/dist/
+COPY --from=charts-build /build/boxplot-chart/dist ./boxplot-chart/dist/
+
+ENV PORT=8080
 EXPOSE 8080
-
-ENTRYPOINT [ "/executor", "/app/charts-router" ]
+WORKDIR /app/charts-router
+ENTRYPOINT [ "/executor", "node", "dist/server.js" ]

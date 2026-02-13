@@ -8,8 +8,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
-### Adicionado
-- Job de pipeline `update-k8s-manifest`: ao dar tag (release), abre MR no k8s-manifests atualizando a image do dataviz-custom-chart (opcional, requer `K8S_MANIFESTS_UPDATE_TOKEN`)
+## [0.1.2] - 2026-02-13
+
+_(Nenhuma alteração adicional.)_
 
 ## [0.1.1] - 2026-02-12
 
@@ -36,6 +37,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Estrutura base para desenvolvimento
 - Documentação inicial
 
-[Unreleased]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/compare/v0.1.1...HEAD
+[0.1.2]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.2
+[Unreleased]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/compare/v0.1.2...HEAD
+
 [0.1.1]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.1
 [0.1.0]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.0

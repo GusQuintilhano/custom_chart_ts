@@ -1,6 +1,6 @@
 # Guia Docker
 
-Um único **Dockerfile** é usado pelo GitLab CI e localmente (docker-compose): build do binário Go (`server.go`) e imagem final baseada na Golden Image Node 18. Porta 8080. Gate Golden Image compliant (`CI_REGISTRY`).
+Um único **Dockerfile** é usado pelo GitLab CI e localmente (docker-compose): build dos charts (Trellis, Boxplot) + **charts-router** (Node/Express) e imagem final baseada na Golden Image Node 18. Porta 8080. Sem Go/CGO. Gate Golden Image compliant (`CI_REGISTRY`).
 
 ## Início Rápido
 
@@ -60,29 +60,28 @@ docker-compose exec dev-server bash  # Acessar shell do container
 
 - **Base final**: Golden Image Node 18 (`ifood/docker-images/golden/nodejs/18:1-edge`)
 - **Porta**: 8080
-- **Aplicação**: servidor Go (`/app/charts-router`), endpoints `/`, `/health`, `/trellis`, `/boxplot`
+- **Aplicação**: charts-router (Node/Express em `/app/charts-router`), endpoints `/`, `/health`, `/trellis`, `/boxplot` (HTML dos charts)
 
-## Teste local do binário estático (glibc)
+## Teste local (stage test)
 
-Para validar que o binário Go (build com `CGO_ENABLED=0`) roda em base glibc como no K8s, use o stage `test`, que usa Debian em vez da Golden Image:
+O stage `test` usa Node Alpine e valida que o charts-router sobe e responde:
 
 ```bash
-# Build da imagem de teste (dist + debian:bookworm-slim)
+# Build da imagem de teste
 docker build --target test -t dataviz-custom-charts-test .
 
 # Rodar e testar
 docker run --rm -p 8080:8080 dataviz-custom-charts-test
 # Em outro terminal:
 curl -s http://localhost:8080/health
+curl -sI http://localhost:8080/trellis   # deve ser HTML (Content-Type: text/html)
 ```
 
-Ou use o script que faz build, sobe o container, chama `/health` e `/` e encerra:
+Ou use o script:
 
 ```bash
 ./scripts/test-docker-local.sh
 ```
-
-Se o health retornar JSON com `"status":"ok"`, o binário estático está funcionando em glibc; o mesmo binário rodará na Golden Image no K8s.
 
 ## Troubleshooting
 
