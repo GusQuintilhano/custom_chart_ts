@@ -8,6 +8,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-02-12
+
 _(Nenhuma alteração pendente.)_
 
 ## [0.1.1] - 2026-02-12
@@ -35,6 +37,8 @@ _(Nenhuma alteração pendente.)_
 - Estrutura base para desenvolvimento
 - Documentação inicial
 
-[Unreleased]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/compare/v0.1.1...HEAD
+[0.1.2]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.2
+[Unreleased]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/compare/v0.1.2...HEAD
+
 [0.1.1]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.1
 [0.1.0]: https://code.ifoodcorp.com.br/ifood/data/viz/custom_charts/releases/tag/v0.1.0
