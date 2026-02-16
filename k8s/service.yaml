@@ -1,0 +1,17 @@
+# Referência para k8s-manifests. Expõe a porta 8080 do deployment.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dataviz-custom-chart
+  namespace: dataviz
+  labels:
+    app: dataviz-custom-chart
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: dataviz-custom-chart

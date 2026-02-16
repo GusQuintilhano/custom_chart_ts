@@ -22,14 +22,14 @@ sdk/
    - Processo de deploy
    - Troubleshooting
 
-2. **Para lições detalhadas**: [`aprendizados/aprendizados-completos.md`](./aprendizados/aprendizados-completos.md) ⭐
+2. **Para lições detalhadas**: [`aprendizados/APRENDIZADOS_COMPLETOS.md`](./aprendizados/APRENDIZADOS_COMPLETOS.md) ⭐
    - Todas as lições fundamentais sobre Chart SDK
    - Como inicializar o Chart Context
    - Como processar dados do ThoughtSpot
    - Template completo de código
    - Problemas e soluções
 
-3. **Para referência técnica**: [`referencia/documentacao-tecnica-oficial.md`](./referencia/documentacao-tecnica-oficial.md)
+3. **Para referência técnica**: [`referencia/DOCUMENTACAO_TECNICA_OFICIAL.md`](./referencia/DOCUMENTACAO_TECNICA_OFICIAL.md)
    - Documentação oficial consolidada
    - API Reference
    - Arquitetura do SDK
@@ -40,15 +40,15 @@ sdk/
 
 ### Para Desenvolver um Chart SDK
 
-- Consulte [`aprendizados/aprendizados-completos.md`](./aprendizados/aprendizados-completos.md) para template completo
+- Consulte [`aprendizados/APRENDIZADOS_COMPLETOS.md`](./aprendizados/APRENDIZADOS_COMPLETOS.md) para template completo
 - Veja exemplo prático em [`exemplos/trellis-chart/`](./exemplos/trellis-chart/)
 
 ## 📚 Documentos Principais
 
-- **`aprendizados/aprendizados-completos.md`** ⭐ - Documento principal consolidado
-- **`aprendizados/aprendizados-e-achados.md`** - Histórico detalhado de desenvolvimento
-- **`aprendizados/columns-viz-prop-definition.md`** - Guia sobre configurações por coluna
-- **`aprendizados/qualidade-e-refatoracao.md`** - Análise de métricas, qualidade de código e refatoração
-- **`referencia/documentacao-tecnica-oficial.md`** - Referência técnica consolidada
+- **`aprendizados/APRENDIZADOS_COMPLETOS.md`** ⭐ - Documento principal consolidado
+- **`aprendizados/APRENDIZADOS_E_ACHADOS.md`** - Histórico detalhado de desenvolvimento
+- **`aprendizados/COLUMNS_VIZ_PROP_DEFINITION.md`** - Guia sobre configurações por coluna
+- **`aprendizados/QUALIDADE_E_REFATORACAO.md`** - Análise de métricas, qualidade de código e refatoração
+- **`referencia/DOCUMENTACAO_TECNICA_OFICIAL.md`** - Referência técnica consolidada
 
 

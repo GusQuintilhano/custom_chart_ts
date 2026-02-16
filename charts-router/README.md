@@ -1,14 +1,21 @@
 # Charts Router
 
-Servidor de roteamento para múltiplos gráficos customizados do ThoughtSpot.
+Servidor de roteamento para múltiplos gráficos customizados do ThoughtSpot (Express/Node).
 
-## Estrutura
+## Rotas
 
-Este servidor roteia diferentes gráficos em paths específicos:
-
+**Gráficos:**
 - `/trellis` → Trellis Chart
 - `/boxplot` → Boxplot Chart
-- `/health` → Health check endpoint
+
+**APIs:**
+- `/health` → Health check (status, paths, existência dos index)
+- `GET /api/analytics/events` → Eventos de analytics (logs), paginação e filtros por tipo/chartType
+- `POST /api/analytics/event` → Recebe eventos do cliente
+- **`GET /api/observability`** → API única: eventos + métricas de capacidade em um JSON (para ingestão no Databricks)
+- `GET /api/metrics` → Snapshot atual de capacidade (processo + container/cgroup)
+
+**Armazenamento:** eventos em arquivo (JSONL por dia), retenção **30 dias**; arquivos mais antigos são removidos automaticamente.
 
 ## Build e Deploy
 

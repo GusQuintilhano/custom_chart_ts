@@ -1,0 +1,24 @@
+# Referência para k8s-manifests. Host deve bater com o configurado no Kong (service host).
+# Sandbox: dataviz-custom-chart.aws.cluster-01.k8s.internal-services-sandbox.dc-ifood.com
+# Production: conforme Kong production (ex.: dataviz-custom-chart.aws-data-prd.dc-ifood.com)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dataviz-custom-chart
+  namespace: dataviz
+  labels:
+    app: dataviz-custom-chart
+  # annotations conforme padrão do cluster (nginx, cert-manager, etc.)
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: dataviz-custom-chart.aws.cluster-01.k8s.internal-services-sandbox.dc-ifood.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dataviz-custom-chart
+                port:
+                  number: 80

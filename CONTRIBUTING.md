@@ -6,30 +6,33 @@ Obrigado por considerar contribuir para este projeto! Este documento fornece dir
 
 ### 1. Estrutura do Projeto
 
-- **`dev/charts/`**: Charts em desenvolvimento/teste
-- **`muze/`**: Charts Muze de produção
-- **`sdk/`**: Charts SDK de produção
-- **`docs/`**: Documentação completa do projeto
+- **`trellis-chart/`**: Chart Trellis (ThoughtSpot Chart SDK)
+- **`boxplot-chart/`**: Chart Boxplot (ThoughtSpot Chart SDK)
+- **`charts-router/`**: Servidor Express que roteia `/trellis` e `/boxplot` e expõe APIs de analytics e observabilidade
+- **`shared/`**: Utilitários e tipos compartilhados entre os charts
+- **`docs/`**: Documentação do projeto (deploy, observabilidade, SDK)
 
 ### 2. Processo de Desenvolvimento
 
-1. **Desenvolva em `dev/charts/`**
-   - Crie ou modifique charts na pasta `dev/charts/`
-   - Teste localmente antes de commitar
+1. **Desenvolva no chart correspondente**
+   - Edite em `trellis-chart/` ou `boxplot-chart/` conforme o gráfico
+   - Use `shared/` para código comum
+   - Teste localmente com o charts-router antes de commitar
 
 2. **Documente suas mudanças**
    - Atualize a documentação em `docs/` se necessário
    - Adicione comentários no código quando apropriado
 
-3. **Empacote e teste**
+3. **Build e teste**
    ```bash
-   cd dev/charts/seu-chart
-   ./build.sh
+   cd trellis-chart && npm run build
+   cd ../boxplot-chart && npm run build
+   cd ../charts-router && npm run build && npm start
    ```
 
-4. **Quando pronto para produção**
-   - Mova o chart de `dev/charts/` para `muze/` ou `sdk/`
-   - Atualize a documentação
+4. **Quando pronto**
+   - Abra MR e garanta que o build e os testes passem
+   - Atualize o CHANGELOG.md na seção [Unreleased] se for mudança relevante
 
 ### 3. Padrões de Código
 
@@ -43,12 +46,12 @@ Obrigado por considerar contribuir para este projeto! Este documento fornece dir
 - Referencie issues quando aplicável
 - Commits pequenos e focados são preferíveis
 
-### 5. Pull Requests
+### 5. Merge Requests (MR)
 
-- Crie uma branch descritiva para sua feature
-- Inclua descrição clara das mudanças
-- Referencie issues relacionadas
-- Certifique-se de que os builds passam
+- Crie uma branch descritiva para sua feature.
+- Sempre inclua uma descrição curta da MR (o assistente pode gerar quando pedido).
+- Referencie issues relacionadas quando houver.
+- Certifique-se de que os builds passam.
 
 ### 6. Versionamento
 
