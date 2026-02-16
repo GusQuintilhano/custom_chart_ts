@@ -99,8 +99,15 @@ app.use('/boxplot', (req, res, next) => {
 // Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
 app.use('/trellis', express.static(trellisDistPath, { index: false }));
 
-// Servir assets do trellis também em /assets (compatibilidade com index.html que referencia /assets/)
-app.use('/assets', express.static(path.join(trellisDistPath, 'assets'), { index: false }));
+// Redirect /assets/* -> /trellis/assets/* para que o browser nunca dependa de /assets/ na raiz
+// (evita proxy/ingress devolver JSON para GET /assets/xxx.js)
+app.get('/assets/:filename', (req, res) => {
+    const filename = req.params.filename;
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(400).setHeader('Content-Type', 'text/plain').send('Bad request');
+    }
+    res.redirect(302, '/trellis/assets/' + encodeURIComponent(filename));
+});
 
 // GET /trellis deve vir DEPOIS do static para que /trellis/assets/... seja servido pelo static
 app.get('/trellis', (req, res) => {
@@ -110,8 +117,12 @@ app.get('/trellis', (req, res) => {
         return;
     }
     let html = fs.readFileSync(indexPath, 'utf8');
+    // Garantir que nenhum asset use /assets/ na raiz (só /trellis/assets/) para não bater em proxy que devolve JSON
     html = html.replace(/src="\/assets\//g, 'src="/trellis/assets/').replace(/href="\/assets\//g, 'href="/trellis/assets/');
+    html = html.replace(/src='\/assets\//g, "src='/trellis/assets/").replace(/href='\/assets\//g, "href='/trellis/assets/");
     res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     res.send(html);
 });
 
@@ -127,7 +138,10 @@ app.get('/boxplot', (req, res) => {
     }
     let html = fs.readFileSync(indexPath, 'utf8');
     html = html.replace(/src="\/assets\//g, 'src="/boxplot/assets/').replace(/href="\/assets\//g, 'href="/boxplot/assets/');
+    html = html.replace(/src='\/assets\//g, "src='/boxplot/assets/").replace(/href='\/assets\//g, "href='/boxplot/assets/");
     res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     res.send(html);
 });
 
