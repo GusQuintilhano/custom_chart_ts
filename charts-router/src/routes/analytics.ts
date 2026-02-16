@@ -3,7 +3,7 @@
  */
 
 import express, { type Request, Response } from 'express';
-import { getAnalyticsStorage, getFileStorage } from '../utils/analyticsStorage';
+import { getAnalyticsStorage, getAnalyticsReader } from '../utils/analyticsStorage.js';
 import type { AnalyticsEvent, AnalyticsEventResponse } from '../../../shared/types/analytics';
 
 const router = express.Router();
@@ -103,16 +103,16 @@ router.get('/events', async (req: Request, res: Response) => {
             }
         }
 
-        // Ler eventos do arquivo
-        const fileStorage = getFileStorage();
-        const events = await fileStorage.readEvents({
+        // Ler eventos do mesmo ambiente configurado (arquivo ou banco)
+        const reader = getAnalyticsReader();
+        const events = await reader.readEvents({
             offset,
             limit,
             type,
             chartType,
         });
 
-        const total = await fileStorage.getTotalEvents();
+        const total = await reader.getTotalEvents({ type, chartType });
 
         res.json({
             success: true,

@@ -1,6 +1,5 @@
 /**
- * Sistema de armazenamento de analytics
- * Suporta múltiplos backends: arquivo, banco de dados, ou ambos
+ * Sistema de armazenamento de analytics (arquivo JSONL).
  */
 
 import fs from 'fs/promises';
@@ -10,12 +9,6 @@ import type { AnalyticsEvent, AnalyticsStorage as IAnalyticsStorage } from '../.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-interface StorageConfig {
-    storageType: 'file' | 'database' | 'file+database';
-    logPath?: string;
-    dbUrl?: string;
-}
 
 /**
  * Implementação de storage baseada em arquivo (JSON Lines)
@@ -80,8 +73,8 @@ class FileStorage implements IAnalyticsStorage {
                 const fileDay = parseInt(dateMatch[3], 10);
                 const fileDate = new Date(fileYear, fileMonth, fileDay);
 
-                // Remove arquivos mais antigos que 30 dias
-                if (fileDate < thirtyDaysAgo) {
+                // Remove arquivos com data <= (hoje - 30), mantendo exatamente 30 dias
+                if (fileDate <= thirtyDaysAgo) {
                     const filePath = path.join(dir, file);
                     try {
                         await fs.unlink(filePath);
@@ -226,8 +219,8 @@ class FileStorage implements IAnalyticsStorage {
                 const fileDay = parseInt(dateMatch[3], 10);
                 const fileDate = new Date(fileYear, fileMonth, fileDay);
 
-                // Inclui apenas arquivos dos últimos 30 dias
-                if (fileDate >= thirtyDaysAgo) {
+                // Inclui apenas arquivos dos últimos 30 dias (excluindo o 31º dia)
+                if (fileDate > thirtyDaysAgo) {
                     validFiles.push(file);
                 }
             }
@@ -241,9 +234,9 @@ class FileStorage implements IAnalyticsStorage {
     }
 
     /**
-     * Retorna o número total de eventos dos últimos 30 dias
+     * Retorna o número total de eventos (com filtros opcionais).
      */
-    async getTotalEvents(): Promise<number> {
+    async getTotalEvents(options?: { type?: AnalyticsEvent['type']; chartType?: AnalyticsEvent['chartType'] }): Promise<number> {
         try {
             const dir = path.dirname(this.baseLogPath);
             await fs.access(dir);
@@ -285,83 +278,14 @@ class FileStorage implements IAnalyticsStorage {
     }
 }
 
-/**
- * Implementação de storage para banco de dados (placeholder para futuro)
- */
-class DatabaseStorage implements IAnalyticsStorage {
-    private dbUrl: string;
-
-    constructor(dbUrl: string) {
-        this.dbUrl = dbUrl;
-    }
-
-    async save(event: AnalyticsEvent): Promise<void> {
-        // TODO: Implementar quando necessário
-        // Por enquanto, apenas log para não quebrar
-        console.warn('Database storage not yet implemented. Event:', event.type);
-    }
-
-    async saveBatch(events: AnalyticsEvent[]): Promise<void> {
-        // TODO: Implementar quando necessário
-        for (const event of events) {
-            await this.save(event);
-        }
-    }
-}
-
-/**
- * Storage composto que escreve em múltiplos backends
- */
-class CompositeStorage implements IAnalyticsStorage {
-    private storages: IAnalyticsStorage[];
-
-    constructor(storages: IAnalyticsStorage[]) {
-        this.storages = storages;
-    }
-
-    async save(event: AnalyticsEvent): Promise<void> {
-        // Executa em paralelo, mas não falha se um falhar
-        const promises = this.storages.map(storage =>
-            storage.save(event).catch(err => {
-                console.error('Error saving to storage:', err);
-            })
-        );
-        await Promise.allSettled(promises);
-    }
-
-    async saveBatch(events: AnalyticsEvent[]): Promise<void> {
-        const promises = this.storages.map(storage =>
-            storage.saveBatch(events).catch(err => {
-                console.error('Error saving batch to storage:', err);
-            })
-        );
-        await Promise.allSettled(promises);
-    }
-}
-
-/**
- * Factory para criar storage baseado na configuração
- */
-export function createAnalyticsStorage(config: StorageConfig): IAnalyticsStorage {
-    const storages: IAnalyticsStorage[] = [];
-
-    if (config.storageType === 'file' || config.storageType === 'file+database') {
-        const logPath = config.logPath || path.join(__dirname, '../../../logs/analytics.jsonl');
-        storages.push(new FileStorage(logPath));
-    }
-
-    if (config.storageType === 'database' || config.storageType === 'file+database') {
-        if (!config.dbUrl) {
-            throw new Error('ANALYTICS_DB_URL is required when using database storage');
-        }
-        storages.push(new DatabaseStorage(config.dbUrl));
-    }
-
-    if (storages.length === 0) {
-        throw new Error('No storage backend configured');
-    }
-
-    return storages.length === 1 ? storages[0] : new CompositeStorage(storages);
+export interface AnalyticsReader {
+    readEvents(options?: {
+        offset?: number;
+        limit?: number;
+        type?: AnalyticsEvent['type'];
+        chartType?: AnalyticsEvent['chartType'];
+    }): Promise<AnalyticsEvent[]>;
+    getTotalEvents(options?: { type?: AnalyticsEvent['type']; chartType?: AnalyticsEvent['chartType'] }): Promise<number>;
 }
 
 /**
@@ -372,22 +296,14 @@ let fileStorageInstance: FileStorage | null = null;
 
 export function getAnalyticsStorage(): IAnalyticsStorage {
     if (!storageInstance) {
-        const storageType = (process.env.ANALYTICS_STORAGE_TYPE || 'file') as 'file' | 'database' | 'file+database';
-        const logPath = process.env.ANALYTICS_LOG_PATH;
-        const dbUrl = process.env.ANALYTICS_DB_URL;
-
-        storageInstance = createAnalyticsStorage({
-            storageType,
-            logPath,
-            dbUrl,
-        });
+        const logPath = process.env.ANALYTICS_LOG_PATH || path.join(__dirname, '../../../logs/analytics.jsonl');
+        storageInstance = new FileStorage(logPath);
     }
-
     return storageInstance;
 }
 
 /**
- * Obtém instância do FileStorage para leitura de eventos
+ * Obtém instância do FileStorage para leitura de eventos.
  */
 export function getFileStorage(): FileStorage {
     if (!fileStorageInstance) {
@@ -395,5 +311,12 @@ export function getFileStorage(): FileStorage {
         fileStorageInstance = new FileStorage(logPath);
     }
     return fileStorageInstance;
+}
+
+/**
+ * Leitor de eventos (sempre arquivo).
+ */
+export function getAnalyticsReader(): AnalyticsReader {
+    return getFileStorage();
 }
 

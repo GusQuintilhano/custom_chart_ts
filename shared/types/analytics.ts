@@ -114,9 +114,7 @@ export interface AnalyticsStorage {
  */
 export interface AnalyticsConfig {
     enabled: boolean;
-    storageType: 'file' | 'database' | 'file+database';
     logPath?: string;
-    dbUrl?: string;
     endpoint: string;
 }
 

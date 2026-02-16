@@ -8,9 +8,29 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado
+- **GET /api/observability**: API única que retorna eventos (logs) e métricas de capacidade em um único JSON para ingestão no Databricks ou outro destino
+- **GET /api/metrics**: Snapshot de capacidade do processo e do container (memória, uptime, cgroup quando em Kubernetes/Docker)
+
+### Mudado
+- Observabilidade: armazenamento apenas em arquivo (JSONL por dia); retenção fixa de **30 dias** no nosso ambiente
+- Correção da retenção: removidos arquivos com data <= (hoje - 30 dias), mantendo exatamente 30 dias (antes mantinha 31)
+- Documentação: README, CONTRIBUTING, docs/railway-vs-ifood-deploy e charts-router alinhados ao estado atual (sem PostgreSQL, 30 dias, API única)
+
+### Removido
+- Integração com PostgreSQL (módulo db, rotas /api/metrics/history, variáveis ANALYTICS_DB_URL, DATABASE_URL, ANALYTICS_STORAGE_TYPE, METRICS_INTERVAL_SEC)
+
 ## [0.1.2] - 2026-02-13
 
-_(Nenhuma alteração adicional.)_
+### Mudado
+- Runtime em produção passa a ser apenas Node.js (charts-router Express); removidos Go e binário CGO do Dockerfile
+- Dockerfile: stages apenas Node (charts-build, router-build, test, production); imagem final usa Golden Image Node 18; stage production sem `RUN` (cópia de `node_modules` do router-build) por compatibilidade com imagem sem `/bin/sh`
+- CI alinhada ao padrão ifood-backend (include `pipelines/ifood-backend/main.yml`); variáveis SERVICE_NAME, GOLDEN_IMG_*, BUILD_*, KUBERNETES_*, HELM_CHART; deploy automático desligado (production/sandbox `when: never`), deploy via k8s-manifests/Argo
+
+### Corrigido
+- pipeline_variables_check: definido `DATADOG_DEFAULT_MONITOR: "false"` para não exigir DATADOG_MONITOR_OPERATIONS
+- sandbox_helm_dry_run: desabilitado (repo não tem `k8s/values-dev.yaml`)
+- Build da imagem de produção: erro `fork/exec /bin/sh: no such file or directory` no stage production (Golden Image distroless) — produção passou a copiar `node_modules` do stage router-build em vez de rodar `npm ci`
 
 ## [0.1.1] - 2026-02-12
 

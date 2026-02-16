@@ -37,11 +37,10 @@ Utilitários e funções comuns estão em `shared/`:
 
 ## 📚 Documentação
 
-Documentação completa disponível em [`docs/sdk/`](./docs/sdk/):
-- **Aprendizados**: [`docs/sdk/aprendizados/`](./docs/sdk/aprendizados/)
-- **Guias**: [`docs/sdk/guias/`](./docs/sdk/guias/)
-- **Exemplos**: [`docs/sdk/exemplos/`](./docs/sdk/exemplos/)
-- **Referência**: [`docs/sdk/referencia/`](./docs/sdk/referencia/)
+**Índice geral:** [**docs/README.md**](./docs/README.md) – deploy, infra iFood, CI/Docker, SDK.
+
+- **Deploy e observabilidade:** [docs/railway-vs-ifood-deploy.md](./docs/railway-vs-ifood-deploy.md) (API única para Databricks, 30 dias de retenção).
+- **Chart SDK (desenvolver gráficos):** [docs/sdk/README.md](./docs/sdk/README.md) – guias, aprendizados, referência, exemplos.
 
 ## 📊 Sistema de Analytics
 
@@ -64,15 +63,11 @@ O sistema de analytics rastreia automaticamente:
 # Habilitar/desabilitar analytics (default: true)
 ANALYTICS_ENABLED=true
 
-# Tipo de armazenamento: 'file', 'database', 'file+database' (default: 'file')
-ANALYTICS_STORAGE_TYPE=file
-
-# Caminho do arquivo de log (default: './logs/analytics.jsonl')
+# Caminho do diretório/arquivo de log (default: './logs/analytics.jsonl' - nome do arquivo diário é derivado)
 ANALYTICS_LOG_PATH=./logs/analytics.jsonl
-
-# URL do banco de dados (necessário se usar 'database' ou 'file+database')
-ANALYTICS_DB_URL=postgresql://user:pass@.../analytics
 ```
+
+O armazenamento é em **arquivo** (JSONL por dia). Há retenção fixa de **30 dias**; arquivos mais antigos são removidos automaticamente.
 
 #### Configuração no Cliente (Frontend)
 
@@ -86,9 +81,7 @@ window.ANALYTICS_ENABLED = true; // ou false para desabilitar
 
 ### Armazenamento
 
-#### Fase 1: Arquivos de Log Diários (Padrão)
-
-Os eventos são salvos em arquivos diários no formato JSON Lines (um evento por linha). **O sistema mantém apenas os últimos 30 dias de logs internos** - arquivos mais antigos que 30 dias são automaticamente removidos.
+Os eventos são salvos em **arquivos diários** no formato JSON Lines (um evento por linha). O sistema mantém **exatamente 30 dias** de histórico; arquivos mais antigos são removidos automaticamente.
 
 **Estrutura de arquivos:**
 - `./logs/analytics-2024-01-15.jsonl` (15 de Janeiro 2024)
@@ -104,9 +97,9 @@ Os eventos são salvos em arquivos diários no formato JSON Lines (um evento por
 
 **Rotação automática:**
 - Um novo arquivo é criado a cada dia
-- Arquivos mais antigos que 30 dias são automaticamente removidos
-- Mantém sempre os últimos 30 dias para economizar espaço em disco
-- Limpeza acontece automaticamente quando um novo dia começa
+- Arquivos com data anterior a (hoje - 30 dias) são removidos automaticamente
+- Mantém exatamente 30 dias de histórico no nosso ambiente
+- Limpeza acontece quando um novo dia começa (na primeira escrita do dia)
 
 **Análise dos logs:**
 ```bash
@@ -126,28 +119,15 @@ ls -lh logs/analytics-*.jsonl
 ls logs/analytics-*.jsonl | wc -l
 ```
 
-#### Fase 2: Consulta Externa para Banco de Dados
+#### Consulta e ingestão externa (ex.: Databricks)
 
-Os eventos são mantidos nos arquivos de log internos dos últimos 30 dias (ex: `./logs/analytics-2024-01-15.jsonl`, `./logs/analytics-2024-01-16.jsonl`, etc.). Um sistema externo pode consultar os eventos através do endpoint `GET /api/analytics/events` e armazená-los no banco de dados antes que sejam removidos automaticamente.
+Use **GET /api/observability** para obter em um único JSON os **eventos (logs)** e o **snapshot de capacidade** (métricas do processo/container). Ideal para um job que consome essa API e grava no Databricks ou em outro destino.
 
-**Fluxo:**
-1. Eventos são salvos automaticamente em arquivos de log diários
-2. Sistema externo consulta `GET /api/analytics/events` periodicamente (diariamente recomendado)
-3. Sistema externo processa e armazena no banco de dados
-4. Arquivos mais antigos que 30 dias são automaticamente removidos
-5. **Importante**: Sistema externo deve processar eventos regularmente para não perder dados antes da remoção automática
+- **Eventos:** vêm dos arquivos dos últimos 30 dias (mesma fonte de `GET /api/analytics/events`).
+- **Métricas:** snapshot atual (memória, uptime, cgroup quando em Kubernetes/Docker).
+- Recomenda-se chamar a API periodicamente (ex.: diariamente) e persistir no destino para não depender apenas dos 30 dias locais.
 
-**Recomendação:**
-- Sistema externo deve consultar os eventos diariamente ou no máximo semanalmente
-- Processar eventos regularmente garante que nenhum dado seja perdido antes da remoção automática (30 dias)
-- Logs internos servem como backup temporário (30 dias)
-- O endpoint retorna eventos de todos os arquivos dos últimos 30 dias
-
-**Vantagens:**
-- Separação de responsabilidades (armazenamento interno vs. banco de dados)
-- Logs internos servem como backup
-- Sistema externo pode processar em seu próprio ritmo
-- Não impacta performance do servidor de gráficos
+Ver detalhes em [docs/railway-vs-ifood-deploy.md](docs/railway-vs-ifood-deploy.md) (seção "Uma única API para consumir e enviar ao Databricks").
 
 ### Estrutura dos Eventos
 
@@ -304,6 +284,18 @@ curl ".../api/analytics/events?type=performance&chartType=trellis"
 
 O sistema externo pode usar a paginação (`offset` e `hasMore`) para processar todos os eventos em lotes.
 
+#### GET /api/observability
+
+Retorna em **um único payload** os eventos (logs) e as métricas de capacidade atuais. Uso típico: job que envia os dados para o Databricks.
+
+**Query Parameters:** `offset`, `limit`, `type`, `chartType` (mesmos de `GET /api/analytics/events`).
+
+**Resposta:** `exported_at`, `events` (data, pagination, filters), `metrics` (current, history sempre `[]`).
+
+#### GET /api/metrics
+
+Snapshot atual de capacidade do processo e do container (memória, uptime, cgroup quando disponível).
+
 ### Como Usar
 
 1. **Iniciar o Servidor**
@@ -322,14 +314,14 @@ O sistema externo pode usar a paginação (`offset` e `hasMore`) para processar 
 
 3. **Verificar Logs**
    ```bash
-   # Ver eventos salvos
-   cat logs/analytics.jsonl
-   
-   # Contar eventos por tipo
-   cat logs/analytics.jsonl | jq -r '.type' | sort | uniq -c
-   
+   # Eventos são salvos em arquivos diários (últimos 30 dias)
+   ls logs/analytics-*.jsonl
+
+   # Ver eventos de um dia
+   cat logs/analytics-2024-01-15.jsonl | jq -r '.type' | sort | uniq -c
+
    # Filtrar erros
-   cat logs/analytics.jsonl | jq 'select(.type == "error")'
+   cat logs/analytics-*.jsonl | jq -s 'add | map(select(.type == "error"))'
    ```
 
 ### Privacidade
@@ -362,9 +354,9 @@ O sistema não rastreia:
 
 #### Performance degradada
 
-1. Verificar tamanho do arquivo de log (pode precisar de rotação)
-2. Considerar migrar para banco de dados
-3. Verificar se há muitos eventos sendo gerados
+1. Verificar quantidade de arquivos em `logs/` (retenção é 30 dias)
+2. Verificar se há muitos eventos sendo gerados
+3. Usar `GET /api/observability` com `limit` para ingestão externa em lotes
 
 ### Arquitetura
 
@@ -374,14 +366,6 @@ O sistema é composto por:
 - **Servidor (Backend)**: `charts-router/src/utils/analyticsStorage.ts`, `charts-router/src/middleware/analytics.ts`, `charts-router/src/routes/analytics.ts`
 - **Tipos**: `shared/types/analytics.ts`
 
-### Próximos Passos (Opcional)
-
-- Script de migração para banco de dados (`charts-router/scripts/migrateLogsToDB.ts`)
-- Implementação de DatabaseStorage em `analyticsStorage.ts`
-- Integração com Datadog ou Google Analytics
-- Dashboard de métricas
-
 ## 📄 Licença
 
 Veja [LICENSE](./LICENSE) para mais detalhes.
-# Pipeline test

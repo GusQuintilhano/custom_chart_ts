@@ -1,0 +1,42 @@
+# Referência para k8s-manifests. Runtime: Node (charts-router), porta 8080.
+# Não definir command/args: a imagem já usa ENTRYPOINT ["/executor", "node", "dist/server.js"].
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dataviz-custom-chart
+  namespace: dataviz
+  labels:
+    app: dataviz-custom-chart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dataviz-custom-chart
+  template:
+    metadata:
+      labels:
+        app: dataviz-custom-chart
+    spec:
+      containers:
+        - name: app
+          image: registry.infra.ifood-prod.com.br/ifood/data/viz/custom-charts:v0.1.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      # imagePullSecrets / securityContext conforme padrão do cluster e ifood-app

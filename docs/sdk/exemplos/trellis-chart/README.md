@@ -56,10 +56,10 @@ O chart está hospedado no Railway. Para fazer deploy:
 
 ### 📖 Documentação Geral do SDK
 
-- **[Aprendizados Completos](../../aprendizados/aprendizados-completos.md)** - Versão consolidada geral
-- **[Aprendizados e Achados](../../aprendizados/aprendizados-e-achados.md)** - Versão consolidada geral
-- **[columnsVizPropDefinition](../../aprendizados/columns-viz-prop-definition.md)** - Guia sobre configurações por coluna
-- **[Documentação Técnica Oficial](../../referencia/documentacao-tecnica-oficial.md)** - Versão consolidada geral
+- **[Aprendizados Completos](../../aprendizados/APRENDIZADOS_COMPLETOS.md)** - Versão consolidada geral
+- **[Aprendizados e Achados](../../aprendizados/APRENDIZADOS_E_ACHADOS.md)** - Versão consolidada geral
+- **[columnsVizPropDefinition](../../aprendizados/COLUMNS_VIZ_PROP_DEFINITION.md)** - Guia sobre configurações por coluna
+- **[Documentação Técnica Oficial](../../referencia/DOCUMENTACAO_TECNICA_OFICIAL.md)** - Versão consolidada geral
 
 ## ✅ Status
 
@@ -72,7 +72,7 @@ O chart está hospedado no Railway. Para fazer deploy:
 ## 🔗 Links Úteis
 
 - [Documentação SDK Completa](../../)
-- [Aprendizados Completos](../../aprendizados/aprendizados-completos.md)
+- [Aprendizados Completos](../../aprendizados/APRENDIZADOS_COMPLETOS.md)
 - [Testes de Integração](../../../testes/)
 
 ---

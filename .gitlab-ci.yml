@@ -35,6 +35,18 @@ sandbox:
   rules:
     - when: never
 
+# Repo Node-only, sem go.mod; sbom_scan_cli exige Go
+sbom_scan_cli:
+  rules:
+    - when: never
+  script: ["echo 'Job disabled for this repo'"]
+
+# Repo não gera SBOM em sbom_files/; library_usage_publish exige esses arquivos
+library_usage_publish:
+  rules:
+    - when: never
+  script: ["echo 'Job disabled for this repo'"]
+
 workflow:
   rules:
     - when: always

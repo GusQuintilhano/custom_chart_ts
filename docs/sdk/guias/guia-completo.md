@@ -55,7 +55,7 @@ meu-chart/
 
 ### 3. Implementar Chart Básico
 
-Veja o template completo em: [`../aprendizados/aprendizados-completos.md`](../aprendizados/aprendizados-completos.md)
+Veja o template completo em: [`../aprendizados/APRENDIZADOS_COMPLETOS.md`](../aprendizados/APRENDIZADOS_COMPLETOS.md)
 
 ---
 
@@ -266,8 +266,8 @@ context.emitEvent(ChartToTSEvent.RenderComplete, []);
 
 Para informações detalhadas, consulte:
 
-- **[Aprendizados Completos](../aprendizados/aprendizados-completos.md)** ⭐ - Todas as lições fundamentais
-- **[Documentação Técnica Oficial](../referencia/documentacao-tecnica-oficial.md)** - Referência técnica
+- **[Aprendizados Completos](../aprendizados/APRENDIZADOS_COMPLETOS.md)** ⭐ - Todas as lições fundamentais
+- **[Documentação Técnica Oficial](../referencia/DOCUMENTACAO_TECNICA_OFICIAL.md)** - Referência técnica
 - **[Exemplo: Trellis Chart](../exemplos/trellis-chart/)** - Exemplo completo funcional
 
 ---
