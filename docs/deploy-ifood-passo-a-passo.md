@@ -249,6 +249,16 @@ Se `/trellis` ou `/boxplot` devolverem JSON (ex.: `{"chart":"trellis","status":"
    - Opcional no pod: `kubectl exec -n dataviz deploy/dataviz-custom-chart -- cat /app/trellis-chart/dist/index.html | head -5` (se existir, o router Node está servindo).
 3. **Se existir K8S_MANIFESTS_UPDATE_TOKEN** no projeto custom_charts, a pipeline da tag pode abrir o MR no k8s-manifests atualizando a image; basta aprovar e fazer merge.
 
+### 9.1 Erro "Expected module script but server responded with application/json"
+
+Se no console do navegador aparecer algo como: *"main-xxx.js: Failed to load module script: Expected a JavaScript module but the server responded with a MIME type of application/json"*:
+
+- **Causa provável:** a URL do custom chart no ThoughtSpot está apontando para um endpoint que devolve JSON (ex.: raiz `/` ou uma API), ou o embed está carregando o iframe de forma que os scripts (`.js`) são pedidos ao domínio do ThoughtSpot em vez do nosso.
+- **O que conferir no ThoughtSpot:** a URL do chart deve ser a **base do nosso serviço** que serve HTML, ex.: `https://dataviz-custom-chart.ifoodcorp.com.br/trellis` (ou `/boxplot`). Não usar a raiz `/` nem rotas de API. O iframe do embed deve ter como `src` essa URL para que o documento e os assets (JS/CSS) sejam carregados do nosso servidor.
+- **No nosso servidor:** as rotas `/trellis` e `/boxplot` servem HTML; `/trellis/assets/*.js` e `/boxplot/assets/*.js` servem os scripts com `Content-Type: application/javascript`. Se a requisição chegar ao nosso serviço, nunca devolvemos JSON para esses paths.
+
+**Avisos de preload/crossorigin** (fontes em dev-ifood.thoughtspot.cloud) e **"resource was preloaded but not used"** vêm do próprio ThoughtSpot; só o time da plataforma ThoughtSpot pode ajustar.
+
 ---
 
 ## 10. Referências rápidas

@@ -114,6 +114,34 @@ app.use('/boxplot', (req, res, next) => {
     next();
 });
 
+// Rotas explícitas para assets: garantem Content-Type application/javascript (nunca JSON)
+app.get('/trellis/assets/:filename', chartLimiter, (req, res) => {
+    const filename = req.params.filename;
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(400).setHeader('Content-Type', 'text/plain').send('Bad request');
+    }
+    const filePath = path.join(trellisDistPath, 'assets', filename);
+    if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Type', filename.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/css; charset=utf-8');
+        res.sendFile(filePath);
+    } else {
+        res.status(404).setHeader('Content-Type', 'text/plain').send('Not found');
+    }
+});
+app.get('/boxplot/assets/:filename', chartLimiter, (req, res) => {
+    const filename = req.params.filename;
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(400).setHeader('Content-Type', 'text/plain').send('Bad request');
+    }
+    const filePath = path.join(boxplotDistPath, 'assets', filename);
+    if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Type', filename.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/css; charset=utf-8');
+        res.sendFile(filePath);
+    } else {
+        res.status(404).setHeader('Content-Type', 'text/plain').send('Not found');
+    }
+});
+
 // Ordem igual ao GitHub: static antes de GET que devolve HTML
 app.use('/trellis', chartLimiter, staticWithMime(trellisDistPath));
 
