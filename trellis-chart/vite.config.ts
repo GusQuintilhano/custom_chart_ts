@@ -31,7 +31,9 @@ export default defineConfig({
     strictPort: false,
     allowedHosts: [
       'ts-custom-charts-production.up.railway.app',
-      '.railway.app', // Permite todos os subdomínios do Railway
+      '.railway.app',
+      'dataviz-custom-chart.ifoodcorp.com.br',
+      '.ifoodcorp.com.br',
       'localhost',
       '127.0.0.1'
     ]

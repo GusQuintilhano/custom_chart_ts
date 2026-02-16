@@ -1,14 +1,14 @@
 /**
  * Servidor de roteamento para múltiplos gráficos customizados
  * Serve Trellis Chart em /trellis e Boxplot Chart em /boxplot
- * Alinhado ao repo GitHub (GusQuintilhano/custom_chart_ts) para mesmo comportamento.
+ * Espelha o repo que funciona: https://github.com/GusQuintilhano/custom_chart_ts
+ * (ordem de rotas, express.static puro, sem handlers manuais de /assets)
  */
 
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { rateLimit } from 'express-rate-limit';
 import { analyticsMiddleware } from './middleware/analytics.js';
 import analyticsRouter from './routes/analytics.js';
 import { getCapacityMetrics } from './utils/capacityMetrics.js';
@@ -23,13 +23,6 @@ app.disable('x-powered-by');
 app.set('trust proxy', true);
 app.use(express.json());
 app.use(analyticsMiddleware);
-
-const chartLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000,
-    max: 120,
-    standardHeaders: true,
-    legacyHeaders: false,
-});
 
 // Resolução de paths igual ao GitHub: funciona em Docker (/app, /app/app) e local
 let projectRoot: string = '/app';
@@ -92,18 +85,6 @@ if (!fs.existsSync(boxplotDistPath)) {
     }
 }
 
-// Garante MIME type correto para assets (evita "Expected module script but server responded with application/json")
-function staticWithMime(staticPath: string, options: { index?: boolean } = {}) {
-    const staticHandler = express.static(staticPath, { index: false, ...options });
-    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        const ext = path.extname(req.path).toLowerCase();
-        if (ext === '.js') res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        else if (ext === '.css') res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        else if (ext === '.json') res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        staticHandler(req, res, next);
-    };
-}
-
 // CORS para embed em ThoughtSpot/Muze (iframe ou fetch de outro domínio)
 app.use('/trellis', (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -114,41 +95,15 @@ app.use('/boxplot', (req, res, next) => {
     next();
 });
 
-// Rotas explícitas para assets: garantem Content-Type application/javascript (nunca JSON)
-app.get('/trellis/assets/:filename', chartLimiter, (req, res) => {
-    const filename = req.params.filename;
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-        return res.status(400).setHeader('Content-Type', 'text/plain').send('Bad request');
-    }
-    const filePath = path.join(trellisDistPath, 'assets', filename);
-    if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Type', filename.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/css; charset=utf-8');
-        res.sendFile(filePath);
-    } else {
-        res.status(404).setHeader('Content-Type', 'text/plain').send('Not found');
-    }
-});
-app.get('/boxplot/assets/:filename', chartLimiter, (req, res) => {
-    const filename = req.params.filename;
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-        return res.status(400).setHeader('Content-Type', 'text/plain').send('Bad request');
-    }
-    const filePath = path.join(boxplotDistPath, 'assets', filename);
-    if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Type', filename.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/css; charset=utf-8');
-        res.sendFile(filePath);
-    } else {
-        res.status(404).setHeader('Content-Type', 'text/plain').send('Not found');
-    }
-});
+// Ordem idêntica ao repo que funciona (GitHub): static primeiro, depois GET que devolve HTML
+// Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
+app.use('/trellis', express.static(trellisDistPath, { index: false }));
 
-// Ordem igual ao GitHub: static antes de GET que devolve HTML
-app.use('/trellis', chartLimiter, staticWithMime(trellisDistPath));
+// Servir assets do trellis também em /assets (compatibilidade com index.html que referencia /assets/)
+app.use('/assets', express.static(path.join(trellisDistPath, 'assets'), { index: false }));
 
-// /assets serve trellis (compatibilidade com index.html que usa /assets/ na raiz)
-app.use('/assets', chartLimiter, staticWithMime(path.join(trellisDistPath, 'assets')));
-
-app.get('/trellis', chartLimiter, (req, res) => {
+// GET /trellis deve vir DEPOIS do static para que /trellis/assets/... seja servido pelo static
+app.get('/trellis', (req, res) => {
     const indexPath = path.join(trellisDistPath, 'index.html');
     if (!fs.existsSync(indexPath)) {
         res.status(404).send('Trellis chart not found');
@@ -160,9 +115,10 @@ app.get('/trellis', chartLimiter, (req, res) => {
     res.send(html);
 });
 
-app.use('/boxplot', chartLimiter, staticWithMime(boxplotDistPath));
+// Servir arquivos estáticos do boxplot - ANTES da rota GET /boxplot
+app.use('/boxplot', express.static(boxplotDistPath, { index: false }));
 
-app.get('/boxplot', chartLimiter, (req, res) => {
+app.get('/boxplot', (req, res) => {
     const indexPath = path.join(boxplotDistPath, 'index.html');
     if (!fs.existsSync(indexPath)) {
         console.error(`ERROR: Boxplot index.html not found at: ${indexPath}`);
@@ -173,21 +129,6 @@ app.get('/boxplot', chartLimiter, (req, res) => {
     html = html.replace(/src="\/assets\//g, 'src="/boxplot/assets/').replace(/href="\/assets\//g, 'href="/boxplot/assets/');
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
-});
-
-// Fallback: /assets/xxx não encontrado em trellis → tentar boxplot (cache antigo)
-app.get('/assets/:filename', chartLimiter, (req, res, next) => {
-    const filename = req.params.filename;
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-        return next();
-    }
-    const boxplotFile = path.join(boxplotDistPath, 'assets', filename);
-    if (fs.existsSync(boxplotFile)) {
-        res.type(filename.endsWith('.js') ? 'application/javascript' : 'text/css');
-        res.sendFile(boxplotFile);
-    } else {
-        next();
-    }
 });
 
 app.use('/api/analytics', analyticsRouter);

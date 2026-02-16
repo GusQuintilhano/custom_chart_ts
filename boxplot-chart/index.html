@@ -24,6 +24,32 @@
 </head>
 <body>
   <div id="chart"></div>
+  <script>
+    // Corrige preloads de fontes que estão faltando o atributo crossorigin (alinhado ao repo que funciona)
+    (function() {
+      function fixFontPreloads() {
+        var fontPreloads = document.querySelectorAll('link[rel="preload"][href*="/font/"], link[rel="preload"][href*=".otf"], link[rel="preload"][href*=".ttf"], link[rel="preload"][as="font"]');
+        fontPreloads.forEach(function(link) {
+          if (!link.hasAttribute('crossorigin')) {
+            link.setAttribute('crossorigin', 'anonymous');
+          }
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixFontPreloads);
+      } else {
+        fixFontPreloads();
+      }
+      if (typeof MutationObserver !== 'undefined') {
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) fixFontPreloads();
+          });
+        });
+        observer.observe(document.head, { childList: true, subtree: true });
+      }
+    })();
+  </script>
   <script type="module">
     import('/src/index.ts');
   </script>
