@@ -99,14 +99,27 @@ app.use('/boxplot', (req, res, next) => {
 // Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
 app.use('/trellis', express.static(trellisDistPath, { index: false }));
 
-// Redirect /assets/* -> /trellis/assets/* para que o browser nunca dependa de /assets/ na raiz
-// (evita proxy/ingress devolver JSON para GET /assets/xxx.js)
+// GET /assets/:filename — quando o ThoughtSpot carrega o chart pede /assets/main-XXX.js (sem /trellis).
+// Servir o ficheiro aqui com Content-Type correto para nunca devolver JSON (proxy pode encaminhar /assets/ ao nosso app).
 app.get('/assets/:filename', (req, res) => {
     const filename = req.params.filename;
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
         return res.status(400).setHeader('Content-Type', 'text/plain').send('Bad request');
     }
-    res.redirect(302, '/trellis/assets/' + encodeURIComponent(filename));
+    const trellisFile = path.join(trellisDistPath, 'assets', filename);
+    const boxplotFile = path.join(boxplotDistPath, 'assets', filename);
+    const isJs = filename.endsWith('.js');
+    const isCss = filename.endsWith('.css');
+    const contentType = isJs ? 'application/javascript; charset=utf-8' : isCss ? 'text/css; charset=utf-8' : undefined;
+    if (fs.existsSync(trellisFile)) {
+        if (contentType) res.setHeader('Content-Type', contentType);
+        return res.sendFile(trellisFile);
+    }
+    if (fs.existsSync(boxplotFile)) {
+        if (contentType) res.setHeader('Content-Type', contentType);
+        return res.sendFile(boxplotFile);
+    }
+    res.status(404).setHeader('Content-Type', 'text/plain').send('Not found');
 });
 
 // GET /trellis deve vir DEPOIS do static para que /trellis/assets/... seja servido pelo static
