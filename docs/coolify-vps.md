@@ -56,7 +56,11 @@ Clique em **Continue**.
 - **Domínio:** se usar proxy reverso do Coolify (Traefik), atribua um domínio ao serviço (ex.: `charts.seudominio.com`). O proxy encaminha para a porta 8080 do container.
 - Se não atribuir domínio, o serviço pode ficar acessível só pela porta mapeada no host (ex.: `http://IP-do-VPS:8080`), dependendo da configuração do Coolify.
 
-### 6. Deploy
+### 6. Variáveis de ambiente no Coolify
+
+Se definir **NODE_ENV** nas variáveis do recurso, marque-a como **Runtime only** (não "Available at Buildtime"). O Dockerfile já define `NODE_ENV=development` nos stages de build e `NODE_ENV=production` no stage final; se o Coolify injetar `NODE_ENV=production` no build, o `npm ci` não instala devDependencies (TypeScript, etc.) e o build falha.
+
+### 7. Deploy
 
 Clique em **Deploy** (ou equivalente). O Coolify vai:
 
@@ -65,6 +69,8 @@ Clique em **Deploy** (ou equivalente). O Coolify vai:
 3. Subir o container e expor conforme a rede/domínio
 
 Aguarde o build terminar. O primeiro deploy pode demorar (build dos charts + router).
+
+Se o deploy falhar com erro de build, confira nos logs do Coolify o passo que falhou (ex.: `npm run build` no charts-router). Garanta que NODE_ENV não está como "Buildtime" com valor `production`.
 
 ---
 

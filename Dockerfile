@@ -7,7 +7,7 @@ ARG GOLDEN_IMG_TAG=1-edge
 
 # Build dos charts (Trellis e Boxplot). Dist gerado sempre do zero (vite.config base /trellis/ e /boxplot/).
 FROM node:18-alpine AS charts-build
-
+ENV NODE_ENV=development
 WORKDIR /build
 
 COPY shared/ ./shared/
@@ -23,7 +23,7 @@ RUN cd boxplot-chart && npm ci && npx vite build
 
 # Build do charts-router (Express que serve /trellis e /boxplot)
 FROM node:18-alpine AS router-build
-
+ENV NODE_ENV=development
 WORKDIR /build
 
 COPY charts-router/package.json charts-router/package-lock.json ./charts-router/
@@ -75,6 +75,7 @@ COPY --from=router-build /build/charts-router/dist ./charts-router/dist/
 COPY --from=charts-build /build/trellis-chart/dist ./trellis-chart/dist/
 COPY --from=charts-build /build/boxplot-chart/dist ./boxplot-chart/dist/
 RUN test -f /app/charts-router/dist/server.js || (echo "ERROR: dist/server.js missing" && exit 1)
+ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 WORKDIR /app/charts-router
