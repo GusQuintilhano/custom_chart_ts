@@ -70,7 +70,7 @@ Clique em **Deploy** (ou equivalente). O Coolify vai:
 
 Aguarde o build terminar. O primeiro deploy pode demorar (build dos charts + router).
 
-Se o deploy falhar com erro de build, confira nos logs do Coolify o passo que falhou (ex.: `npm run build` no charts-router). Garanta que NODE_ENV não está como "Buildtime" com valor `production`.
+Se o deploy falhar com "dist/server.js missing", o build está a usar **cache antiga** (de quando NODE_ENV=production impedia instalar devDependencies). No Coolify, faça **"Clear build cache"** ou **"Redeploy without cache"** (conforme a UI) e volte a fazer deploy. O Dockerfile já usa `npm config set production false` nos stages de build para instalar sempre as devDependencies.
 
 ---
 
