@@ -5,7 +5,7 @@ ARG CI_REGISTRY=registry.infra.ifood-prod.com.br
 ARG GOLDEN_IMG_NODE_VERSION=18
 ARG GOLDEN_IMG_TAG=1-edge
 
-# Build dos charts (Trellis e Boxplot)
+# Build dos charts (Trellis e Boxplot). Dist gerado sempre do zero (vite.config base /trellis/ e /boxplot/).
 FROM node:18-alpine AS charts-build
 
 WORKDIR /build
@@ -13,6 +13,9 @@ WORKDIR /build
 COPY shared/ ./shared/
 COPY trellis-chart/ ./trellis-chart/
 COPY boxplot-chart/ ./boxplot-chart/
+
+# Garantir build limpo: não reutilizar dist de outro build (base no vite.config deve ser aplicada).
+RUN rm -rf trellis-chart/dist boxplot-chart/dist 2>/dev/null || true
 
 RUN cd shared && npm install
 RUN cd trellis-chart && npm ci && npm run build

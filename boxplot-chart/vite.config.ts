@@ -3,7 +3,10 @@ import { resolve } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-/** Garante que o index.html gerado use apenas /boxplot/assets/ (nunca /assets/ na raiz), para evitar proxy devolver JSON. */
+/**
+ * Garante que o index.html gerado use prefixo /boxplot/assets/ (nunca /assets/ na raiz).
+ * Alinhado ao repo que funciona: https://github.com/GusQuintilhano/custom_chart_ts
+ */
 function rewriteAssetPathsPlugin(prefix: string) {
   return {
     name: 'rewrite-asset-paths',

@@ -32,6 +32,23 @@ No **GitHub** ([GusQuintilhano/custom_chart_ts](https://github.com/GusQuintilhan
 | **CSP (Content-Security-Policy)** | Política muito restritiva pode bloquear scripts ou estilos do chart. | Se Kong ou o app passarem a enviar CSP, incluir `script-src`/`style-src` que permitam os assets do chart (e o domínio do ThoughtSpot, se necessário). |
 | **Kong/proxy reescrevendo path** | Ex.: Kong enviar `GET /` em vez de `GET /trellis` para o backend. O router veria `/` e devolveria JSON. | Configurar Kong (ou proxy) para manter o path (`/trellis`, `/boxplot`, `/trellis/assets/...`, etc.) ao repassar para o charts-router. |
 | **Whitelist no ThoughtSpot** | A URL do chart no iFood é diferente da do Railway. Se não estiver na whitelist, o ThoughtSpot não carrega o iframe. | Incluir a URL de produção iFood (ex.: `https://dataviz-custom-chart.xxx/trellis`) na whitelist do cluster ThoughtSpot. |
+
+## Contrato do proxy e URL do chart (iFood)
+
+Para o chart carregar corretamente, o backend (charts-router) deve receber os paths **exatamente** como abaixo. O proxy/Kong deve estar configurado em função disso.
+
+- **URL do chart no ThoughtSpot (iFood):** deve ser a que resulte em o **backend receber** `GET /trellis` e `GET /trellis/assets/*` (ex.: `https://dataviz-custom-chart.ifoodcorp.com.br/trellis` se o proxy não adicionar prefixo). Se o proxy expuser outra path (ex.: `/v2/trellis`), ele deve **repassar para o app como** `GET /trellis` (strip do prefixo), para que o charts-router sirva HTML e assets nos paths que conhece.
+- **Proxy/Kong:** deve repassar para o charts-router os paths `/trellis`, `/boxplot`, `/trellis/assets/*`, `/boxplot/assets/*` e `/assets/*` **sem alterar o path** (ou mapeando ex.: `/v2/trellis` → `/trellis` no backend). Não deve devolver JSON nem outra resposta para esses paths; a resposta deve vir do charts-router (HTML ou JS/CSS com `Content-Type` correto).
+
+## Checklist pós-deploy
+
+Após merge e deploy da nova imagem:
+
+1. **Health:** `curl -s https://dataviz-custom-chart.ifoodcorp.com.br/health` deve retornar JSON com `status: ok`.
+2. **HTML:** `curl -sI https://dataviz-custom-chart.ifoodcorp.com.br/trellis` deve ter `Content-Type: text/html`. O corpo (ex.: `curl -s https://.../trellis`) deve conter `src="/trellis/assets/` (não `/assets/` nem `/v2/`).
+3. **Asset:** uma URL de script presente no HTML (ex.: `.../trellis/assets/main-XXX.js`) deve retornar 200 e `Content-Type: application/javascript`.
+
+Em aba anônima no navegador: abrir a URL do chart, abrir DevTools (aba Rede). Verificar que `index.html` e os `.js`/`.css` dos assets retornam 200 e `Content-Type` correto (text/html e application/javascript ou text/css), **não** `application/json`. Se algo falhar nos passos 2 ou 3, o problema está no proxy/roteamento (path ou Content-Type), não no build ou no server do repo.
 | **HTTPS / mixed content** | Página ThoughtSpot em HTTPS e chart em HTTP → bloqueio. | Servir o chart em HTTPS (Kong/TLS na frente do charts-router). |
 | **Cache de HTML/JS antigo** | Navegador ou CDN servindo HTML/JS antigo com paths errados. | Headers de cache adequados para o chart (ex.: revalidação para `index.html` e assets). Após deploy, testar em aba anônima ou com cache desabilitado. |
 

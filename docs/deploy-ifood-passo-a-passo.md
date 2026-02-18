@@ -232,6 +232,12 @@ Se aparecer JSON em vez do gráfico, seguir a seção **9. Troubleshooting: JSON
 - Incluir a URL do chart (ex.: `https://dataviz-custom-chart.ifoodcorp.com.br/trellis`) na whitelist do cluster ThoughtSpot usado no iFood.
 - Testar o embed do gráfico em uma resposta do ThoughtSpot.
 
+### 8.5 Contrato do proxy e checklist de Content-Type
+
+- **URL do chart:** deve resultar em o backend receber `GET /trellis` e `GET /trellis/assets/*`. Se o proxy expuser ex.: `/v2/trellis`, deve repassar para o app como `/trellis`.
+- **Proxy/Kong:** repassar `/trellis`, `/boxplot`, `/trellis/assets/*`, `/boxplot/assets/*` e `/assets/*` sem alterar o path (ou mapeando prefixo para `/trellis`/`/boxplot`); não devolver JSON para esses paths.
+- **Checklist pós-deploy:** (1) `curl -s .../health` → JSON com `status: ok`. (2) `curl -s .../trellis` → HTML com `src="/trellis/assets/` e `Content-Type: text/html`. (3) Uma URL de script do HTML (ex.: `.../trellis/assets/main-XXX.js`) → 200 e `Content-Type: application/javascript`. Em aba anônima, DevTools (Rede): confirmar que `index.html` e os `.js`/`.css` retornam 200 e Content-Type correto, não `application/json`. Detalhes: [railway-vs-ifood-deploy.md](./railway-vs-ifood-deploy.md) (seções "Contrato do proxy" e "Checklist pós-deploy").
+
 ---
 
 ## 9. Troubleshooting: JSON em vez do gráfico

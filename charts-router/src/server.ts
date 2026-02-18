@@ -99,6 +99,9 @@ app.use('/boxplot', (req, res, next) => {
 // Servir arquivos estáticos do trellis (JS, CSS, etc) - ANTES da rota principal
 app.use('/trellis', express.static(trellisDistPath, { index: false }));
 
+// Fallback /assets para compatibilidade (como no GitHub); GET /assets/:filename abaixo garante Content-Type correto
+app.use('/assets', express.static(path.join(trellisDistPath, 'assets'), { index: false }));
+
 // GET /assets/:filename — ThoughtSpot pede /assets/main-XXX.js (sem /trellis). Servir ficheiro com Content-Type correto (nunca JSON).
 app.get('/assets/:filename', (req, res) => {
     const filename = req.params.filename;
