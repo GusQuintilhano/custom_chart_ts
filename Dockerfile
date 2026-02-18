@@ -63,3 +63,17 @@ ENV PORT=8080
 EXPOSE 8080
 WORKDIR /app/charts-router
 ENTRYPOINT [ "/executor", "node", "dist/server.js" ]
+
+# Stage final por defeito (VPS/Coolify). Não usa registry iFood.
+# Para Golden Image no GitLab CI use: docker build --target production
+FROM node:18-alpine AS vps
+WORKDIR /app
+COPY --from=router-build /build/charts-router/package.json /build/charts-router/package-lock.json ./charts-router/
+RUN cd charts-router && npm ci --omit=dev
+COPY --from=router-build /build/charts-router/dist ./charts-router/dist/
+COPY --from=charts-build /build/trellis-chart/dist ./trellis-chart/dist/
+COPY --from=charts-build /build/boxplot-chart/dist ./boxplot-chart/dist/
+ENV PORT=8080
+EXPOSE 8080
+WORKDIR /app/charts-router
+CMD ["node", "dist/server.js"]

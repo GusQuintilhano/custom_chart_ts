@@ -1,6 +1,8 @@
 # Guia Docker
 
-Um único **Dockerfile** é usado pelo GitLab CI e localmente (docker-compose): build dos charts (Trellis, Boxplot) + **charts-router** (Node/Express) e imagem final baseada na Golden Image Node 18. Porta 8080. Sem Go/CGO. Gate Golden Image compliant (`CI_REGISTRY`).
+Um único **Dockerfile** é usado pelo GitLab CI e localmente (docker-compose): build dos charts (Trellis, Boxplot) + **charts-router** (Node/Express). Porta 8080. Sem Go/CGO.
+
+**Stages do Dockerfile:** O último stage é `vps` (Node 18 Alpine, sem registry iFood), para que builds sem `--target` (ex.: Coolify com build pack Dockerfile) funcionem fora da rede iFood. Para imagem Golden Image no GitLab CI use: `docker build --target production`.
 
 ## Início Rápido
 
