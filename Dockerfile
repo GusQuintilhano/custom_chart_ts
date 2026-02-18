@@ -71,7 +71,8 @@ FROM node:18-alpine AS vps
 WORKDIR /app
 COPY --from=router-build /build/charts-router/package.json /build/charts-router/package-lock.json ./charts-router/
 COPY --from=router-build /build/charts-router/node_modules ./charts-router/node_modules/
-COPY --from=router-build /build/charts-router/dist ./charts-router/dist/
+COPY --from=router-build /build/charts-router/dist ./charts-router/dist-in/
+RUN if [ -f ./charts-router/dist-in/charts-router/src/server.js ]; then mv ./charts-router/dist-in/charts-router/src/* ./charts-router/dist-in/ && rm -rf ./charts-router/dist-in/charts-router; fi && mv ./charts-router/dist-in ./charts-router/dist
 COPY --from=charts-build /build/trellis-chart/dist ./trellis-chart/dist/
 COPY --from=charts-build /build/boxplot-chart/dist ./boxplot-chart/dist/
 RUN test -f /app/charts-router/dist/server.js || (echo "ERROR: dist/server.js missing" && exit 1)

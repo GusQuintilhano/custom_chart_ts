@@ -13,11 +13,8 @@
     "declaration": true,
     "outDir": "./dist",
     "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["../shared/*"]
-    }
+    "paths": { "@shared/*": ["../shared/*"] }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
-
