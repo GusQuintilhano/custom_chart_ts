@@ -1,0 +1,22 @@
+# Docker Compose para VPS / Coolify (sem Golden Image iFood)
+# Usa o stage "test" do Dockerfile (node:18-alpine). Build: docker-compose -f docker-compose.vps.yml up --build -d
+
+services:
+    dev-server:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: test
+        container_name: muze-dev-server
+        ports:
+            - "8080:8080"
+        environment:
+            - PORT=8080
+        restart: unless-stopped
+        healthcheck:
+            test:
+                ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
