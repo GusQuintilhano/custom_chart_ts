@@ -17,9 +17,9 @@ COPY boxplot-chart/ ./boxplot-chart/
 # Garantir build limpo: não reutilizar dist de outro build (base no vite.config deve ser aplicada).
 RUN rm -rf trellis-chart/dist boxplot-chart/dist 2>/dev/null || true
 
-RUN cd shared && npm config set production false && npm install
-RUN cd trellis-chart && npm config set production false && npm ci && npm run build
-RUN cd boxplot-chart && npm config set production false && npm ci && npx vite build
+RUN cd shared && NODE_ENV=development npm install
+RUN cd trellis-chart && NODE_ENV=development npm ci && npm run build
+RUN cd boxplot-chart && NODE_ENV=development npm ci && npx vite build
 
 # Build do charts-router (Express que serve /trellis e /boxplot)
 FROM node:18-alpine AS router-build
@@ -29,7 +29,7 @@ WORKDIR /build
 COPY charts-router/package.json charts-router/package-lock.json ./charts-router/
 COPY shared/ ./shared/
 
-RUN cd charts-router && npm config set production false && npm ci
+RUN cd charts-router && NODE_ENV=development npm ci
 
 COPY charts-router/ ./charts-router/
 RUN cd charts-router && npm run build && npm ci --omit=dev
