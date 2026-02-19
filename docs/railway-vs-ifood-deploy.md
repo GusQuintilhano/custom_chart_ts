@@ -8,25 +8,25 @@ No **GitHub** ([GusQuintilhano/custom_chart_ts](https://github.com/GusQuintilhan
 
 - **O que sobe:** charts-router (build de trellis-chart + boxplot-chart + charts-router).
 - **URLs:** `https://ts-custom-charts-production.up.railway.app/trellis` e `.../boxplot`.
-- **Comportamento do server:** ao servir `GET /trellis` e `GET /boxplot`, o server **reescreve o HTML** antes de enviar: troca `src="/assets/` por `src="/trellis/assets/` (ou `/boxplot/assets/`). Assim o browser sempre pede `/trellis/assets/...` ou `/boxplot/assets/...`, que são atendidos pelo `express.static` montado nesses paths. Há ainda `app.use('/assets', express.static(trellisDistPath/assets))` como fallback.
+- **Comportamento do server:** ao servir `GET /trellis` e `GET /boxplot`, o server **reescreve o HTML** antes de enviar: troca `src="/assets/` por `src="/trellis/assets/` (ou `/boxplot/assets/`). Assim o browser sempre pede `/trellis/assets/...` ou `/boxplot/assets/...`, que são atendidos pelo `express.static` montado nesses paths. Não existe rota em `/assets` na raiz; pedidos a `/assets` ou `/assets/*` recebem 404 com mensagem "Use /trellis or /boxplot".
 
 ### iFood (charts-router, alinhado ao GitHub)
 
 - **O que sobe:** mesmo conceito (charts-router com `/trellis` e `/boxplot`).
 - **URL do chart:** `https://dataviz-custom-chart.xxx/trellis` (e `/boxplot`).
-- **Alinhamento:** o server do iFood foi ajustado para fazer a **mesma reescrita de HTML** em `GET /trellis` e `GET /boxplot` (substituir `/assets/` por `/trellis/assets/` ou `/boxplot/assets/`). Mantém-se a rota de fallback `GET /assets/:filename` para cache ou clientes antigos.
+- **Alinhamento:** o server faz a **mesma reescrita de HTML** em `GET /trellis` e `GET /boxplot`. Assets são servidos apenas em `/trellis/assets/*` e `/boxplot/assets/*`; não há rota dinâmica em `/assets`.
 
 ## Por que funcionava no Railway e não no iFood?
 
 - No **GitHub/Railway** o server já reescrevia o HTML, então o browser nunca pedia `/assets/` na raiz; pedia `/trellis/assets/` ou `/boxplot/assets/`.
 - No **iFood** o server enviava o `index.html` cru (com `src="/assets/..."`). O browser pedia `GET /assets/main-xxx.js` no mesmo host; sem rota adequada ou com proxy diferente, a resposta podia ser JSON → "MIME type application/json", gráfico não carregava.
-- Com a reescrita de HTML e o fallback `/assets/*`, o comportamento fica igual ao do repo GitHub.
+- Com a reescrita de HTML, o browser passa a pedir apenas `/trellis/assets/...` ou `/boxplot/assets/...`; não existe rota em `/assets` (pedidos a `/assets` recebem 404).
 
 ## O que mais pode quebrar (e como evitar)
 
 | Risco | Descrição | Mitigação |
 |-------|-----------|-----------|
-| **Build com base errado** | Dist gerado com `base: '/'` (cache, build antigo, CI diferente). HTML pede `/assets/...` e no iFood isso não bate com as rotas. | Fallback `GET /assets/*` já implementado. Garantir que no Docker/CI não haja cache antigo de `dist` e que sempre rode `vite build` com o `vite.config` atual (base `/trellis/` e `/boxplot/`). |
+| **Build com base errado** | Dist gerado com `base: '/'` (cache, build antigo, CI diferente). HTML pede `/assets/...` e o server reescreve para `/trellis/assets/` ou `/boxplot/assets/`. | Garantir que no Docker/CI não haja cache antigo de `dist` e que sempre rode `vite build` com o `vite.config` atual (base `/trellis/` e `/boxplot/`). |
 | **CORS** | Se o chart fizer `fetch()` para outro domínio, o servidor precisa enviar cabeçalhos CORS adequados. | Hoje o chart roda dentro do iframe do ThoughtSpot; os assets são same-origin. Se no futuro o chart chamar APIs externas, configurar CORS no charts-router ou no Kong. |
 | **X-Frame-Options** | Se a resposta tiver `X-Frame-Options: DENY` (ou `SAMEORIGIN` com origem diferente), o ThoughtSpot não consegue embutir o chart no iframe. | Não definir `X-Frame-Options` no charts-router (ou usar `ALLOW-FROM` se o Kong/proxy exigir). Kong/proxy não devem injetar DENY. |
 | **CSP (Content-Security-Policy)** | Política muito restritiva pode bloquear scripts ou estilos do chart. | Se Kong ou o app passarem a enviar CSP, incluir `script-src`/`style-src` que permitam os assets do chart (e o domínio do ThoughtSpot, se necessário). |
@@ -38,7 +38,7 @@ No **GitHub** ([GusQuintilhano/custom_chart_ts](https://github.com/GusQuintilhan
 Para o chart carregar corretamente, o backend (charts-router) deve receber os paths **exatamente** como abaixo. O proxy/Kong deve estar configurado em função disso.
 
 - **URL do chart no ThoughtSpot (iFood):** deve ser a que resulte em o **backend receber** `GET /trellis` e `GET /trellis/assets/*` (ex.: `https://dataviz-custom-chart.ifoodcorp.com.br/trellis` se o proxy não adicionar prefixo). Se o proxy expuser outra path (ex.: `/v2/trellis`), ele deve **repassar para o app como** `GET /trellis` (strip do prefixo), para que o charts-router sirva HTML e assets nos paths que conhece.
-- **Proxy/Kong:** deve repassar para o charts-router os paths `/trellis`, `/boxplot`, `/trellis/assets/*`, `/boxplot/assets/*` e `/assets/*` **sem alterar o path** (ou mapeando ex.: `/v2/trellis` → `/trellis` no backend). Não deve devolver JSON nem outra resposta para esses paths; a resposta deve vir do charts-router (HTML ou JS/CSS com `Content-Type` correto).
+- **Proxy/Kong:** deve repassar para o charts-router os paths `/trellis`, `/boxplot`, `/trellis/assets/*` e `/boxplot/assets/*` **sem alterar o path** (ou mapeando ex.: `/v2/trellis` → `/trellis` no backend). Não é necessário repassar `/assets/*` (o backend devolve 404 para `/assets`). Não deve devolver JSON para paths de chart; a resposta deve vir do charts-router (HTML ou JS/CSS com `Content-Type` correto).
 
 ## Checklist pós-deploy
 
@@ -111,7 +111,6 @@ Um job (Airflow, cron, Databricks Job, etc.) pode chamar essa API periodicamente
 
 ## Recomendações
 
-1. **Manter o fallback `GET /assets/*`** no charts-router como rede de segurança.
-2. **Garantir base no build:** no Docker/CI, não reutilizar `dist` de outro build; rodar `npm run build` (que chama `vite build`) dentro do contexto do monorepo para trellis e boxplot, para que `base: '/trellis/'` e `base: '/boxplot/'` sejam aplicados.
-3. **Testar após deploy:** abrir a URL do chart no iFood em aba anônima, abrir o DevTools (Console + Network) e confirmar que os assets (`.js`/`.css`) retornam 200 e `Content-Type` correto (não JSON).
-4. **Whitelist:** confirmar com o time ThoughtSpot que a URL de produção iFood está na whitelist do cluster usado no iFood.
+1. **Garantir base no build:** no Docker/CI, não reutilizar `dist` de outro build; rodar `npm run build` (que chama `vite build`) dentro do contexto do monorepo para trellis e boxplot, para que `base: '/trellis/'` e `base: '/boxplot/'` sejam aplicados.
+2. **Testar após deploy:** abrir a URL do chart no iFood em aba anônima, abrir o DevTools (Console + Network) e confirmar que os assets (`.js`/`.css`) retornam 200 e `Content-Type` correto (não JSON).
+3. **Whitelist:** confirmar com o time ThoughtSpot que a URL de produção iFood está na whitelist do cluster usado no iFood.

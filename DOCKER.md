@@ -179,9 +179,9 @@ Serviço disponível em: `http://<IP-do-VPS>:8080`
 | `GET /boxplot` | Idem com `boxplot-chart/dist/index.html` e `src="/boxplot/assets/..."` |
 | `GET /trellis/assets/:filename` | Ficheiro em `trellis-chart/dist/assets/` com `Content-Type: application/javascript` (`.js`) ou `text/css` (`.css`) |
 | `GET /boxplot/assets/:filename` | Idem para `boxplot-chart/dist/assets/` |
-| `GET /assets/:filename` | Fallback: procura o ficheiro em trellis e depois em boxplot; envia com Content-Type correto (nunca JSON) |
+| `GET /assets` ou `GET /assets/*` | 404 com mensagem "Use /trellis or /boxplot". Não existe rota dinâmica em `/assets`; uso correto é `/trellis` ou `/boxplot`. |
 
-O HTML dos charts referencia scripts em `/trellis/assets/...` ou `/boxplot/assets/...` para evitar que um proxy na frente responda em `/assets/*` com JSON.
+O HTML dos charts referencia scripts em `/trellis/assets/...` ou `/boxplot/assets/...`. Não existe fallback em `/assets` na raiz.
 
 ### 4. Opcional: proxy reverso no VPS (HTTPS / domínio)
 
